@@ -1,0 +1,71 @@
+name: Release Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tag format
+        run: |
+          if [[ ! "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must match vX.Y.Z (e.g. v1.0.0), got: ${{ github.ref_name }}"
+            exit 1
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Set version from tag
+        run: |
+          chmod +x tool/set_version.sh
+          VERSION=$(./tool/set_version.sh "${{ github.ref_name }}")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=${VERSION%%+*}" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate Drift code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Prepare release artifact
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/shop-flow-${VERSION_NAME}.apk"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Shop Flow v${{ env.VERSION_NAME }}
+          files: dist/shop-flow-${{ env.VERSION_NAME }}.apk
+          generate_release_notes: true
+          body: |
+            ## Install on Android
+
+            1. Download `shop-flow-${{ env.VERSION_NAME }}.apk` below.
+            2. On your phone, allow installation from unknown sources for your browser or file manager.
+            3. Open the APK and install.
+
+            This build is debug-signed for sideloading only (not for Google Play).

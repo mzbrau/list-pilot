@@ -90,6 +90,9 @@ class ListsOverviewScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
+        final versionAsync = ref.watch(appVersionProvider);
+        final theme = Theme.of(context);
+
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -117,6 +120,19 @@ class ListsOverviewScreen extends ConsumerWidget {
                   ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
                   Navigator.pop(context);
                 },
+              ),
+              versionAsync.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (info) => Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Text(
+                    'Version ${info.version} (${info.buildNumber})',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

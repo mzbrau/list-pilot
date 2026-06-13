@@ -38,6 +38,34 @@ flutter run
 flutter test
 ```
 
+## Releasing
+
+Releases are driven by git tags in the form `vX.Y.Z` (e.g. `v1.0.0`). The tag sets the app version in `pubspec.yaml` and triggers a GitHub Action that builds an Android APK and attaches it to a GitHub Release.
+
+### Create a release
+
+```bash
+./tool/set_version.sh v1.0.0
+git add pubspec.yaml
+git commit -m "Release v1.0.0"
+git tag v1.0.0
+git push origin main
+git push origin v1.0.0
+```
+
+The `set_version.sh` step is optional before tagging — CI applies the version from the tag when building — but committing the updated `pubspec.yaml` keeps the repo in sync.
+
+Version numbers use semver (`X.Y.Z`). The Android build number is derived automatically as `major*10000 + minor*100 + patch` (e.g. `v1.2.3` → build `10203`).
+
+### Install the APK on Android
+
+1. Open the [GitHub Releases](https://github.com/mzbrau/shop-flow/releases) page for this repo.
+2. Download the `shop-flow-X.Y.Z.apk` file from the latest release.
+3. On your phone, allow installation from unknown sources for your browser or file manager.
+4. Open the downloaded APK and install.
+
+Release APKs are debug-signed for sideloading only — they are not suitable for Google Play.
+
 ## Project structure
 
 ```

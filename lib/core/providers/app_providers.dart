@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -38,6 +39,10 @@ final databaseSeederProvider = Provider<DatabaseSeeder>((ref) {
 final appInitProvider = FutureProvider<void>((ref) async {
   final seeder = ref.watch(databaseSeederProvider);
   await seeder.seedIfNeeded();
+});
+
+final appVersionProvider = FutureProvider<PackageInfo>((ref) async {
+  return PackageInfo.fromPlatform();
 });
 
 final shoppingListsProvider = StreamProvider<List<ShoppingList>>((ref) {
