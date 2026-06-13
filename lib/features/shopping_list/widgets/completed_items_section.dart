@@ -37,7 +37,7 @@ class _CompletedItemsSectionState extends State<CompletedItemsSection> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
             child: Row(
               children: [
                 Expanded(
@@ -56,7 +56,7 @@ class _CompletedItemsSectionState extends State<CompletedItemsSection> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Completed (${widget.items.length})',
+                            'In your cart (${widget.items.length})',
                             style: theme.textTheme.titleSmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),

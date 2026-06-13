@@ -27,19 +27,26 @@ class CategorizedItemList extends StatelessWidget {
           var itemIndex = index;
           for (final entry in groupedItems.entries) {
             if (itemIndex == 0) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Chip(
-                  label: Text(
-                    entry.key,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      theme.colorScheme.primaryContainer,
+                      theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                    ],
                   ),
-                  backgroundColor: theme.colorScheme.primaryContainer
-                      .withValues(alpha: 0.4),
-                  side: BorderSide.none,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                child: Text(
+                  '${entry.key} (${entry.value.length})',
+                  textAlign: TextAlign.left,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
                 ),
               );
             }

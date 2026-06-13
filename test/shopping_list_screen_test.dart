@@ -1,0 +1,153 @@
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:shop_flow/core/providers/app_providers.dart';
+import 'package:shop_flow/data/database/app_database.dart';
+import 'package:shop_flow/data/repositories/catalog_repository.dart';
+import 'package:shop_flow/data/repositories/learning_repository.dart';
+import 'package:shop_flow/data/repositories/list_repository.dart';
+import 'package:shop_flow/features/item_detail/item_detail_screen.dart';
+import 'package:shop_flow/features/shopping_list/shopping_list_screen.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('Shopping list shows AppBar title, count, back button, and item navigation',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+
+    await db.into(db.categories).insert(
+          CategoriesCompanion.insert(
+            id: 'dairy',
+            name: 'Dairy',
+            sortOrder: 0,
+          ),
+        );
+
+    final catalogId = await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'milk',
+            displayName: 'Milk',
+            categoryId: 'dairy',
+            createdAt: DateTime.now(),
+          ),
+        );
+
+    final listId = await db.into(db.shoppingLists).insert(
+          ShoppingListsCompanion.insert(
+            name: 'Supermarket',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+    final now = DateTime.now();
+    await db.batch((batch) {
+      batch.insert(
+        db.listItems,
+        ListItemsCompanion.insert(
+          listId: listId,
+          catalogItemId: Value(catalogId),
+          displayName: 'Milk',
+          categoryId: 'dairy',
+          addedAt: now,
+        ),
+      );
+      batch.insert(
+        db.listItems,
+        ListItemsCompanion.insert(
+          listId: listId,
+          catalogItemId: Value(catalogId),
+          displayName: 'Cheese',
+          categoryId: 'dairy',
+          addedAt: now,
+        ),
+      );
+      batch.insert(
+        db.listItems,
+        ListItemsCompanion.insert(
+          listId: listId,
+          catalogItemId: Value(catalogId),
+          displayName: 'Yogurt',
+          categoryId: 'dairy',
+          isCompleted: const Value(true),
+          completedAt: Value(now),
+          addedAt: now,
+        ),
+      );
+    });
+
+    final catalogRepo = CatalogRepository(db);
+    final learningRepo = LearningRepository(db);
+    final listRepo = ListRepository(db, catalogRepo, learningRepo);
+
+    final overrides = [
+      databaseProvider.overrideWithValue(db),
+      catalogRepositoryProvider.overrideWithValue(catalogRepo),
+      learningRepositoryProvider.overrideWithValue(learningRepo),
+      listRepositoryProvider.overrideWithValue(listRepo),
+      appInitProvider.overrideWith((ref) async {}),
+    ];
+
+    late GoRouter router;
+    router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(
+            body: Center(child: Text('Home')),
+          ),
+        ),
+        GoRoute(
+          path: '/list/:id',
+          builder: (context, state) {
+            final id = int.parse(state.pathParameters['id']!);
+            return ShoppingListScreen(listId: id);
+          },
+          routes: [
+            GoRoute(
+              path: 'item/:itemId',
+              builder: (context, state) {
+                final listRouteId = int.parse(state.pathParameters['id']!);
+                final itemId = int.parse(state.pathParameters['itemId']!);
+                return ItemDetailScreen(listId: listRouteId, itemId: itemId);
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    router.push('/list/$listId');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Supermarket'), findsOneWidget);
+    expect(find.text('2/3'), findsOneWidget);
+    expect(find.text('Dairy (2)'), findsOneWidget);
+    expect(find.byType(BackButtonIcon), findsOneWidget);
+
+    await tester.tap(find.text('Milk'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Item details'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await db.close();
+    await tester.pump();
+  });
+}

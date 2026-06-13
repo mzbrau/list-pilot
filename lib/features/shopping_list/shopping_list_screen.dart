@@ -8,6 +8,7 @@ import '../../features/learning/ordering_service.dart';
 import 'widgets/categorized_item_list.dart';
 import 'widgets/completed_items_section.dart';
 import 'widgets/item_autocomplete_field.dart';
+import 'widgets/list_progress_title.dart';
 
 class ShoppingListScreen extends ConsumerStatefulWidget {
   const ShoppingListScreen({super.key, required this.listId});
@@ -22,35 +23,44 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
   final _orderingService = OrderingService();
 
-  @override
-  Widget build(BuildContext context) {
-    final listAsync = ref.watch(shoppingListProvider(widget.listId));
-    final itemsAsync = ref.watch(listItemsProvider(widget.listId));
-    final categoriesAsync = ref.watch(categoriesProvider);
-    final categoryStatsAsync =
-        ref.watch(categoryRankStatsProvider(widget.listId));
-    final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context, {
+    required String? listName,
+    required int remaining,
+    required int total,
+    ShoppingList? list,
+  }) {
+    final theme = Theme.of(context);
 
-    return listAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => Scaffold(
-        appBar: AppBar(),
-        body: Center(child: Text('Error: $e')),
-      ),
-      data: (list) {
-        if (list == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: Text('List not found')),
-          );
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(list.name),
-            actions: [
+    return AppBar(
+      leading: context.canPop()
+          ? IconButton(
+              icon: const BackButtonIcon(),
+              onPressed: () => context.pop(),
+            )
+          : null,
+      title: listName != null
+          ? ListProgressTitle(
+              listName: listName,
+              remaining: remaining,
+              total: total,
+            )
+          : null,
+      bottom: total > 0
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(3),
+              child: LinearProgressIndicator(
+                value: remaining / total,
+                minHeight: 3,
+                backgroundColor: theme.colorScheme.primaryContainer
+                    .withValues(alpha: 0.3),
+                color: theme.colorScheme.primary,
+              ),
+            )
+          : null,
+      actions: list == null
+          ? null
+          : [
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Rename',
@@ -70,6 +80,60 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                 ],
               ),
             ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final listAsync = ref.watch(shoppingListProvider(widget.listId));
+    final itemsAsync = ref.watch(listItemsProvider(widget.listId));
+    final items = itemsAsync.valueOrNull ?? [];
+    final remaining = items.where((i) => !i.isCompleted).length;
+    final total = items.length;
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final categoryStatsAsync =
+        ref.watch(categoryRankStatsProvider(widget.listId));
+    final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
+
+    return listAsync.when(
+      loading: () => Scaffold(
+        appBar: _buildAppBar(
+          context,
+          listName: null,
+          remaining: remaining,
+          total: total,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: _buildAppBar(
+          context,
+          listName: null,
+          remaining: remaining,
+          total: total,
+        ),
+        body: Center(child: Text('Error: $e')),
+      ),
+      data: (list) {
+        if (list == null) {
+          return Scaffold(
+            appBar: _buildAppBar(
+              context,
+              listName: null,
+              remaining: remaining,
+              total: total,
+            ),
+            body: const Center(child: Text('List not found')),
+          );
+        }
+
+        return Scaffold(
+          appBar: _buildAppBar(
+            context,
+            listName: list.name,
+            remaining: remaining,
+            total: total,
+            list: list,
           ),
           body: Column(
             children: [

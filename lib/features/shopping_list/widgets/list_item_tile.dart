@@ -23,13 +23,17 @@ class ListItemTile extends StatelessWidget {
     final quantity = formatQuantity(item);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
         opacity: completed ? 0.55 : 1,
         child: ListTile(
+          dense: true,
+          visualDensity: VisualDensity.compact,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           leading: Checkbox(
             value: completed,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             onChanged: (value) => onToggle(value ?? false),
           ),
           title: Text(
@@ -44,7 +48,7 @@ class ListItemTile extends StatelessWidget {
           trailing: quantity.isNotEmpty
               ? Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(8),

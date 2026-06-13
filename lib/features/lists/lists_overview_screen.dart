@@ -19,9 +19,9 @@ class ListsOverviewScreen extends ConsumerWidget {
         title: const Text('Shop Flow'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.brightness_6_outlined),
-            tooltip: 'Theme',
-            onPressed: () => _showThemeSheet(context, ref),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => _showSettingsSheet(context, ref),
           ),
         ],
       ),
@@ -86,58 +86,147 @@ class ListsOverviewScreen extends ConsumerWidget {
     if (context.mounted) context.push('/list/$id');
   }
 
-  void _showThemeSheet(BuildContext context, WidgetRef ref) {
+  void _showSettingsSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (context) {
-        final versionAsync = ref.watch(appVersionProvider);
-        final theme = Theme.of(context);
-
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.brightness_auto),
-                title: const Text('System'),
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.light_mode),
-                title: const Text('Light'),
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('Dark'),
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
-                  Navigator.pop(context);
-                },
-              ),
-              versionAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (info) => Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Text(
-                    'Version ${info.version} (${info.buildNumber})',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+      builder: (sheetContext) {
+        return _SettingsSheet(
+          onExport: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              final result =
+                  await ref.read(catalogExportServiceProvider).exportToFile();
+              if (sheetContext.mounted) Navigator.pop(sheetContext);
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Exported ${result.customItemCount} custom and '
+                    '${result.recategorizedItemCount} recategorized items to '
+                    '${result.filePath}',
                   ),
                 ),
-              ),
-            ],
-          ),
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(content: Text('Export failed: $e')),
+              );
+            }
+          },
         );
       },
+    );
+  }
+}
+
+class _SettingsSheet extends ConsumerStatefulWidget {
+  const _SettingsSheet({required this.onExport});
+
+  final Future<void> Function() onExport;
+
+  @override
+  ConsumerState<_SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
+  bool _exporting = false;
+
+  Future<void> _handleExport() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      await widget.onExport();
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final versionAsync = ref.watch(appVersionProvider);
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              'Appearance',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.brightness_auto),
+            title: const Text('System'),
+            onTap: () {
+              ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.light_mode),
+            title: const Text('Light'),
+            onTap: () {
+              ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.dark_mode),
+            title: const Text('Dark'),
+            onTap: () {
+              ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
+              Navigator.pop(context);
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              'Catalog',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: _exporting
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.primary,
+                    ),
+                  )
+                : const Icon(Icons.download_outlined),
+            title: const Text('Export custom catalog'),
+            subtitle: const Text(
+              'Save custom and recategorized items as JSON',
+            ),
+            enabled: !_exporting,
+            onTap: _handleExport,
+          ),
+          versionAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (info) => Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Text(
+                'Version ${info.version} (${info.buildNumber})',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

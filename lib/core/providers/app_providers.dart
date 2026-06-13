@@ -9,6 +9,7 @@ import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/learning_repository.dart';
 import '../../data/repositories/list_repository.dart';
 import '../../data/seed/database_seeder.dart';
+import '../../data/services/catalog_export_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -18,6 +19,10 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
   return CatalogRepository(ref.watch(databaseProvider));
+});
+
+final catalogExportServiceProvider = Provider<CatalogExportService>((ref) {
+  return CatalogExportService(ref.watch(catalogRepositoryProvider));
 });
 
 final learningRepositoryProvider = Provider<LearningRepository>((ref) {

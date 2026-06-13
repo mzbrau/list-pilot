@@ -68,4 +68,14 @@ class CatalogRepository {
   }
 
   Future<List<Category>> getCategories() => _db.getAllCategories();
+
+  Future<List<CatalogItem>> getUserAddedItems() {
+    return (_db.select(_db.catalogItems)
+          ..where((t) => t.isUserAdded.equals(true)))
+        .get();
+  }
+
+  Future<List<CatalogItem>> getAllCatalogItems() {
+    return _db.select(_db.catalogItems).get();
+  }
 }
