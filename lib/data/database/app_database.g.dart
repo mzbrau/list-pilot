@@ -1,0 +1,4059 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'app_database.dart';
+
+// ignore_for_file: type=lint
+class $CategoriesTable extends Categories
+    with TableInfo<$CategoriesTable, Category> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'categories';
+  @override
+  VerificationContext validateIntegrity(Insertable<Category> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Category(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+    );
+  }
+
+  @override
+  $CategoriesTable createAlias(String alias) {
+    return $CategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class Category extends DataClass implements Insertable<Category> {
+  final String id;
+  final String name;
+  final int sortOrder;
+  const Category(
+      {required this.id, required this.name, required this.sortOrder});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  CategoriesCompanion toCompanion(bool nullToAbsent) {
+    return CategoriesCompanion(
+      id: Value(id),
+      name: Value(name),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory Category.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Category(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  Category copyWith({String? id, String? name, int? sortOrder}) => Category(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        sortOrder: sortOrder ?? this.sortOrder,
+      );
+  Category copyWithCompanion(CategoriesCompanion data) {
+    return Category(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Category(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Category &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.sortOrder == this.sortOrder);
+}
+
+class CategoriesCompanion extends UpdateCompanion<Category> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const CategoriesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CategoriesCompanion.insert({
+    required String id,
+    required String name,
+    required int sortOrder,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
+        sortOrder = Value(sortOrder);
+  static Insertable<Category> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CategoriesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? name,
+      Value<int>? sortOrder,
+      Value<int>? rowid}) {
+    return CategoriesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CatalogItemsTable extends CatalogItems
+    with TableInfo<$CatalogItemsTable, CatalogItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CatalogItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _displayNameMeta =
+      const VerificationMeta('displayName');
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+      'display_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _isUserAddedMeta =
+      const VerificationMeta('isUserAdded');
+  @override
+  late final GeneratedColumn<bool> isUserAdded = GeneratedColumn<bool>(
+      'is_user_added', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_user_added" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, displayName, categoryId, isUserAdded, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'catalog_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<CatalogItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+          _displayNameMeta,
+          displayName.isAcceptableOrUnknown(
+              data['display_name']!, _displayNameMeta));
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('is_user_added')) {
+      context.handle(
+          _isUserAddedMeta,
+          isUserAdded.isAcceptableOrUnknown(
+              data['is_user_added']!, _isUserAddedMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CatalogItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CatalogItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      displayName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
+      isUserAdded: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_user_added'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $CatalogItemsTable createAlias(String alias) {
+    return $CatalogItemsTable(attachedDatabase, alias);
+  }
+}
+
+class CatalogItem extends DataClass implements Insertable<CatalogItem> {
+  final int id;
+  final String name;
+  final String displayName;
+  final String categoryId;
+  final bool isUserAdded;
+  final DateTime createdAt;
+  const CatalogItem(
+      {required this.id,
+      required this.name,
+      required this.displayName,
+      required this.categoryId,
+      required this.isUserAdded,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['display_name'] = Variable<String>(displayName);
+    map['category_id'] = Variable<String>(categoryId);
+    map['is_user_added'] = Variable<bool>(isUserAdded);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CatalogItemsCompanion toCompanion(bool nullToAbsent) {
+    return CatalogItemsCompanion(
+      id: Value(id),
+      name: Value(name),
+      displayName: Value(displayName),
+      categoryId: Value(categoryId),
+      isUserAdded: Value(isUserAdded),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CatalogItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CatalogItem(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      isUserAdded: serializer.fromJson<bool>(json['isUserAdded']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'displayName': serializer.toJson<String>(displayName),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'isUserAdded': serializer.toJson<bool>(isUserAdded),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CatalogItem copyWith(
+          {int? id,
+          String? name,
+          String? displayName,
+          String? categoryId,
+          bool? isUserAdded,
+          DateTime? createdAt}) =>
+      CatalogItem(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        displayName: displayName ?? this.displayName,
+        categoryId: categoryId ?? this.categoryId,
+        isUserAdded: isUserAdded ?? this.isUserAdded,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  CatalogItem copyWithCompanion(CatalogItemsCompanion data) {
+    return CatalogItem(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      displayName:
+          data.displayName.present ? data.displayName.value : this.displayName,
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      isUserAdded:
+          data.isUserAdded.present ? data.isUserAdded.value : this.isUserAdded,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogItem(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('displayName: $displayName, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('isUserAdded: $isUserAdded, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, displayName, categoryId, isUserAdded, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CatalogItem &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.displayName == this.displayName &&
+          other.categoryId == this.categoryId &&
+          other.isUserAdded == this.isUserAdded &&
+          other.createdAt == this.createdAt);
+}
+
+class CatalogItemsCompanion extends UpdateCompanion<CatalogItem> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> displayName;
+  final Value<String> categoryId;
+  final Value<bool> isUserAdded;
+  final Value<DateTime> createdAt;
+  const CatalogItemsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.isUserAdded = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  CatalogItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String displayName,
+    required String categoryId,
+    this.isUserAdded = const Value.absent(),
+    required DateTime createdAt,
+  })  : name = Value(name),
+        displayName = Value(displayName),
+        categoryId = Value(categoryId),
+        createdAt = Value(createdAt);
+  static Insertable<CatalogItem> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? displayName,
+    Expression<String>? categoryId,
+    Expression<bool>? isUserAdded,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (displayName != null) 'display_name': displayName,
+      if (categoryId != null) 'category_id': categoryId,
+      if (isUserAdded != null) 'is_user_added': isUserAdded,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  CatalogItemsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String>? displayName,
+      Value<String>? categoryId,
+      Value<bool>? isUserAdded,
+      Value<DateTime>? createdAt}) {
+    return CatalogItemsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      displayName: displayName ?? this.displayName,
+      categoryId: categoryId ?? this.categoryId,
+      isUserAdded: isUserAdded ?? this.isUserAdded,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (isUserAdded.present) {
+      map['is_user_added'] = Variable<bool>(isUserAdded.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('displayName: $displayName, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('isUserAdded: $isUserAdded, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ShoppingListsTable extends ShoppingLists
+    with TableInfo<$ShoppingListsTable, ShoppingList> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ShoppingListsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _lastCheckOffAtMeta =
+      const VerificationMeta('lastCheckOffAt');
+  @override
+  late final GeneratedColumn<DateTime> lastCheckOffAt =
+      GeneratedColumn<DateTime>('last_check_off_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _currentTripIdMeta =
+      const VerificationMeta('currentTripId');
+  @override
+  late final GeneratedColumn<int> currentTripId = GeneratedColumn<int>(
+      'current_trip_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _currentTripSequenceMeta =
+      const VerificationMeta('currentTripSequence');
+  @override
+  late final GeneratedColumn<int> currentTripSequence = GeneratedColumn<int>(
+      'current_trip_sequence', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        name,
+        createdAt,
+        updatedAt,
+        lastCheckOffAt,
+        currentTripId,
+        currentTripSequence
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shopping_lists';
+  @override
+  VerificationContext validateIntegrity(Insertable<ShoppingList> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('last_check_off_at')) {
+      context.handle(
+          _lastCheckOffAtMeta,
+          lastCheckOffAt.isAcceptableOrUnknown(
+              data['last_check_off_at']!, _lastCheckOffAtMeta));
+    }
+    if (data.containsKey('current_trip_id')) {
+      context.handle(
+          _currentTripIdMeta,
+          currentTripId.isAcceptableOrUnknown(
+              data['current_trip_id']!, _currentTripIdMeta));
+    }
+    if (data.containsKey('current_trip_sequence')) {
+      context.handle(
+          _currentTripSequenceMeta,
+          currentTripSequence.isAcceptableOrUnknown(
+              data['current_trip_sequence']!, _currentTripSequenceMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ShoppingList map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShoppingList(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      lastCheckOffAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}last_check_off_at']),
+      currentTripId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}current_trip_id'])!,
+      currentTripSequence: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}current_trip_sequence'])!,
+    );
+  }
+
+  @override
+  $ShoppingListsTable createAlias(String alias) {
+    return $ShoppingListsTable(attachedDatabase, alias);
+  }
+}
+
+class ShoppingList extends DataClass implements Insertable<ShoppingList> {
+  final int id;
+  final String name;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? lastCheckOffAt;
+  final int currentTripId;
+  final int currentTripSequence;
+  const ShoppingList(
+      {required this.id,
+      required this.name,
+      required this.createdAt,
+      required this.updatedAt,
+      this.lastCheckOffAt,
+      required this.currentTripId,
+      required this.currentTripSequence});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || lastCheckOffAt != null) {
+      map['last_check_off_at'] = Variable<DateTime>(lastCheckOffAt);
+    }
+    map['current_trip_id'] = Variable<int>(currentTripId);
+    map['current_trip_sequence'] = Variable<int>(currentTripSequence);
+    return map;
+  }
+
+  ShoppingListsCompanion toCompanion(bool nullToAbsent) {
+    return ShoppingListsCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      lastCheckOffAt: lastCheckOffAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCheckOffAt),
+      currentTripId: Value(currentTripId),
+      currentTripSequence: Value(currentTripSequence),
+    );
+  }
+
+  factory ShoppingList.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShoppingList(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      lastCheckOffAt: serializer.fromJson<DateTime?>(json['lastCheckOffAt']),
+      currentTripId: serializer.fromJson<int>(json['currentTripId']),
+      currentTripSequence:
+          serializer.fromJson<int>(json['currentTripSequence']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'lastCheckOffAt': serializer.toJson<DateTime?>(lastCheckOffAt),
+      'currentTripId': serializer.toJson<int>(currentTripId),
+      'currentTripSequence': serializer.toJson<int>(currentTripSequence),
+    };
+  }
+
+  ShoppingList copyWith(
+          {int? id,
+          String? name,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<DateTime?> lastCheckOffAt = const Value.absent(),
+          int? currentTripId,
+          int? currentTripSequence}) =>
+      ShoppingList(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        lastCheckOffAt:
+            lastCheckOffAt.present ? lastCheckOffAt.value : this.lastCheckOffAt,
+        currentTripId: currentTripId ?? this.currentTripId,
+        currentTripSequence: currentTripSequence ?? this.currentTripSequence,
+      );
+  ShoppingList copyWithCompanion(ShoppingListsCompanion data) {
+    return ShoppingList(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      lastCheckOffAt: data.lastCheckOffAt.present
+          ? data.lastCheckOffAt.value
+          : this.lastCheckOffAt,
+      currentTripId: data.currentTripId.present
+          ? data.currentTripId.value
+          : this.currentTripId,
+      currentTripSequence: data.currentTripSequence.present
+          ? data.currentTripSequence.value
+          : this.currentTripSequence,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShoppingList(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastCheckOffAt: $lastCheckOffAt, ')
+          ..write('currentTripId: $currentTripId, ')
+          ..write('currentTripSequence: $currentTripSequence')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt, updatedAt,
+      lastCheckOffAt, currentTripId, currentTripSequence);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShoppingList &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.lastCheckOffAt == this.lastCheckOffAt &&
+          other.currentTripId == this.currentTripId &&
+          other.currentTripSequence == this.currentTripSequence);
+}
+
+class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> lastCheckOffAt;
+  final Value<int> currentTripId;
+  final Value<int> currentTripSequence;
+  const ShoppingListsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.lastCheckOffAt = const Value.absent(),
+    this.currentTripId = const Value.absent(),
+    this.currentTripSequence = const Value.absent(),
+  });
+  ShoppingListsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.lastCheckOffAt = const Value.absent(),
+    this.currentTripId = const Value.absent(),
+    this.currentTripSequence = const Value.absent(),
+  })  : name = Value(name),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<ShoppingList> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? lastCheckOffAt,
+    Expression<int>? currentTripId,
+    Expression<int>? currentTripSequence,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (lastCheckOffAt != null) 'last_check_off_at': lastCheckOffAt,
+      if (currentTripId != null) 'current_trip_id': currentTripId,
+      if (currentTripSequence != null)
+        'current_trip_sequence': currentTripSequence,
+    });
+  }
+
+  ShoppingListsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? lastCheckOffAt,
+      Value<int>? currentTripId,
+      Value<int>? currentTripSequence}) {
+    return ShoppingListsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastCheckOffAt: lastCheckOffAt ?? this.lastCheckOffAt,
+      currentTripId: currentTripId ?? this.currentTripId,
+      currentTripSequence: currentTripSequence ?? this.currentTripSequence,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (lastCheckOffAt.present) {
+      map['last_check_off_at'] = Variable<DateTime>(lastCheckOffAt.value);
+    }
+    if (currentTripId.present) {
+      map['current_trip_id'] = Variable<int>(currentTripId.value);
+    }
+    if (currentTripSequence.present) {
+      map['current_trip_sequence'] = Variable<int>(currentTripSequence.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShoppingListsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastCheckOffAt: $lastCheckOffAt, ')
+          ..write('currentTripId: $currentTripId, ')
+          ..write('currentTripSequence: $currentTripSequence')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ListItemsTable extends ListItems
+    with TableInfo<$ListItemsTable, ListItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ListItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<int> listId = GeneratedColumn<int>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _catalogItemIdMeta =
+      const VerificationMeta('catalogItemId');
+  @override
+  late final GeneratedColumn<int> catalogItemId = GeneratedColumn<int>(
+      'catalog_item_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _displayNameMeta =
+      const VerificationMeta('displayName');
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+      'display_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityValueMeta =
+      const VerificationMeta('quantityValue');
+  @override
+  late final GeneratedColumn<double> quantityValue = GeneratedColumn<double>(
+      'quantity_value', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _quantityUnitMeta =
+      const VerificationMeta('quantityUnit');
+  @override
+  late final GeneratedColumn<String> quantityUnit = GeneratedColumn<String>(
+      'quantity_unit', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isCompletedMeta =
+      const VerificationMeta('isCompleted');
+  @override
+  late final GeneratedColumn<bool> isCompleted = GeneratedColumn<bool>(
+      'is_completed', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_completed" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _completedAtMeta =
+      const VerificationMeta('completedAt');
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+      'completed_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _addedAtMeta =
+      const VerificationMeta('addedAt');
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+      'added_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        listId,
+        catalogItemId,
+        displayName,
+        categoryId,
+        quantityValue,
+        quantityUnit,
+        isCompleted,
+        completedAt,
+        addedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'list_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<ListItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('catalog_item_id')) {
+      context.handle(
+          _catalogItemIdMeta,
+          catalogItemId.isAcceptableOrUnknown(
+              data['catalog_item_id']!, _catalogItemIdMeta));
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+          _displayNameMeta,
+          displayName.isAcceptableOrUnknown(
+              data['display_name']!, _displayNameMeta));
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('quantity_value')) {
+      context.handle(
+          _quantityValueMeta,
+          quantityValue.isAcceptableOrUnknown(
+              data['quantity_value']!, _quantityValueMeta));
+    }
+    if (data.containsKey('quantity_unit')) {
+      context.handle(
+          _quantityUnitMeta,
+          quantityUnit.isAcceptableOrUnknown(
+              data['quantity_unit']!, _quantityUnitMeta));
+    }
+    if (data.containsKey('is_completed')) {
+      context.handle(
+          _isCompletedMeta,
+          isCompleted.isAcceptableOrUnknown(
+              data['is_completed']!, _isCompletedMeta));
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+          _completedAtMeta,
+          completedAt.isAcceptableOrUnknown(
+              data['completed_at']!, _completedAtMeta));
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(_addedAtMeta,
+          addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta));
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ListItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ListItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
+      catalogItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}catalog_item_id']),
+      displayName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
+      quantityValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity_value']),
+      quantityUnit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}quantity_unit']),
+      isCompleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_completed'])!,
+      completedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
+      addedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}added_at'])!,
+    );
+  }
+
+  @override
+  $ListItemsTable createAlias(String alias) {
+    return $ListItemsTable(attachedDatabase, alias);
+  }
+}
+
+class ListItem extends DataClass implements Insertable<ListItem> {
+  final int id;
+  final int listId;
+  final int? catalogItemId;
+  final String displayName;
+  final String categoryId;
+  final double? quantityValue;
+  final String? quantityUnit;
+  final bool isCompleted;
+  final DateTime? completedAt;
+  final DateTime addedAt;
+  const ListItem(
+      {required this.id,
+      required this.listId,
+      this.catalogItemId,
+      required this.displayName,
+      required this.categoryId,
+      this.quantityValue,
+      this.quantityUnit,
+      required this.isCompleted,
+      this.completedAt,
+      required this.addedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['list_id'] = Variable<int>(listId);
+    if (!nullToAbsent || catalogItemId != null) {
+      map['catalog_item_id'] = Variable<int>(catalogItemId);
+    }
+    map['display_name'] = Variable<String>(displayName);
+    map['category_id'] = Variable<String>(categoryId);
+    if (!nullToAbsent || quantityValue != null) {
+      map['quantity_value'] = Variable<double>(quantityValue);
+    }
+    if (!nullToAbsent || quantityUnit != null) {
+      map['quantity_unit'] = Variable<String>(quantityUnit);
+    }
+    map['is_completed'] = Variable<bool>(isCompleted);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  ListItemsCompanion toCompanion(bool nullToAbsent) {
+    return ListItemsCompanion(
+      id: Value(id),
+      listId: Value(listId),
+      catalogItemId: catalogItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(catalogItemId),
+      displayName: Value(displayName),
+      categoryId: Value(categoryId),
+      quantityValue: quantityValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantityValue),
+      quantityUnit: quantityUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantityUnit),
+      isCompleted: Value(isCompleted),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      addedAt: Value(addedAt),
+    );
+  }
+
+  factory ListItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ListItem(
+      id: serializer.fromJson<int>(json['id']),
+      listId: serializer.fromJson<int>(json['listId']),
+      catalogItemId: serializer.fromJson<int?>(json['catalogItemId']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      quantityValue: serializer.fromJson<double?>(json['quantityValue']),
+      quantityUnit: serializer.fromJson<String?>(json['quantityUnit']),
+      isCompleted: serializer.fromJson<bool>(json['isCompleted']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'listId': serializer.toJson<int>(listId),
+      'catalogItemId': serializer.toJson<int?>(catalogItemId),
+      'displayName': serializer.toJson<String>(displayName),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'quantityValue': serializer.toJson<double?>(quantityValue),
+      'quantityUnit': serializer.toJson<String?>(quantityUnit),
+      'isCompleted': serializer.toJson<bool>(isCompleted),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  ListItem copyWith(
+          {int? id,
+          int? listId,
+          Value<int?> catalogItemId = const Value.absent(),
+          String? displayName,
+          String? categoryId,
+          Value<double?> quantityValue = const Value.absent(),
+          Value<String?> quantityUnit = const Value.absent(),
+          bool? isCompleted,
+          Value<DateTime?> completedAt = const Value.absent(),
+          DateTime? addedAt}) =>
+      ListItem(
+        id: id ?? this.id,
+        listId: listId ?? this.listId,
+        catalogItemId:
+            catalogItemId.present ? catalogItemId.value : this.catalogItemId,
+        displayName: displayName ?? this.displayName,
+        categoryId: categoryId ?? this.categoryId,
+        quantityValue:
+            quantityValue.present ? quantityValue.value : this.quantityValue,
+        quantityUnit:
+            quantityUnit.present ? quantityUnit.value : this.quantityUnit,
+        isCompleted: isCompleted ?? this.isCompleted,
+        completedAt: completedAt.present ? completedAt.value : this.completedAt,
+        addedAt: addedAt ?? this.addedAt,
+      );
+  ListItem copyWithCompanion(ListItemsCompanion data) {
+    return ListItem(
+      id: data.id.present ? data.id.value : this.id,
+      listId: data.listId.present ? data.listId.value : this.listId,
+      catalogItemId: data.catalogItemId.present
+          ? data.catalogItemId.value
+          : this.catalogItemId,
+      displayName:
+          data.displayName.present ? data.displayName.value : this.displayName,
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      quantityValue: data.quantityValue.present
+          ? data.quantityValue.value
+          : this.quantityValue,
+      quantityUnit: data.quantityUnit.present
+          ? data.quantityUnit.value
+          : this.quantityUnit,
+      isCompleted:
+          data.isCompleted.present ? data.isCompleted.value : this.isCompleted,
+      completedAt:
+          data.completedAt.present ? data.completedAt.value : this.completedAt,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ListItem(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('displayName: $displayName, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('quantityValue: $quantityValue, ')
+          ..write('quantityUnit: $quantityUnit, ')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      listId,
+      catalogItemId,
+      displayName,
+      categoryId,
+      quantityValue,
+      quantityUnit,
+      isCompleted,
+      completedAt,
+      addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ListItem &&
+          other.id == this.id &&
+          other.listId == this.listId &&
+          other.catalogItemId == this.catalogItemId &&
+          other.displayName == this.displayName &&
+          other.categoryId == this.categoryId &&
+          other.quantityValue == this.quantityValue &&
+          other.quantityUnit == this.quantityUnit &&
+          other.isCompleted == this.isCompleted &&
+          other.completedAt == this.completedAt &&
+          other.addedAt == this.addedAt);
+}
+
+class ListItemsCompanion extends UpdateCompanion<ListItem> {
+  final Value<int> id;
+  final Value<int> listId;
+  final Value<int?> catalogItemId;
+  final Value<String> displayName;
+  final Value<String> categoryId;
+  final Value<double?> quantityValue;
+  final Value<String?> quantityUnit;
+  final Value<bool> isCompleted;
+  final Value<DateTime?> completedAt;
+  final Value<DateTime> addedAt;
+  const ListItemsCompanion({
+    this.id = const Value.absent(),
+    this.listId = const Value.absent(),
+    this.catalogItemId = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.quantityValue = const Value.absent(),
+    this.quantityUnit = const Value.absent(),
+    this.isCompleted = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.addedAt = const Value.absent(),
+  });
+  ListItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required int listId,
+    this.catalogItemId = const Value.absent(),
+    required String displayName,
+    required String categoryId,
+    this.quantityValue = const Value.absent(),
+    this.quantityUnit = const Value.absent(),
+    this.isCompleted = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    required DateTime addedAt,
+  })  : listId = Value(listId),
+        displayName = Value(displayName),
+        categoryId = Value(categoryId),
+        addedAt = Value(addedAt);
+  static Insertable<ListItem> custom({
+    Expression<int>? id,
+    Expression<int>? listId,
+    Expression<int>? catalogItemId,
+    Expression<String>? displayName,
+    Expression<String>? categoryId,
+    Expression<double>? quantityValue,
+    Expression<String>? quantityUnit,
+    Expression<bool>? isCompleted,
+    Expression<DateTime>? completedAt,
+    Expression<DateTime>? addedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (listId != null) 'list_id': listId,
+      if (catalogItemId != null) 'catalog_item_id': catalogItemId,
+      if (displayName != null) 'display_name': displayName,
+      if (categoryId != null) 'category_id': categoryId,
+      if (quantityValue != null) 'quantity_value': quantityValue,
+      if (quantityUnit != null) 'quantity_unit': quantityUnit,
+      if (isCompleted != null) 'is_completed': isCompleted,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (addedAt != null) 'added_at': addedAt,
+    });
+  }
+
+  ListItemsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? listId,
+      Value<int?>? catalogItemId,
+      Value<String>? displayName,
+      Value<String>? categoryId,
+      Value<double?>? quantityValue,
+      Value<String?>? quantityUnit,
+      Value<bool>? isCompleted,
+      Value<DateTime?>? completedAt,
+      Value<DateTime>? addedAt}) {
+    return ListItemsCompanion(
+      id: id ?? this.id,
+      listId: listId ?? this.listId,
+      catalogItemId: catalogItemId ?? this.catalogItemId,
+      displayName: displayName ?? this.displayName,
+      categoryId: categoryId ?? this.categoryId,
+      quantityValue: quantityValue ?? this.quantityValue,
+      quantityUnit: quantityUnit ?? this.quantityUnit,
+      isCompleted: isCompleted ?? this.isCompleted,
+      completedAt: completedAt ?? this.completedAt,
+      addedAt: addedAt ?? this.addedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (listId.present) {
+      map['list_id'] = Variable<int>(listId.value);
+    }
+    if (catalogItemId.present) {
+      map['catalog_item_id'] = Variable<int>(catalogItemId.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (quantityValue.present) {
+      map['quantity_value'] = Variable<double>(quantityValue.value);
+    }
+    if (quantityUnit.present) {
+      map['quantity_unit'] = Variable<String>(quantityUnit.value);
+    }
+    if (isCompleted.present) {
+      map['is_completed'] = Variable<bool>(isCompleted.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ListItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('displayName: $displayName, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('quantityValue: $quantityValue, ')
+          ..write('quantityUnit: $quantityUnit, ')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CheckOffEventsTable extends CheckOffEvents
+    with TableInfo<$CheckOffEventsTable, CheckOffEvent> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CheckOffEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<int> listId = GeneratedColumn<int>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _listItemIdMeta =
+      const VerificationMeta('listItemId');
+  @override
+  late final GeneratedColumn<int> listItemId = GeneratedColumn<int>(
+      'list_item_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _catalogItemIdMeta =
+      const VerificationMeta('catalogItemId');
+  @override
+  late final GeneratedColumn<int> catalogItemId = GeneratedColumn<int>(
+      'catalog_item_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _checkedAtMeta =
+      const VerificationMeta('checkedAt');
+  @override
+  late final GeneratedColumn<DateTime> checkedAt = GeneratedColumn<DateTime>(
+      'checked_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _sequenceIndexMeta =
+      const VerificationMeta('sequenceIndex');
+  @override
+  late final GeneratedColumn<int> sequenceIndex = GeneratedColumn<int>(
+      'sequence_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<int> tripId = GeneratedColumn<int>(
+      'trip_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _weightMeta = const VerificationMeta('weight');
+  @override
+  late final GeneratedColumn<double> weight = GeneratedColumn<double>(
+      'weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1.0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        listId,
+        listItemId,
+        categoryId,
+        catalogItemId,
+        checkedAt,
+        sequenceIndex,
+        tripId,
+        weight
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'check_off_events';
+  @override
+  VerificationContext validateIntegrity(Insertable<CheckOffEvent> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('list_item_id')) {
+      context.handle(
+          _listItemIdMeta,
+          listItemId.isAcceptableOrUnknown(
+              data['list_item_id']!, _listItemIdMeta));
+    } else if (isInserting) {
+      context.missing(_listItemIdMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('catalog_item_id')) {
+      context.handle(
+          _catalogItemIdMeta,
+          catalogItemId.isAcceptableOrUnknown(
+              data['catalog_item_id']!, _catalogItemIdMeta));
+    }
+    if (data.containsKey('checked_at')) {
+      context.handle(_checkedAtMeta,
+          checkedAt.isAcceptableOrUnknown(data['checked_at']!, _checkedAtMeta));
+    } else if (isInserting) {
+      context.missing(_checkedAtMeta);
+    }
+    if (data.containsKey('sequence_index')) {
+      context.handle(
+          _sequenceIndexMeta,
+          sequenceIndex.isAcceptableOrUnknown(
+              data['sequence_index']!, _sequenceIndexMeta));
+    } else if (isInserting) {
+      context.missing(_sequenceIndexMeta);
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(_tripIdMeta,
+          tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta));
+    } else if (isInserting) {
+      context.missing(_tripIdMeta);
+    }
+    if (data.containsKey('weight')) {
+      context.handle(_weightMeta,
+          weight.isAcceptableOrUnknown(data['weight']!, _weightMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CheckOffEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CheckOffEvent(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
+      listItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_item_id'])!,
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
+      catalogItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}catalog_item_id']),
+      checkedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}checked_at'])!,
+      sequenceIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sequence_index'])!,
+      tripId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}trip_id'])!,
+      weight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}weight'])!,
+    );
+  }
+
+  @override
+  $CheckOffEventsTable createAlias(String alias) {
+    return $CheckOffEventsTable(attachedDatabase, alias);
+  }
+}
+
+class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
+  final int id;
+  final int listId;
+  final int listItemId;
+  final String categoryId;
+  final int? catalogItemId;
+  final DateTime checkedAt;
+  final int sequenceIndex;
+  final int tripId;
+  final double weight;
+  const CheckOffEvent(
+      {required this.id,
+      required this.listId,
+      required this.listItemId,
+      required this.categoryId,
+      this.catalogItemId,
+      required this.checkedAt,
+      required this.sequenceIndex,
+      required this.tripId,
+      required this.weight});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['list_id'] = Variable<int>(listId);
+    map['list_item_id'] = Variable<int>(listItemId);
+    map['category_id'] = Variable<String>(categoryId);
+    if (!nullToAbsent || catalogItemId != null) {
+      map['catalog_item_id'] = Variable<int>(catalogItemId);
+    }
+    map['checked_at'] = Variable<DateTime>(checkedAt);
+    map['sequence_index'] = Variable<int>(sequenceIndex);
+    map['trip_id'] = Variable<int>(tripId);
+    map['weight'] = Variable<double>(weight);
+    return map;
+  }
+
+  CheckOffEventsCompanion toCompanion(bool nullToAbsent) {
+    return CheckOffEventsCompanion(
+      id: Value(id),
+      listId: Value(listId),
+      listItemId: Value(listItemId),
+      categoryId: Value(categoryId),
+      catalogItemId: catalogItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(catalogItemId),
+      checkedAt: Value(checkedAt),
+      sequenceIndex: Value(sequenceIndex),
+      tripId: Value(tripId),
+      weight: Value(weight),
+    );
+  }
+
+  factory CheckOffEvent.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CheckOffEvent(
+      id: serializer.fromJson<int>(json['id']),
+      listId: serializer.fromJson<int>(json['listId']),
+      listItemId: serializer.fromJson<int>(json['listItemId']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      catalogItemId: serializer.fromJson<int?>(json['catalogItemId']),
+      checkedAt: serializer.fromJson<DateTime>(json['checkedAt']),
+      sequenceIndex: serializer.fromJson<int>(json['sequenceIndex']),
+      tripId: serializer.fromJson<int>(json['tripId']),
+      weight: serializer.fromJson<double>(json['weight']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'listId': serializer.toJson<int>(listId),
+      'listItemId': serializer.toJson<int>(listItemId),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'catalogItemId': serializer.toJson<int?>(catalogItemId),
+      'checkedAt': serializer.toJson<DateTime>(checkedAt),
+      'sequenceIndex': serializer.toJson<int>(sequenceIndex),
+      'tripId': serializer.toJson<int>(tripId),
+      'weight': serializer.toJson<double>(weight),
+    };
+  }
+
+  CheckOffEvent copyWith(
+          {int? id,
+          int? listId,
+          int? listItemId,
+          String? categoryId,
+          Value<int?> catalogItemId = const Value.absent(),
+          DateTime? checkedAt,
+          int? sequenceIndex,
+          int? tripId,
+          double? weight}) =>
+      CheckOffEvent(
+        id: id ?? this.id,
+        listId: listId ?? this.listId,
+        listItemId: listItemId ?? this.listItemId,
+        categoryId: categoryId ?? this.categoryId,
+        catalogItemId:
+            catalogItemId.present ? catalogItemId.value : this.catalogItemId,
+        checkedAt: checkedAt ?? this.checkedAt,
+        sequenceIndex: sequenceIndex ?? this.sequenceIndex,
+        tripId: tripId ?? this.tripId,
+        weight: weight ?? this.weight,
+      );
+  CheckOffEvent copyWithCompanion(CheckOffEventsCompanion data) {
+    return CheckOffEvent(
+      id: data.id.present ? data.id.value : this.id,
+      listId: data.listId.present ? data.listId.value : this.listId,
+      listItemId:
+          data.listItemId.present ? data.listItemId.value : this.listItemId,
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      catalogItemId: data.catalogItemId.present
+          ? data.catalogItemId.value
+          : this.catalogItemId,
+      checkedAt: data.checkedAt.present ? data.checkedAt.value : this.checkedAt,
+      sequenceIndex: data.sequenceIndex.present
+          ? data.sequenceIndex.value
+          : this.sequenceIndex,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      weight: data.weight.present ? data.weight.value : this.weight,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckOffEvent(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('listItemId: $listItemId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('checkedAt: $checkedAt, ')
+          ..write('sequenceIndex: $sequenceIndex, ')
+          ..write('tripId: $tripId, ')
+          ..write('weight: $weight')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, listId, listItemId, categoryId,
+      catalogItemId, checkedAt, sequenceIndex, tripId, weight);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CheckOffEvent &&
+          other.id == this.id &&
+          other.listId == this.listId &&
+          other.listItemId == this.listItemId &&
+          other.categoryId == this.categoryId &&
+          other.catalogItemId == this.catalogItemId &&
+          other.checkedAt == this.checkedAt &&
+          other.sequenceIndex == this.sequenceIndex &&
+          other.tripId == this.tripId &&
+          other.weight == this.weight);
+}
+
+class CheckOffEventsCompanion extends UpdateCompanion<CheckOffEvent> {
+  final Value<int> id;
+  final Value<int> listId;
+  final Value<int> listItemId;
+  final Value<String> categoryId;
+  final Value<int?> catalogItemId;
+  final Value<DateTime> checkedAt;
+  final Value<int> sequenceIndex;
+  final Value<int> tripId;
+  final Value<double> weight;
+  const CheckOffEventsCompanion({
+    this.id = const Value.absent(),
+    this.listId = const Value.absent(),
+    this.listItemId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.catalogItemId = const Value.absent(),
+    this.checkedAt = const Value.absent(),
+    this.sequenceIndex = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.weight = const Value.absent(),
+  });
+  CheckOffEventsCompanion.insert({
+    this.id = const Value.absent(),
+    required int listId,
+    required int listItemId,
+    required String categoryId,
+    this.catalogItemId = const Value.absent(),
+    required DateTime checkedAt,
+    required int sequenceIndex,
+    required int tripId,
+    this.weight = const Value.absent(),
+  })  : listId = Value(listId),
+        listItemId = Value(listItemId),
+        categoryId = Value(categoryId),
+        checkedAt = Value(checkedAt),
+        sequenceIndex = Value(sequenceIndex),
+        tripId = Value(tripId);
+  static Insertable<CheckOffEvent> custom({
+    Expression<int>? id,
+    Expression<int>? listId,
+    Expression<int>? listItemId,
+    Expression<String>? categoryId,
+    Expression<int>? catalogItemId,
+    Expression<DateTime>? checkedAt,
+    Expression<int>? sequenceIndex,
+    Expression<int>? tripId,
+    Expression<double>? weight,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (listId != null) 'list_id': listId,
+      if (listItemId != null) 'list_item_id': listItemId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (catalogItemId != null) 'catalog_item_id': catalogItemId,
+      if (checkedAt != null) 'checked_at': checkedAt,
+      if (sequenceIndex != null) 'sequence_index': sequenceIndex,
+      if (tripId != null) 'trip_id': tripId,
+      if (weight != null) 'weight': weight,
+    });
+  }
+
+  CheckOffEventsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? listId,
+      Value<int>? listItemId,
+      Value<String>? categoryId,
+      Value<int?>? catalogItemId,
+      Value<DateTime>? checkedAt,
+      Value<int>? sequenceIndex,
+      Value<int>? tripId,
+      Value<double>? weight}) {
+    return CheckOffEventsCompanion(
+      id: id ?? this.id,
+      listId: listId ?? this.listId,
+      listItemId: listItemId ?? this.listItemId,
+      categoryId: categoryId ?? this.categoryId,
+      catalogItemId: catalogItemId ?? this.catalogItemId,
+      checkedAt: checkedAt ?? this.checkedAt,
+      sequenceIndex: sequenceIndex ?? this.sequenceIndex,
+      tripId: tripId ?? this.tripId,
+      weight: weight ?? this.weight,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (listId.present) {
+      map['list_id'] = Variable<int>(listId.value);
+    }
+    if (listItemId.present) {
+      map['list_item_id'] = Variable<int>(listItemId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (catalogItemId.present) {
+      map['catalog_item_id'] = Variable<int>(catalogItemId.value);
+    }
+    if (checkedAt.present) {
+      map['checked_at'] = Variable<DateTime>(checkedAt.value);
+    }
+    if (sequenceIndex.present) {
+      map['sequence_index'] = Variable<int>(sequenceIndex.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<int>(tripId.value);
+    }
+    if (weight.present) {
+      map['weight'] = Variable<double>(weight.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckOffEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('listItemId: $listItemId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('checkedAt: $checkedAt, ')
+          ..write('sequenceIndex: $sequenceIndex, ')
+          ..write('tripId: $tripId, ')
+          ..write('weight: $weight')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CategoryRankStatsTable extends CategoryRankStats
+    with TableInfo<$CategoryRankStatsTable, CategoryRankStat> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CategoryRankStatsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<int> listId = GeneratedColumn<int>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _medianRankMeta =
+      const VerificationMeta('medianRank');
+  @override
+  late final GeneratedColumn<double> medianRank = GeneratedColumn<double>(
+      'median_rank', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _sampleCountMeta =
+      const VerificationMeta('sampleCount');
+  @override
+  late final GeneratedColumn<int> sampleCount = GeneratedColumn<int>(
+      'sample_count', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMeta =
+      const VerificationMeta('lastUpdated');
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+      'last_updated', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [listId, categoryId, medianRank, sampleCount, lastUpdated];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'category_rank_stats';
+  @override
+  VerificationContext validateIntegrity(Insertable<CategoryRankStat> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('median_rank')) {
+      context.handle(
+          _medianRankMeta,
+          medianRank.isAcceptableOrUnknown(
+              data['median_rank']!, _medianRankMeta));
+    } else if (isInserting) {
+      context.missing(_medianRankMeta);
+    }
+    if (data.containsKey('sample_count')) {
+      context.handle(
+          _sampleCountMeta,
+          sampleCount.isAcceptableOrUnknown(
+              data['sample_count']!, _sampleCountMeta));
+    } else if (isInserting) {
+      context.missing(_sampleCountMeta);
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+          _lastUpdatedMeta,
+          lastUpdated.isAcceptableOrUnknown(
+              data['last_updated']!, _lastUpdatedMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {listId, categoryId};
+  @override
+  CategoryRankStat map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CategoryRankStat(
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
+      medianRank: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}median_rank'])!,
+      sampleCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sample_count'])!,
+      lastUpdated: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+    );
+  }
+
+  @override
+  $CategoryRankStatsTable createAlias(String alias) {
+    return $CategoryRankStatsTable(attachedDatabase, alias);
+  }
+}
+
+class CategoryRankStat extends DataClass
+    implements Insertable<CategoryRankStat> {
+  final int listId;
+  final String categoryId;
+  final double medianRank;
+  final int sampleCount;
+  final DateTime lastUpdated;
+  const CategoryRankStat(
+      {required this.listId,
+      required this.categoryId,
+      required this.medianRank,
+      required this.sampleCount,
+      required this.lastUpdated});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['list_id'] = Variable<int>(listId);
+    map['category_id'] = Variable<String>(categoryId);
+    map['median_rank'] = Variable<double>(medianRank);
+    map['sample_count'] = Variable<int>(sampleCount);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    return map;
+  }
+
+  CategoryRankStatsCompanion toCompanion(bool nullToAbsent) {
+    return CategoryRankStatsCompanion(
+      listId: Value(listId),
+      categoryId: Value(categoryId),
+      medianRank: Value(medianRank),
+      sampleCount: Value(sampleCount),
+      lastUpdated: Value(lastUpdated),
+    );
+  }
+
+  factory CategoryRankStat.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CategoryRankStat(
+      listId: serializer.fromJson<int>(json['listId']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      medianRank: serializer.fromJson<double>(json['medianRank']),
+      sampleCount: serializer.fromJson<int>(json['sampleCount']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'listId': serializer.toJson<int>(listId),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'medianRank': serializer.toJson<double>(medianRank),
+      'sampleCount': serializer.toJson<int>(sampleCount),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+    };
+  }
+
+  CategoryRankStat copyWith(
+          {int? listId,
+          String? categoryId,
+          double? medianRank,
+          int? sampleCount,
+          DateTime? lastUpdated}) =>
+      CategoryRankStat(
+        listId: listId ?? this.listId,
+        categoryId: categoryId ?? this.categoryId,
+        medianRank: medianRank ?? this.medianRank,
+        sampleCount: sampleCount ?? this.sampleCount,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
+      );
+  CategoryRankStat copyWithCompanion(CategoryRankStatsCompanion data) {
+    return CategoryRankStat(
+      listId: data.listId.present ? data.listId.value : this.listId,
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      medianRank:
+          data.medianRank.present ? data.medianRank.value : this.medianRank,
+      sampleCount:
+          data.sampleCount.present ? data.sampleCount.value : this.sampleCount,
+      lastUpdated:
+          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoryRankStat(')
+          ..write('listId: $listId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('medianRank: $medianRank, ')
+          ..write('sampleCount: $sampleCount, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(listId, categoryId, medianRank, sampleCount, lastUpdated);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CategoryRankStat &&
+          other.listId == this.listId &&
+          other.categoryId == this.categoryId &&
+          other.medianRank == this.medianRank &&
+          other.sampleCount == this.sampleCount &&
+          other.lastUpdated == this.lastUpdated);
+}
+
+class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
+  final Value<int> listId;
+  final Value<String> categoryId;
+  final Value<double> medianRank;
+  final Value<int> sampleCount;
+  final Value<DateTime> lastUpdated;
+  final Value<int> rowid;
+  const CategoryRankStatsCompanion({
+    this.listId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.medianRank = const Value.absent(),
+    this.sampleCount = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CategoryRankStatsCompanion.insert({
+    required int listId,
+    required String categoryId,
+    required double medianRank,
+    required int sampleCount,
+    required DateTime lastUpdated,
+    this.rowid = const Value.absent(),
+  })  : listId = Value(listId),
+        categoryId = Value(categoryId),
+        medianRank = Value(medianRank),
+        sampleCount = Value(sampleCount),
+        lastUpdated = Value(lastUpdated);
+  static Insertable<CategoryRankStat> custom({
+    Expression<int>? listId,
+    Expression<String>? categoryId,
+    Expression<double>? medianRank,
+    Expression<int>? sampleCount,
+    Expression<DateTime>? lastUpdated,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (listId != null) 'list_id': listId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (medianRank != null) 'median_rank': medianRank,
+      if (sampleCount != null) 'sample_count': sampleCount,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CategoryRankStatsCompanion copyWith(
+      {Value<int>? listId,
+      Value<String>? categoryId,
+      Value<double>? medianRank,
+      Value<int>? sampleCount,
+      Value<DateTime>? lastUpdated,
+      Value<int>? rowid}) {
+    return CategoryRankStatsCompanion(
+      listId: listId ?? this.listId,
+      categoryId: categoryId ?? this.categoryId,
+      medianRank: medianRank ?? this.medianRank,
+      sampleCount: sampleCount ?? this.sampleCount,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (listId.present) {
+      map['list_id'] = Variable<int>(listId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (medianRank.present) {
+      map['median_rank'] = Variable<double>(medianRank.value);
+    }
+    if (sampleCount.present) {
+      map['sample_count'] = Variable<int>(sampleCount.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoryRankStatsCompanion(')
+          ..write('listId: $listId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('medianRank: $medianRank, ')
+          ..write('sampleCount: $sampleCount, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ItemRankStatsTable extends ItemRankStats
+    with TableInfo<$ItemRankStatsTable, ItemRankStat> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ItemRankStatsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<int> listId = GeneratedColumn<int>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _catalogItemIdMeta =
+      const VerificationMeta('catalogItemId');
+  @override
+  late final GeneratedColumn<int> catalogItemId = GeneratedColumn<int>(
+      'catalog_item_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _medianRankMeta =
+      const VerificationMeta('medianRank');
+  @override
+  late final GeneratedColumn<double> medianRank = GeneratedColumn<double>(
+      'median_rank', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _sampleCountMeta =
+      const VerificationMeta('sampleCount');
+  @override
+  late final GeneratedColumn<int> sampleCount = GeneratedColumn<int>(
+      'sample_count', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMeta =
+      const VerificationMeta('lastUpdated');
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+      'last_updated', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [listId, catalogItemId, categoryId, medianRank, sampleCount, lastUpdated];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'item_rank_stats';
+  @override
+  VerificationContext validateIntegrity(Insertable<ItemRankStat> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('catalog_item_id')) {
+      context.handle(
+          _catalogItemIdMeta,
+          catalogItemId.isAcceptableOrUnknown(
+              data['catalog_item_id']!, _catalogItemIdMeta));
+    } else if (isInserting) {
+      context.missing(_catalogItemIdMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('median_rank')) {
+      context.handle(
+          _medianRankMeta,
+          medianRank.isAcceptableOrUnknown(
+              data['median_rank']!, _medianRankMeta));
+    } else if (isInserting) {
+      context.missing(_medianRankMeta);
+    }
+    if (data.containsKey('sample_count')) {
+      context.handle(
+          _sampleCountMeta,
+          sampleCount.isAcceptableOrUnknown(
+              data['sample_count']!, _sampleCountMeta));
+    } else if (isInserting) {
+      context.missing(_sampleCountMeta);
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+          _lastUpdatedMeta,
+          lastUpdated.isAcceptableOrUnknown(
+              data['last_updated']!, _lastUpdatedMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {listId, catalogItemId};
+  @override
+  ItemRankStat map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ItemRankStat(
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
+      catalogItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}catalog_item_id'])!,
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
+      medianRank: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}median_rank'])!,
+      sampleCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sample_count'])!,
+      lastUpdated: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+    );
+  }
+
+  @override
+  $ItemRankStatsTable createAlias(String alias) {
+    return $ItemRankStatsTable(attachedDatabase, alias);
+  }
+}
+
+class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
+  final int listId;
+  final int catalogItemId;
+  final String categoryId;
+  final double medianRank;
+  final int sampleCount;
+  final DateTime lastUpdated;
+  const ItemRankStat(
+      {required this.listId,
+      required this.catalogItemId,
+      required this.categoryId,
+      required this.medianRank,
+      required this.sampleCount,
+      required this.lastUpdated});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['list_id'] = Variable<int>(listId);
+    map['catalog_item_id'] = Variable<int>(catalogItemId);
+    map['category_id'] = Variable<String>(categoryId);
+    map['median_rank'] = Variable<double>(medianRank);
+    map['sample_count'] = Variable<int>(sampleCount);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    return map;
+  }
+
+  ItemRankStatsCompanion toCompanion(bool nullToAbsent) {
+    return ItemRankStatsCompanion(
+      listId: Value(listId),
+      catalogItemId: Value(catalogItemId),
+      categoryId: Value(categoryId),
+      medianRank: Value(medianRank),
+      sampleCount: Value(sampleCount),
+      lastUpdated: Value(lastUpdated),
+    );
+  }
+
+  factory ItemRankStat.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ItemRankStat(
+      listId: serializer.fromJson<int>(json['listId']),
+      catalogItemId: serializer.fromJson<int>(json['catalogItemId']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      medianRank: serializer.fromJson<double>(json['medianRank']),
+      sampleCount: serializer.fromJson<int>(json['sampleCount']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'listId': serializer.toJson<int>(listId),
+      'catalogItemId': serializer.toJson<int>(catalogItemId),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'medianRank': serializer.toJson<double>(medianRank),
+      'sampleCount': serializer.toJson<int>(sampleCount),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+    };
+  }
+
+  ItemRankStat copyWith(
+          {int? listId,
+          int? catalogItemId,
+          String? categoryId,
+          double? medianRank,
+          int? sampleCount,
+          DateTime? lastUpdated}) =>
+      ItemRankStat(
+        listId: listId ?? this.listId,
+        catalogItemId: catalogItemId ?? this.catalogItemId,
+        categoryId: categoryId ?? this.categoryId,
+        medianRank: medianRank ?? this.medianRank,
+        sampleCount: sampleCount ?? this.sampleCount,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
+      );
+  ItemRankStat copyWithCompanion(ItemRankStatsCompanion data) {
+    return ItemRankStat(
+      listId: data.listId.present ? data.listId.value : this.listId,
+      catalogItemId: data.catalogItemId.present
+          ? data.catalogItemId.value
+          : this.catalogItemId,
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      medianRank:
+          data.medianRank.present ? data.medianRank.value : this.medianRank,
+      sampleCount:
+          data.sampleCount.present ? data.sampleCount.value : this.sampleCount,
+      lastUpdated:
+          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ItemRankStat(')
+          ..write('listId: $listId, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('medianRank: $medianRank, ')
+          ..write('sampleCount: $sampleCount, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      listId, catalogItemId, categoryId, medianRank, sampleCount, lastUpdated);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ItemRankStat &&
+          other.listId == this.listId &&
+          other.catalogItemId == this.catalogItemId &&
+          other.categoryId == this.categoryId &&
+          other.medianRank == this.medianRank &&
+          other.sampleCount == this.sampleCount &&
+          other.lastUpdated == this.lastUpdated);
+}
+
+class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
+  final Value<int> listId;
+  final Value<int> catalogItemId;
+  final Value<String> categoryId;
+  final Value<double> medianRank;
+  final Value<int> sampleCount;
+  final Value<DateTime> lastUpdated;
+  final Value<int> rowid;
+  const ItemRankStatsCompanion({
+    this.listId = const Value.absent(),
+    this.catalogItemId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.medianRank = const Value.absent(),
+    this.sampleCount = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ItemRankStatsCompanion.insert({
+    required int listId,
+    required int catalogItemId,
+    required String categoryId,
+    required double medianRank,
+    required int sampleCount,
+    required DateTime lastUpdated,
+    this.rowid = const Value.absent(),
+  })  : listId = Value(listId),
+        catalogItemId = Value(catalogItemId),
+        categoryId = Value(categoryId),
+        medianRank = Value(medianRank),
+        sampleCount = Value(sampleCount),
+        lastUpdated = Value(lastUpdated);
+  static Insertable<ItemRankStat> custom({
+    Expression<int>? listId,
+    Expression<int>? catalogItemId,
+    Expression<String>? categoryId,
+    Expression<double>? medianRank,
+    Expression<int>? sampleCount,
+    Expression<DateTime>? lastUpdated,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (listId != null) 'list_id': listId,
+      if (catalogItemId != null) 'catalog_item_id': catalogItemId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (medianRank != null) 'median_rank': medianRank,
+      if (sampleCount != null) 'sample_count': sampleCount,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ItemRankStatsCompanion copyWith(
+      {Value<int>? listId,
+      Value<int>? catalogItemId,
+      Value<String>? categoryId,
+      Value<double>? medianRank,
+      Value<int>? sampleCount,
+      Value<DateTime>? lastUpdated,
+      Value<int>? rowid}) {
+    return ItemRankStatsCompanion(
+      listId: listId ?? this.listId,
+      catalogItemId: catalogItemId ?? this.catalogItemId,
+      categoryId: categoryId ?? this.categoryId,
+      medianRank: medianRank ?? this.medianRank,
+      sampleCount: sampleCount ?? this.sampleCount,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (listId.present) {
+      map['list_id'] = Variable<int>(listId.value);
+    }
+    if (catalogItemId.present) {
+      map['catalog_item_id'] = Variable<int>(catalogItemId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (medianRank.present) {
+      map['median_rank'] = Variable<double>(medianRank.value);
+    }
+    if (sampleCount.present) {
+      map['sample_count'] = Variable<int>(sampleCount.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ItemRankStatsCompanion(')
+          ..write('listId: $listId, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('medianRank: $medianRank, ')
+          ..write('sampleCount: $sampleCount, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+abstract class _$AppDatabase extends GeneratedDatabase {
+  _$AppDatabase(QueryExecutor e) : super(e);
+  $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $CategoriesTable categories = $CategoriesTable(this);
+  late final $CatalogItemsTable catalogItems = $CatalogItemsTable(this);
+  late final $ShoppingListsTable shoppingLists = $ShoppingListsTable(this);
+  late final $ListItemsTable listItems = $ListItemsTable(this);
+  late final $CheckOffEventsTable checkOffEvents = $CheckOffEventsTable(this);
+  late final $CategoryRankStatsTable categoryRankStats =
+      $CategoryRankStatsTable(this);
+  late final $ItemRankStatsTable itemRankStats = $ItemRankStatsTable(this);
+  @override
+  Iterable<TableInfo<Table, Object?>> get allTables =>
+      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  @override
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        categories,
+        catalogItems,
+        shoppingLists,
+        listItems,
+        checkOffEvents,
+        categoryRankStats,
+        itemRankStats
+      ];
+}
+
+typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
+  required String id,
+  required String name,
+  required int sortOrder,
+  Value<int> rowid,
+});
+typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
+  Value<String> id,
+  Value<String> name,
+  Value<int> sortOrder,
+  Value<int> rowid,
+});
+
+class $$CategoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+}
+
+class $$CategoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CategoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+}
+
+class $$CategoriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CategoriesTable,
+    Category,
+    $$CategoriesTableFilterComposer,
+    $$CategoriesTableOrderingComposer,
+    $$CategoriesTableAnnotationComposer,
+    $$CategoriesTableCreateCompanionBuilder,
+    $$CategoriesTableUpdateCompanionBuilder,
+    (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
+    Category,
+    PrefetchHooks Function()> {
+  $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CategoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CategoriesCompanion(
+            id: id,
+            name: name,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String name,
+            required int sortOrder,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CategoriesCompanion.insert(
+            id: id,
+            name: name,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CategoriesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CategoriesTable,
+    Category,
+    $$CategoriesTableFilterComposer,
+    $$CategoriesTableOrderingComposer,
+    $$CategoriesTableAnnotationComposer,
+    $$CategoriesTableCreateCompanionBuilder,
+    $$CategoriesTableUpdateCompanionBuilder,
+    (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
+    Category,
+    PrefetchHooks Function()>;
+typedef $$CatalogItemsTableCreateCompanionBuilder = CatalogItemsCompanion
+    Function({
+  Value<int> id,
+  required String name,
+  required String displayName,
+  required String categoryId,
+  Value<bool> isUserAdded,
+  required DateTime createdAt,
+});
+typedef $$CatalogItemsTableUpdateCompanionBuilder = CatalogItemsCompanion
+    Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String> displayName,
+  Value<String> categoryId,
+  Value<bool> isUserAdded,
+  Value<DateTime> createdAt,
+});
+
+class $$CatalogItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogItemsTable> {
+  $$CatalogItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isUserAdded => $composableBuilder(
+      column: $table.isUserAdded, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CatalogItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogItemsTable> {
+  $$CatalogItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isUserAdded => $composableBuilder(
+      column: $table.isUserAdded, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CatalogItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogItemsTable> {
+  $$CatalogItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  GeneratedColumn<bool> get isUserAdded => $composableBuilder(
+      column: $table.isUserAdded, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CatalogItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CatalogItemsTable,
+    CatalogItem,
+    $$CatalogItemsTableFilterComposer,
+    $$CatalogItemsTableOrderingComposer,
+    $$CatalogItemsTableAnnotationComposer,
+    $$CatalogItemsTableCreateCompanionBuilder,
+    $$CatalogItemsTableUpdateCompanionBuilder,
+    (
+      CatalogItem,
+      BaseReferences<_$AppDatabase, $CatalogItemsTable, CatalogItem>
+    ),
+    CatalogItem,
+    PrefetchHooks Function()> {
+  $$CatalogItemsTableTableManager(_$AppDatabase db, $CatalogItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CatalogItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CatalogItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CatalogItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> displayName = const Value.absent(),
+            Value<String> categoryId = const Value.absent(),
+            Value<bool> isUserAdded = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              CatalogItemsCompanion(
+            id: id,
+            name: name,
+            displayName: displayName,
+            categoryId: categoryId,
+            isUserAdded: isUserAdded,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            required String displayName,
+            required String categoryId,
+            Value<bool> isUserAdded = const Value.absent(),
+            required DateTime createdAt,
+          }) =>
+              CatalogItemsCompanion.insert(
+            id: id,
+            name: name,
+            displayName: displayName,
+            categoryId: categoryId,
+            isUserAdded: isUserAdded,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CatalogItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CatalogItemsTable,
+    CatalogItem,
+    $$CatalogItemsTableFilterComposer,
+    $$CatalogItemsTableOrderingComposer,
+    $$CatalogItemsTableAnnotationComposer,
+    $$CatalogItemsTableCreateCompanionBuilder,
+    $$CatalogItemsTableUpdateCompanionBuilder,
+    (
+      CatalogItem,
+      BaseReferences<_$AppDatabase, $CatalogItemsTable, CatalogItem>
+    ),
+    CatalogItem,
+    PrefetchHooks Function()>;
+typedef $$ShoppingListsTableCreateCompanionBuilder = ShoppingListsCompanion
+    Function({
+  Value<int> id,
+  required String name,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<DateTime?> lastCheckOffAt,
+  Value<int> currentTripId,
+  Value<int> currentTripSequence,
+});
+typedef $$ShoppingListsTableUpdateCompanionBuilder = ShoppingListsCompanion
+    Function({
+  Value<int> id,
+  Value<String> name,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> lastCheckOffAt,
+  Value<int> currentTripId,
+  Value<int> currentTripSequence,
+});
+
+class $$ShoppingListsTableFilterComposer
+    extends Composer<_$AppDatabase, $ShoppingListsTable> {
+  $$ShoppingListsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastCheckOffAt => $composableBuilder(
+      column: $table.lastCheckOffAt,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get currentTripId => $composableBuilder(
+      column: $table.currentTripId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get currentTripSequence => $composableBuilder(
+      column: $table.currentTripSequence,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$ShoppingListsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ShoppingListsTable> {
+  $$ShoppingListsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastCheckOffAt => $composableBuilder(
+      column: $table.lastCheckOffAt,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get currentTripId => $composableBuilder(
+      column: $table.currentTripId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get currentTripSequence => $composableBuilder(
+      column: $table.currentTripSequence,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$ShoppingListsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ShoppingListsTable> {
+  $$ShoppingListsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastCheckOffAt => $composableBuilder(
+      column: $table.lastCheckOffAt, builder: (column) => column);
+
+  GeneratedColumn<int> get currentTripId => $composableBuilder(
+      column: $table.currentTripId, builder: (column) => column);
+
+  GeneratedColumn<int> get currentTripSequence => $composableBuilder(
+      column: $table.currentTripSequence, builder: (column) => column);
+}
+
+class $$ShoppingListsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ShoppingListsTable,
+    ShoppingList,
+    $$ShoppingListsTableFilterComposer,
+    $$ShoppingListsTableOrderingComposer,
+    $$ShoppingListsTableAnnotationComposer,
+    $$ShoppingListsTableCreateCompanionBuilder,
+    $$ShoppingListsTableUpdateCompanionBuilder,
+    (
+      ShoppingList,
+      BaseReferences<_$AppDatabase, $ShoppingListsTable, ShoppingList>
+    ),
+    ShoppingList,
+    PrefetchHooks Function()> {
+  $$ShoppingListsTableTableManager(_$AppDatabase db, $ShoppingListsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ShoppingListsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ShoppingListsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ShoppingListsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> lastCheckOffAt = const Value.absent(),
+            Value<int> currentTripId = const Value.absent(),
+            Value<int> currentTripSequence = const Value.absent(),
+          }) =>
+              ShoppingListsCompanion(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            lastCheckOffAt: lastCheckOffAt,
+            currentTripId: currentTripId,
+            currentTripSequence: currentTripSequence,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<DateTime?> lastCheckOffAt = const Value.absent(),
+            Value<int> currentTripId = const Value.absent(),
+            Value<int> currentTripSequence = const Value.absent(),
+          }) =>
+              ShoppingListsCompanion.insert(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            lastCheckOffAt: lastCheckOffAt,
+            currentTripId: currentTripId,
+            currentTripSequence: currentTripSequence,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ShoppingListsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ShoppingListsTable,
+    ShoppingList,
+    $$ShoppingListsTableFilterComposer,
+    $$ShoppingListsTableOrderingComposer,
+    $$ShoppingListsTableAnnotationComposer,
+    $$ShoppingListsTableCreateCompanionBuilder,
+    $$ShoppingListsTableUpdateCompanionBuilder,
+    (
+      ShoppingList,
+      BaseReferences<_$AppDatabase, $ShoppingListsTable, ShoppingList>
+    ),
+    ShoppingList,
+    PrefetchHooks Function()>;
+typedef $$ListItemsTableCreateCompanionBuilder = ListItemsCompanion Function({
+  Value<int> id,
+  required int listId,
+  Value<int?> catalogItemId,
+  required String displayName,
+  required String categoryId,
+  Value<double?> quantityValue,
+  Value<String?> quantityUnit,
+  Value<bool> isCompleted,
+  Value<DateTime?> completedAt,
+  required DateTime addedAt,
+});
+typedef $$ListItemsTableUpdateCompanionBuilder = ListItemsCompanion Function({
+  Value<int> id,
+  Value<int> listId,
+  Value<int?> catalogItemId,
+  Value<String> displayName,
+  Value<String> categoryId,
+  Value<double?> quantityValue,
+  Value<String?> quantityUnit,
+  Value<bool> isCompleted,
+  Value<DateTime?> completedAt,
+  Value<DateTime> addedAt,
+});
+
+class $$ListItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $ListItemsTable> {
+  $$ListItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get quantityValue => $composableBuilder(
+      column: $table.quantityValue, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get quantityUnit => $composableBuilder(
+      column: $table.quantityUnit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isCompleted => $composableBuilder(
+      column: $table.isCompleted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+      column: $table.addedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ListItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ListItemsTable> {
+  $$ListItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get quantityValue => $composableBuilder(
+      column: $table.quantityValue,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get quantityUnit => $composableBuilder(
+      column: $table.quantityUnit,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isCompleted => $composableBuilder(
+      column: $table.isCompleted, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+      column: $table.addedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ListItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ListItemsTable> {
+  $$ListItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  GeneratedColumn<double> get quantityValue => $composableBuilder(
+      column: $table.quantityValue, builder: (column) => column);
+
+  GeneratedColumn<String> get quantityUnit => $composableBuilder(
+      column: $table.quantityUnit, builder: (column) => column);
+
+  GeneratedColumn<bool> get isCompleted => $composableBuilder(
+      column: $table.isCompleted, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$ListItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ListItemsTable,
+    ListItem,
+    $$ListItemsTableFilterComposer,
+    $$ListItemsTableOrderingComposer,
+    $$ListItemsTableAnnotationComposer,
+    $$ListItemsTableCreateCompanionBuilder,
+    $$ListItemsTableUpdateCompanionBuilder,
+    (ListItem, BaseReferences<_$AppDatabase, $ListItemsTable, ListItem>),
+    ListItem,
+    PrefetchHooks Function()> {
+  $$ListItemsTableTableManager(_$AppDatabase db, $ListItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ListItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ListItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ListItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> listId = const Value.absent(),
+            Value<int?> catalogItemId = const Value.absent(),
+            Value<String> displayName = const Value.absent(),
+            Value<String> categoryId = const Value.absent(),
+            Value<double?> quantityValue = const Value.absent(),
+            Value<String?> quantityUnit = const Value.absent(),
+            Value<bool> isCompleted = const Value.absent(),
+            Value<DateTime?> completedAt = const Value.absent(),
+            Value<DateTime> addedAt = const Value.absent(),
+          }) =>
+              ListItemsCompanion(
+            id: id,
+            listId: listId,
+            catalogItemId: catalogItemId,
+            displayName: displayName,
+            categoryId: categoryId,
+            quantityValue: quantityValue,
+            quantityUnit: quantityUnit,
+            isCompleted: isCompleted,
+            completedAt: completedAt,
+            addedAt: addedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int listId,
+            Value<int?> catalogItemId = const Value.absent(),
+            required String displayName,
+            required String categoryId,
+            Value<double?> quantityValue = const Value.absent(),
+            Value<String?> quantityUnit = const Value.absent(),
+            Value<bool> isCompleted = const Value.absent(),
+            Value<DateTime?> completedAt = const Value.absent(),
+            required DateTime addedAt,
+          }) =>
+              ListItemsCompanion.insert(
+            id: id,
+            listId: listId,
+            catalogItemId: catalogItemId,
+            displayName: displayName,
+            categoryId: categoryId,
+            quantityValue: quantityValue,
+            quantityUnit: quantityUnit,
+            isCompleted: isCompleted,
+            completedAt: completedAt,
+            addedAt: addedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ListItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ListItemsTable,
+    ListItem,
+    $$ListItemsTableFilterComposer,
+    $$ListItemsTableOrderingComposer,
+    $$ListItemsTableAnnotationComposer,
+    $$ListItemsTableCreateCompanionBuilder,
+    $$ListItemsTableUpdateCompanionBuilder,
+    (ListItem, BaseReferences<_$AppDatabase, $ListItemsTable, ListItem>),
+    ListItem,
+    PrefetchHooks Function()>;
+typedef $$CheckOffEventsTableCreateCompanionBuilder = CheckOffEventsCompanion
+    Function({
+  Value<int> id,
+  required int listId,
+  required int listItemId,
+  required String categoryId,
+  Value<int?> catalogItemId,
+  required DateTime checkedAt,
+  required int sequenceIndex,
+  required int tripId,
+  Value<double> weight,
+});
+typedef $$CheckOffEventsTableUpdateCompanionBuilder = CheckOffEventsCompanion
+    Function({
+  Value<int> id,
+  Value<int> listId,
+  Value<int> listItemId,
+  Value<String> categoryId,
+  Value<int?> catalogItemId,
+  Value<DateTime> checkedAt,
+  Value<int> sequenceIndex,
+  Value<int> tripId,
+  Value<double> weight,
+});
+
+class $$CheckOffEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $CheckOffEventsTable> {
+  $$CheckOffEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get listItemId => $composableBuilder(
+      column: $table.listItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get checkedAt => $composableBuilder(
+      column: $table.checkedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sequenceIndex => $composableBuilder(
+      column: $table.sequenceIndex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get tripId => $composableBuilder(
+      column: $table.tripId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get weight => $composableBuilder(
+      column: $table.weight, builder: (column) => ColumnFilters(column));
+}
+
+class $$CheckOffEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CheckOffEventsTable> {
+  $$CheckOffEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get listItemId => $composableBuilder(
+      column: $table.listItemId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get checkedAt => $composableBuilder(
+      column: $table.checkedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sequenceIndex => $composableBuilder(
+      column: $table.sequenceIndex,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get tripId => $composableBuilder(
+      column: $table.tripId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get weight => $composableBuilder(
+      column: $table.weight, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CheckOffEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CheckOffEventsTable> {
+  $$CheckOffEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<int> get listItemId => $composableBuilder(
+      column: $table.listItemId, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  GeneratedColumn<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get checkedAt =>
+      $composableBuilder(column: $table.checkedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sequenceIndex => $composableBuilder(
+      column: $table.sequenceIndex, builder: (column) => column);
+
+  GeneratedColumn<int> get tripId =>
+      $composableBuilder(column: $table.tripId, builder: (column) => column);
+
+  GeneratedColumn<double> get weight =>
+      $composableBuilder(column: $table.weight, builder: (column) => column);
+}
+
+class $$CheckOffEventsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CheckOffEventsTable,
+    CheckOffEvent,
+    $$CheckOffEventsTableFilterComposer,
+    $$CheckOffEventsTableOrderingComposer,
+    $$CheckOffEventsTableAnnotationComposer,
+    $$CheckOffEventsTableCreateCompanionBuilder,
+    $$CheckOffEventsTableUpdateCompanionBuilder,
+    (
+      CheckOffEvent,
+      BaseReferences<_$AppDatabase, $CheckOffEventsTable, CheckOffEvent>
+    ),
+    CheckOffEvent,
+    PrefetchHooks Function()> {
+  $$CheckOffEventsTableTableManager(
+      _$AppDatabase db, $CheckOffEventsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CheckOffEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CheckOffEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CheckOffEventsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> listId = const Value.absent(),
+            Value<int> listItemId = const Value.absent(),
+            Value<String> categoryId = const Value.absent(),
+            Value<int?> catalogItemId = const Value.absent(),
+            Value<DateTime> checkedAt = const Value.absent(),
+            Value<int> sequenceIndex = const Value.absent(),
+            Value<int> tripId = const Value.absent(),
+            Value<double> weight = const Value.absent(),
+          }) =>
+              CheckOffEventsCompanion(
+            id: id,
+            listId: listId,
+            listItemId: listItemId,
+            categoryId: categoryId,
+            catalogItemId: catalogItemId,
+            checkedAt: checkedAt,
+            sequenceIndex: sequenceIndex,
+            tripId: tripId,
+            weight: weight,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int listId,
+            required int listItemId,
+            required String categoryId,
+            Value<int?> catalogItemId = const Value.absent(),
+            required DateTime checkedAt,
+            required int sequenceIndex,
+            required int tripId,
+            Value<double> weight = const Value.absent(),
+          }) =>
+              CheckOffEventsCompanion.insert(
+            id: id,
+            listId: listId,
+            listItemId: listItemId,
+            categoryId: categoryId,
+            catalogItemId: catalogItemId,
+            checkedAt: checkedAt,
+            sequenceIndex: sequenceIndex,
+            tripId: tripId,
+            weight: weight,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CheckOffEventsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CheckOffEventsTable,
+    CheckOffEvent,
+    $$CheckOffEventsTableFilterComposer,
+    $$CheckOffEventsTableOrderingComposer,
+    $$CheckOffEventsTableAnnotationComposer,
+    $$CheckOffEventsTableCreateCompanionBuilder,
+    $$CheckOffEventsTableUpdateCompanionBuilder,
+    (
+      CheckOffEvent,
+      BaseReferences<_$AppDatabase, $CheckOffEventsTable, CheckOffEvent>
+    ),
+    CheckOffEvent,
+    PrefetchHooks Function()>;
+typedef $$CategoryRankStatsTableCreateCompanionBuilder
+    = CategoryRankStatsCompanion Function({
+  required int listId,
+  required String categoryId,
+  required double medianRank,
+  required int sampleCount,
+  required DateTime lastUpdated,
+  Value<int> rowid,
+});
+typedef $$CategoryRankStatsTableUpdateCompanionBuilder
+    = CategoryRankStatsCompanion Function({
+  Value<int> listId,
+  Value<String> categoryId,
+  Value<double> medianRank,
+  Value<int> sampleCount,
+  Value<DateTime> lastUpdated,
+  Value<int> rowid,
+});
+
+class $$CategoryRankStatsTableFilterComposer
+    extends Composer<_$AppDatabase, $CategoryRankStatsTable> {
+  $$CategoryRankStatsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get medianRank => $composableBuilder(
+      column: $table.medianRank, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sampleCount => $composableBuilder(
+      column: $table.sampleCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => ColumnFilters(column));
+}
+
+class $$CategoryRankStatsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CategoryRankStatsTable> {
+  $$CategoryRankStatsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get medianRank => $composableBuilder(
+      column: $table.medianRank, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sampleCount => $composableBuilder(
+      column: $table.sampleCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CategoryRankStatsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CategoryRankStatsTable> {
+  $$CategoryRankStatsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  GeneratedColumn<double> get medianRank => $composableBuilder(
+      column: $table.medianRank, builder: (column) => column);
+
+  GeneratedColumn<int> get sampleCount => $composableBuilder(
+      column: $table.sampleCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => column);
+}
+
+class $$CategoryRankStatsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CategoryRankStatsTable,
+    CategoryRankStat,
+    $$CategoryRankStatsTableFilterComposer,
+    $$CategoryRankStatsTableOrderingComposer,
+    $$CategoryRankStatsTableAnnotationComposer,
+    $$CategoryRankStatsTableCreateCompanionBuilder,
+    $$CategoryRankStatsTableUpdateCompanionBuilder,
+    (
+      CategoryRankStat,
+      BaseReferences<_$AppDatabase, $CategoryRankStatsTable, CategoryRankStat>
+    ),
+    CategoryRankStat,
+    PrefetchHooks Function()> {
+  $$CategoryRankStatsTableTableManager(
+      _$AppDatabase db, $CategoryRankStatsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CategoryRankStatsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CategoryRankStatsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CategoryRankStatsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> listId = const Value.absent(),
+            Value<String> categoryId = const Value.absent(),
+            Value<double> medianRank = const Value.absent(),
+            Value<int> sampleCount = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CategoryRankStatsCompanion(
+            listId: listId,
+            categoryId: categoryId,
+            medianRank: medianRank,
+            sampleCount: sampleCount,
+            lastUpdated: lastUpdated,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int listId,
+            required String categoryId,
+            required double medianRank,
+            required int sampleCount,
+            required DateTime lastUpdated,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CategoryRankStatsCompanion.insert(
+            listId: listId,
+            categoryId: categoryId,
+            medianRank: medianRank,
+            sampleCount: sampleCount,
+            lastUpdated: lastUpdated,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CategoryRankStatsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CategoryRankStatsTable,
+    CategoryRankStat,
+    $$CategoryRankStatsTableFilterComposer,
+    $$CategoryRankStatsTableOrderingComposer,
+    $$CategoryRankStatsTableAnnotationComposer,
+    $$CategoryRankStatsTableCreateCompanionBuilder,
+    $$CategoryRankStatsTableUpdateCompanionBuilder,
+    (
+      CategoryRankStat,
+      BaseReferences<_$AppDatabase, $CategoryRankStatsTable, CategoryRankStat>
+    ),
+    CategoryRankStat,
+    PrefetchHooks Function()>;
+typedef $$ItemRankStatsTableCreateCompanionBuilder = ItemRankStatsCompanion
+    Function({
+  required int listId,
+  required int catalogItemId,
+  required String categoryId,
+  required double medianRank,
+  required int sampleCount,
+  required DateTime lastUpdated,
+  Value<int> rowid,
+});
+typedef $$ItemRankStatsTableUpdateCompanionBuilder = ItemRankStatsCompanion
+    Function({
+  Value<int> listId,
+  Value<int> catalogItemId,
+  Value<String> categoryId,
+  Value<double> medianRank,
+  Value<int> sampleCount,
+  Value<DateTime> lastUpdated,
+  Value<int> rowid,
+});
+
+class $$ItemRankStatsTableFilterComposer
+    extends Composer<_$AppDatabase, $ItemRankStatsTable> {
+  $$ItemRankStatsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get medianRank => $composableBuilder(
+      column: $table.medianRank, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sampleCount => $composableBuilder(
+      column: $table.sampleCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => ColumnFilters(column));
+}
+
+class $$ItemRankStatsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ItemRankStatsTable> {
+  $$ItemRankStatsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get medianRank => $composableBuilder(
+      column: $table.medianRank, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sampleCount => $composableBuilder(
+      column: $table.sampleCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ItemRankStatsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ItemRankStatsTable> {
+  $$ItemRankStatsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  GeneratedColumn<double> get medianRank => $composableBuilder(
+      column: $table.medianRank, builder: (column) => column);
+
+  GeneratedColumn<int> get sampleCount => $composableBuilder(
+      column: $table.sampleCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => column);
+}
+
+class $$ItemRankStatsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ItemRankStatsTable,
+    ItemRankStat,
+    $$ItemRankStatsTableFilterComposer,
+    $$ItemRankStatsTableOrderingComposer,
+    $$ItemRankStatsTableAnnotationComposer,
+    $$ItemRankStatsTableCreateCompanionBuilder,
+    $$ItemRankStatsTableUpdateCompanionBuilder,
+    (
+      ItemRankStat,
+      BaseReferences<_$AppDatabase, $ItemRankStatsTable, ItemRankStat>
+    ),
+    ItemRankStat,
+    PrefetchHooks Function()> {
+  $$ItemRankStatsTableTableManager(_$AppDatabase db, $ItemRankStatsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ItemRankStatsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ItemRankStatsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ItemRankStatsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> listId = const Value.absent(),
+            Value<int> catalogItemId = const Value.absent(),
+            Value<String> categoryId = const Value.absent(),
+            Value<double> medianRank = const Value.absent(),
+            Value<int> sampleCount = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ItemRankStatsCompanion(
+            listId: listId,
+            catalogItemId: catalogItemId,
+            categoryId: categoryId,
+            medianRank: medianRank,
+            sampleCount: sampleCount,
+            lastUpdated: lastUpdated,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int listId,
+            required int catalogItemId,
+            required String categoryId,
+            required double medianRank,
+            required int sampleCount,
+            required DateTime lastUpdated,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ItemRankStatsCompanion.insert(
+            listId: listId,
+            catalogItemId: catalogItemId,
+            categoryId: categoryId,
+            medianRank: medianRank,
+            sampleCount: sampleCount,
+            lastUpdated: lastUpdated,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ItemRankStatsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ItemRankStatsTable,
+    ItemRankStat,
+    $$ItemRankStatsTableFilterComposer,
+    $$ItemRankStatsTableOrderingComposer,
+    $$ItemRankStatsTableAnnotationComposer,
+    $$ItemRankStatsTableCreateCompanionBuilder,
+    $$ItemRankStatsTableUpdateCompanionBuilder,
+    (
+      ItemRankStat,
+      BaseReferences<_$AppDatabase, $ItemRankStatsTable, ItemRankStat>
+    ),
+    ItemRankStat,
+    PrefetchHooks Function()>;
+
+class $AppDatabaseManager {
+  final _$AppDatabase _db;
+  $AppDatabaseManager(this._db);
+  $$CategoriesTableTableManager get categories =>
+      $$CategoriesTableTableManager(_db, _db.categories);
+  $$CatalogItemsTableTableManager get catalogItems =>
+      $$CatalogItemsTableTableManager(_db, _db.catalogItems);
+  $$ShoppingListsTableTableManager get shoppingLists =>
+      $$ShoppingListsTableTableManager(_db, _db.shoppingLists);
+  $$ListItemsTableTableManager get listItems =>
+      $$ListItemsTableTableManager(_db, _db.listItems);
+  $$CheckOffEventsTableTableManager get checkOffEvents =>
+      $$CheckOffEventsTableTableManager(_db, _db.checkOffEvents);
+  $$CategoryRankStatsTableTableManager get categoryRankStats =>
+      $$CategoryRankStatsTableTableManager(_db, _db.categoryRankStats);
+  $$ItemRankStatsTableTableManager get itemRankStats =>
+      $$ItemRankStatsTableTableManager(_db, _db.itemRankStats);
+}

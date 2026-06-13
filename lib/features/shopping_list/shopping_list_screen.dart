@@ -1,0 +1,248 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/providers/app_providers.dart';
+import '../../data/database/app_database.dart';
+import '../../features/learning/ordering_service.dart';
+import 'widgets/categorized_item_list.dart';
+import 'widgets/completed_items_section.dart';
+import 'widgets/item_autocomplete_field.dart';
+
+class ShoppingListScreen extends ConsumerStatefulWidget {
+  const ShoppingListScreen({super.key, required this.listId});
+
+  final int listId;
+
+  @override
+  ConsumerState<ShoppingListScreen> createState() =>
+      _ShoppingListScreenState();
+}
+
+class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
+  final _orderingService = OrderingService();
+
+  @override
+  Widget build(BuildContext context) {
+    final listAsync = ref.watch(shoppingListProvider(widget.listId));
+    final itemsAsync = ref.watch(listItemsProvider(widget.listId));
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final categoryStatsAsync =
+        ref.watch(categoryRankStatsProvider(widget.listId));
+    final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
+
+    return listAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('Error: $e')),
+      ),
+      data: (list) {
+        if (list == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: Text('List not found')),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(list.name),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Rename',
+                onPressed: () => _renameList(context, list),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) async {
+                  if (value == 'reset') {
+                    await _resetLearnedOrder(context);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'reset',
+                    child: Text('Reset learned order'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: ItemAutocompleteField(
+                  listId: widget.listId,
+                ),
+              ),
+              Expanded(
+                child: itemsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                  data: (items) {
+                    return categoriesAsync.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('Error: $e')),
+                      data: (categories) {
+                        final categoryStats =
+                            categoryStatsAsync.valueOrNull ?? [];
+                        final itemStats = itemStatsAsync.valueOrNull ?? [];
+
+                        final grouped = _orderingService.groupActiveItems(
+                          items: items,
+                          categories: categories,
+                          categoryRankStats: categoryStats,
+                          itemRankStats: itemStats,
+                        );
+                        final completed =
+                            _orderingService.sortCompletedItems(items);
+
+                        if (items.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Text(
+                                'Start typing above to add items',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return CustomScrollView(
+                          slivers: [
+                            if (grouped.isNotEmpty)
+                              CategorizedItemList(
+                                groupedItems: grouped,
+                                listId: widget.listId,
+                                onToggle: _toggleItem,
+                                onTapItem: (item) => context.push(
+                                  '/list/${widget.listId}/item/${item.id}',
+                                ),
+                              ),
+                            CompletedItemsSection(
+                              items: completed,
+                              listId: widget.listId,
+                              onToggle: _toggleItem,
+                              onClear: _clearCompleted,
+                              onTapItem: (item) => context.push(
+                                '/list/${widget.listId}/item/${item.id}',
+                              ),
+                            ),
+                            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _toggleItem(ListItem item, bool completed) async {
+    await ref.read(listRepositoryProvider).setItemCompleted(
+          widget.listId,
+          item.id,
+          completed,
+        );
+  }
+
+  Future<void> _clearCompleted(int count) async {
+    if (count > 5) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Clear completed items?'),
+          content: Text('Remove $count completed items?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Clear'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    await ref.read(listRepositoryProvider).clearCompleted(widget.listId);
+  }
+
+  Future<void> _renameList(BuildContext context, ShoppingList list) async {
+    final controller = TextEditingController(text: list.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename list'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (name != null && name.trim().isNotEmpty) {
+      await ref.read(listRepositoryProvider).renameList(list.id, name);
+    }
+  }
+
+  Future<void> _resetLearnedOrder(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset learned order?'),
+        content: const Text(
+          'This will forget the shopping order learned for this list.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(listRepositoryProvider).resetLearnedOrder(widget.listId);
+    }
+  }
+}
