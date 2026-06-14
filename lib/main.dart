@@ -7,7 +7,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     const ProviderScope(
-      child: ShopFlowApp(),
+      child: ListPilotApp(),
     ),
   );
 }

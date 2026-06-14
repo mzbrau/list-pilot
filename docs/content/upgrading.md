@@ -10,24 +10,13 @@ List Pilot supports in-place upgrades on Android when the new APK is signed with
 
 Once you have List Pilot installed from a GitHub Release:
 
-1. Download the latest `list-pilot-X.Y.Z.apk` from [Releases](https://github.com/mzbrau/shop-flow/releases).
+1. Download the latest `list-pilot-X.Y.Z.apk` from [Releases](https://github.com/mzbrau/list-pilot/releases).
 2. Open the APK on your phone.
 3. Install over the existing app — **your data is preserved** (lists, custom catalog, learned order).
 
 :::tip No uninstall needed
 In-place upgrades keep your SQLite database intact. You should never need to uninstall between normal releases.
 :::
-
-## Migrating from Shop Flow
-
-If you previously installed **Shop Flow** (`com.shopflow.shop_flow`), you **cannot** upgrade in place because the application ID changed. Follow this one-time migration:
-
-1. Open Shop Flow → Settings → **Export custom catalog** to save your custom items as JSON.
-2. **Uninstall** Shop Flow.
-3. Install the latest **List Pilot** APK from GitHub Releases.
-4. Recreate your lists and re-add custom items (catalog import is export-only for now).
-
-Future List Pilot releases will upgrade in place without uninstalling.
 
 ## Migrating from debug-signed releases
 

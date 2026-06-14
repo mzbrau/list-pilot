@@ -14,8 +14,8 @@ List Pilot is a Flutter app. This guide covers building and running from source.
 ## Setup
 
 ```bash
-git clone https://github.com/mzbrau/shop-flow.git
-cd shop-flow
+git clone https://github.com/mzbrau/list-pilot.git
+cd list-pilot
 flutter pub get
 dart run build_runner build
 ```
@@ -86,8 +86,8 @@ npm run build
 
 Enable **GitHub Pages → Source: GitHub Actions** in repository settings for deployment.
 
-Site URL: [https://mzbrau.github.io/shop-flow/](https://mzbrau.github.io/shop-flow/)
+Site URL: [https://mzbrau.github.io/list-pilot/](https://mzbrau.github.io/list-pilot/)
 
 ## License
 
-Apache 2.0 — see [LICENSE](https://github.com/mzbrau/shop-flow/blob/main/LICENSE).
+Apache 2.0 — see [LICENSE](https://github.com/mzbrau/list-pilot/blob/main/LICENSE).

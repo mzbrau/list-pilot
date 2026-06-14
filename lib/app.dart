@@ -6,8 +6,8 @@ import 'core/providers/app_providers.dart';
 import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 
-class ShopFlowApp extends ConsumerWidget {
-  const ShopFlowApp({super.key});
+class ListPilotApp extends ConsumerWidget {
+  const ListPilotApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

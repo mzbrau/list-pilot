@@ -9,7 +9,7 @@ void main() {
   testWidgets('List Pilot app renders lists overview', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
-        child: ShopFlowApp(),
+        child: ListPilotApp(),
       ),
     );
 

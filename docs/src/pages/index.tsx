@@ -3,7 +3,7 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 
-const RELEASES_URL = 'https://github.com/mzbrau/shop-flow/releases/latest';
+const RELEASES_URL = 'https://github.com/mzbrau/list-pilot/releases/latest';
 
 function DownloadButtons({className}: {className?: string}) {
   return (

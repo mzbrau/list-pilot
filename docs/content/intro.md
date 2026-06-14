@@ -22,7 +22,7 @@ slug: /intro
 
 | Platform | Status |
 |----------|--------|
-| Android (GitHub) | [Download latest release](https://github.com/mzbrau/shop-flow/releases/latest) |
+| Android (GitHub) | [Download latest release](https://github.com/mzbrau/list-pilot/releases/latest) |
 | Google Play | Coming soon |
 | iOS | Not available |
 

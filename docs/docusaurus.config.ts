@@ -2,7 +2,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-const GITHUB_REPO = 'https://github.com/mzbrau/shop-flow';
+const GITHUB_REPO = 'https://github.com/mzbrau/list-pilot';
 const RELEASES_URL = `${GITHUB_REPO}/releases/latest`;
 
 const config: Config = {
@@ -11,9 +11,9 @@ const config: Config = {
   favicon: 'img/app-icon.png',
 
   url: 'https://mzbrau.github.io',
-  baseUrl: '/shop-flow/',
+  baseUrl: '/list-pilot/',
   organizationName: 'mzbrau',
-  projectName: 'shop-flow',
+  projectName: 'list-pilot',
   trailingSlash: false,
 
   onBrokenLinks: 'throw',

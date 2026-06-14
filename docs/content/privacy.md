@@ -35,4 +35,4 @@ Uninstalling the app removes all local data from your device. Export your catalo
 
 ## Open source
 
-List Pilot is open source under the [Apache 2.0 license](https://github.com/mzbrau/shop-flow/blob/main/LICENSE). You can inspect the code to verify these claims.
+List Pilot is open source under the [Apache 2.0 license](https://github.com/mzbrau/list-pilot/blob/main/LICENSE). You can inspect the code to verify these claims.

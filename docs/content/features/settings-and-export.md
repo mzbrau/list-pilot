@@ -33,8 +33,8 @@ The file is saved to your public **Downloads** folder as `list-pilot-catalog-exp
 
 The file is saved to your Downloads folder or app documents directory.
 
-:::tip Before migrating
-Always export your catalog before uninstalling, switching devices, or migrating from Shop Flow to List Pilot.
+:::tip Before uninstalling
+Always export your catalog before uninstalling or switching devices.
 :::
 
 ## App version
