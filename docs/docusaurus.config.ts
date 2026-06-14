@@ -11,7 +11,7 @@ const config: Config = {
   favicon: 'img/app-icon.png',
 
   url: 'https://mzbrau.github.io',
-  baseUrl: '/list-pilot/',
+  baseUrl: '/',
   organizationName: 'mzbrau',
   projectName: 'list-pilot',
   trailingSlash: false,
