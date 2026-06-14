@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = shop_flow
+PRODUCT_NAME = list_pilot
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.shopflow.shopFlow
+PRODUCT_BUNDLE_IDENTIFIER = com.listpilot.listPilot
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.shopflow. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.listpilot. All rights reserved.

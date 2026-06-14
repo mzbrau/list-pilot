@@ -1,11 +1,11 @@
 {
-    "name": "shop_flow",
-    "short_name": "shop_flow",
+    "name": "List Pilot",
+    "short_name": "List Pilot",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "List Pilot - smart shopping list app.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

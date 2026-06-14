@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'Shop Flow';
+  static const String appName = 'List Pilot';
 
   /// Hours of inactivity before starting a new shopping trip.
   static const int tripInactivityHours = 4;

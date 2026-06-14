@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shop_flow/core/providers/app_providers.dart';
-import 'package:shop_flow/data/database/app_database.dart';
-import 'package:shop_flow/data/repositories/catalog_repository.dart';
-import 'package:shop_flow/data/repositories/learning_repository.dart';
-import 'package:shop_flow/data/repositories/list_repository.dart';
-import 'package:shop_flow/features/shopping_list/widgets/item_autocomplete_field.dart';
+import 'package:list_pilot/core/providers/app_providers.dart';
+import 'package:list_pilot/data/database/app_database.dart';
+import 'package:list_pilot/data/repositories/catalog_repository.dart';
+import 'package:list_pilot/data/repositories/learning_repository.dart';
+import 'package:list_pilot/data/repositories/list_repository.dart';
+import 'package:list_pilot/features/shopping_list/widgets/item_autocomplete_field.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

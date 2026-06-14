@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Validate tag format
         run: |
@@ -69,18 +71,18 @@ jobs:
       - name: Prepare release artifact
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk "dist/shop-flow-${VERSION_NAME}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/list-pilot-${VERSION_NAME}.apk"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Shop Flow v${{ env.VERSION_NAME }}
-          files: dist/shop-flow-${{ env.VERSION_NAME }}.apk
+          name: List Pilot v${{ env.VERSION_NAME }}
+          files: dist/list-pilot-${{ env.VERSION_NAME }}.apk
           generate_release_notes: true
           body: |
             ## Install on Android
 
-            1. Download `shop-flow-${{ env.VERSION_NAME }}.apk` below.
+            1. Download `list-pilot-${{ env.VERSION_NAME }}.apk` below.
             2. On your phone, allow installation from unknown sources for your browser or file manager.
             3. Open the APK and install.
 

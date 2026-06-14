@@ -112,7 +112,7 @@ class CatalogExportService {
     };
 
     final date = DateTime.now().toIso8601String().split('T').first;
-    final fileName = 'shop-flow-catalog-export-$date';
+    final fileName = 'list-pilot-catalog-export-$date';
     final contents = const JsonEncoder.withIndent('  ').convert(payload);
 
     final writeResult = await _writeExportFile(fileName, contents);

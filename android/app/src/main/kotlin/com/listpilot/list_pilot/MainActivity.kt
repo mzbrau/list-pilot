@@ -1,4 +1,4 @@
-package com.shopflow.shop_flow
+package com.listpilot.list_pilot
 
 import io.flutter.embedding.android.FlutterActivity
 

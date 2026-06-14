@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.shopflow" "\0"
-            VALUE "FileDescription", "shop_flow" "\0"
+            VALUE "CompanyName", "com.listpilot" "\0"
+            VALUE "FileDescription", "List Pilot" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "shop_flow" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.shopflow. All rights reserved." "\0"
-            VALUE "OriginalFilename", "shop_flow.exe" "\0"
-            VALUE "ProductName", "shop_flow" "\0"
+            VALUE "InternalName", "list_pilot" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.listpilot. All rights reserved." "\0"
+            VALUE "OriginalFilename", "list_pilot.exe" "\0"
+            VALUE "ProductName", "List Pilot" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

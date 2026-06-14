@@ -1,9 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shop_flow/data/database/app_database.dart';
-import 'package:shop_flow/data/repositories/catalog_repository.dart';
-import 'package:shop_flow/features/learning/ordering_service.dart';
+import 'package:list_pilot/data/database/app_database.dart';
+import 'package:list_pilot/data/repositories/catalog_repository.dart';
+import 'package:list_pilot/features/learning/ordering_service.dart';
 
 void main() {
   group('OrderingService', () {

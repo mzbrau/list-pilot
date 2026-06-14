@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'shop_flow');
+    return driftDatabase(name: 'list_pilot');
   }
 
   Future<bool> hasCategories() async {

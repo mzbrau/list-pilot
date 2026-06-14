@@ -16,7 +16,7 @@ class ListsOverviewScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shop Flow'),
+        title: const Text('List Pilot'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
