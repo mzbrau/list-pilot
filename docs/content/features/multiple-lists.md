@@ -18,9 +18,9 @@ From the main **List Pilot** screen, tap **+** to create a new list. Each list h
 
 Tap any list on the overview screen to open it. Use the back button to return to the overview and pick a different list.
 
-![Placeholder — multiple lists overview](/img/lists-overview-placeholder.svg)
+![Multiple shopping lists for different shops](/img/lists-overview.png)
 
-*Screenshot coming soon — the lists overview showing multiple named lists.*
+*List Pilot supports different lists for different shops — each shop has its own ordering memory.*
 
 :::tip Separate stores
 Create one list per store if your route through each differs. Smart ordering learns independently for each list.

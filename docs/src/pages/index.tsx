@@ -48,7 +48,7 @@ export default function Home(): JSX.Element {
   const screenshotLight = useBaseUrl('/img/screenshot-list-light.png');
   const screenshotDark = useBaseUrl('/img/screenshot-list-dark.png');
   const screenshotCatalog = useBaseUrl('/img/screenshot-catalog-search.png');
-  const listsPlaceholder = useBaseUrl('/img/lists-overview-placeholder.svg');
+  const listsOverview = useBaseUrl('/img/lists-overview.png');
 
   return (
     <Layout
@@ -170,10 +170,13 @@ export default function Home(): JSX.Element {
 
             <figure className="lp-lists-preview">
               <img
-                src={listsPlaceholder}
-                alt="Placeholder for multiple lists overview screenshot"
+                src={listsOverview}
+                alt="Multiple shopping lists for different shops"
               />
-              <figcaption>Screenshot coming soon — manage separate lists for different stores</figcaption>
+              <figcaption>
+                List Pilot supports different lists for different shops — each
+                shop has its own ordering memory.
+              </figcaption>
             </figure>
           </div>
         </section>
