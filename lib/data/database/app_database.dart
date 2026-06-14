@@ -24,6 +24,19 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          // Add step-by-step migrations here when schemaVersion is bumped.
+        },
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+      );
+
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'shop_flow');
   }
@@ -32,6 +45,14 @@ class AppDatabase extends _$AppDatabase {
     final count = await customSelect(
       'SELECT COUNT(*) AS c FROM categories',
       readsFrom: {categories},
+    ).getSingle();
+    return count.read<int>('c') > 0;
+  }
+
+  Future<bool> hasCatalogItems() async {
+    final count = await customSelect(
+      'SELECT COUNT(*) AS c FROM catalog_items',
+      readsFrom: {catalogItems},
     ).getSingle();
     return count.read<int>('c') > 0;
   }

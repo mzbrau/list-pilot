@@ -10,7 +10,9 @@ class DatabaseSeeder {
   final AppDatabase _db;
 
   Future<void> seedIfNeeded() async {
-    if (await _db.hasCategories()) return;
+    final hasCategories = await _db.hasCategories();
+    final hasItems = await _db.hasCatalogItems();
+    if (hasCategories && hasItems) return;
 
     final jsonString = await rootBundle.loadString('assets/seed_catalog.json');
     final data = json.decode(jsonString) as Map<String, dynamic>;
@@ -18,36 +20,41 @@ class DatabaseSeeder {
     final categories = (data['categories'] as List<dynamic>)
         .map((c) => c as Map<String, dynamic>);
 
-    await _db.batch((batch) {
-      for (final cat in categories) {
-        batch.insert(
-          _db.categories,
-          CategoriesCompanion.insert(
-            id: cat['id'] as String,
-            name: cat['name'] as String,
-            sortOrder: cat['sortOrder'] as int,
-          ),
-        );
-      }
-    });
-
     final items = (data['items'] as List<dynamic>)
         .map((i) => i as Map<String, dynamic>);
 
     final now = DateTime.now();
-    await _db.batch((batch) {
-      for (final item in items) {
-        final displayName = item['name'] as String;
-        batch.insert(
-          _db.catalogItems,
-          CatalogItemsCompanion.insert(
-            name: displayName.toLowerCase(),
-            displayName: displayName,
-            categoryId: item['categoryId'] as String,
-            createdAt: now,
-          ),
-        );
-      }
+
+    await _db.transaction(() async {
+      await _db.batch((batch) {
+        if (!hasCategories) {
+          for (final cat in categories) {
+            batch.insert(
+              _db.categories,
+              CategoriesCompanion.insert(
+                id: cat['id'] as String,
+                name: cat['name'] as String,
+                sortOrder: cat['sortOrder'] as int,
+              ),
+            );
+          }
+        }
+
+        if (!hasItems) {
+          for (final item in items) {
+            final displayName = item['name'] as String;
+            batch.insert(
+              _db.catalogItems,
+              CatalogItemsCompanion.insert(
+                name: displayName.toLowerCase(),
+                displayName: displayName,
+                categoryId: item['categoryId'] as String,
+                createdAt: now,
+              ),
+            );
+          }
+        }
+      });
     });
   }
 }

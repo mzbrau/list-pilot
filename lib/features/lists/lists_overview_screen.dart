@@ -103,7 +103,7 @@ class ListsOverviewScreen extends ConsumerWidget {
                   content: Text(
                     'Exported ${result.customItemCount} custom and '
                     '${result.recategorizedItemCount} recategorized items to '
-                    '${result.filePath}',
+                    '${result.displayLocation}',
                   ),
                 ),
               );

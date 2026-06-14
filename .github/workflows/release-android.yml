@@ -41,6 +41,22 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "VERSION_NAME=${VERSION%%+*}" >> "$GITHUB_ENV"
 
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Warning: ANDROID_KEYSTORE_BASE64 not set — release APK will use debug signing and upgrades between releases will fail."
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=app/upload-keystore.jks\n' \
+            "$ANDROID_KEYSTORE_PASSWORD" "$ANDROID_KEY_PASSWORD" "$ANDROID_KEY_ALIAS" \
+            > android/key.properties
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -68,4 +84,4 @@ jobs:
             2. On your phone, allow installation from unknown sources for your browser or file manager.
             3. Open the APK and install.
 
-            This build is debug-signed for sideloading only (not for Google Play).
+            Release APKs are signed with the repository sideload keystore so in-place upgrades preserve your data. Keep patch versions below 100 (e.g. v1.0.99) to avoid Android versionCode collisions.

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_saver/file_saver.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -21,11 +23,13 @@ class CatalogExportData {
 class CatalogExportResult {
   const CatalogExportResult({
     required this.filePath,
+    required this.displayLocation,
     required this.customItemCount,
     required this.recategorizedItemCount,
   });
 
   final String filePath;
+  final String displayLocation;
   final int customItemCount;
   final int recategorizedItemCount;
 }
@@ -75,6 +79,16 @@ Future<Map<String, String>> loadSeedCategoryMap() async {
   };
 }
 
+class _ExportWriteResult {
+  const _ExportWriteResult({
+    required this.filePath,
+    required this.displayLocation,
+  });
+
+  final String filePath;
+  final String displayLocation;
+}
+
 class CatalogExportService {
   CatalogExportService(this._catalog);
 
@@ -97,18 +111,45 @@ class CatalogExportService {
       'recategorizedItems': exportData.recategorizedItems,
     };
 
-    final directory = await _exportDirectory();
     final date = DateTime.now().toIso8601String().split('T').first;
-    final filePath =
-        p.join(directory.path, 'shop-flow-catalog-export-$date.json');
-    await File(filePath).writeAsString(
-      const JsonEncoder.withIndent('  ').convert(payload),
-    );
+    final fileName = 'shop-flow-catalog-export-$date';
+    final contents = const JsonEncoder.withIndent('  ').convert(payload);
+
+    final writeResult = await _writeExportFile(fileName, contents);
 
     return CatalogExportResult(
-      filePath: filePath,
+      filePath: writeResult.filePath,
+      displayLocation: writeResult.displayLocation,
       customItemCount: exportData.customItems.length,
       recategorizedItemCount: exportData.recategorizedItems.length,
+    );
+  }
+
+  Future<_ExportWriteResult> _writeExportFile(
+    String fileName,
+    String contents,
+  ) async {
+    if (!kIsWeb && Platform.isAndroid) {
+      final savedPath = await FileSaver.instance.saveFile(
+        name: fileName,
+        bytes: utf8.encode(contents),
+        ext: 'json',
+        mimeType: MimeType.json,
+      );
+      return _ExportWriteResult(
+        filePath: savedPath ?? fileName,
+        displayLocation: 'Downloads',
+      );
+    }
+
+    final directory = await _exportDirectory();
+    await directory.create(recursive: true);
+    final filePath = p.join(directory.path, '$fileName.json');
+    await File(filePath).writeAsString(contents);
+
+    return _ExportWriteResult(
+      filePath: filePath,
+      displayLocation: directory.path,
     );
   }
 
