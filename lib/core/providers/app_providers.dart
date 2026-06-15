@@ -8,9 +8,12 @@ import '../../data/database/app_database.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/learning_repository.dart';
 import '../../data/repositories/list_repository.dart';
+import '../../data/repositories/meal_repository.dart';
 import '../../data/repositories/shop_stats_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
+import '../../data/services/meal_export_service.dart';
+import '../../data/services/meal_photo_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -24,6 +27,18 @@ final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
 
 final catalogExportServiceProvider = Provider<CatalogExportService>((ref) {
   return CatalogExportService(ref.watch(catalogRepositoryProvider));
+});
+
+final mealRepositoryProvider = Provider<MealRepository>((ref) {
+  return MealRepository(ref.watch(databaseProvider));
+});
+
+final mealPhotoServiceProvider = Provider<MealPhotoService>((ref) {
+  return MealPhotoService(ref.watch(mealRepositoryProvider));
+});
+
+final mealExportServiceProvider = Provider<MealExportService>((ref) {
+  return MealExportService(ref.watch(mealRepositoryProvider));
 });
 
 final learningRepositoryProvider = Provider<LearningRepository>((ref) {
@@ -187,4 +202,62 @@ final shopStatsAverageMsPerItemProvider =
     FutureProvider.family<int?, int>((ref, listId) {
   ref.watch(appInitProvider);
   return ref.watch(shopStatsRepositoryProvider).getLongTermAverageMsPerItem(listId);
+});
+
+final defaultShoppingListIdProvider =
+    StateNotifierProvider<DefaultShoppingListIdNotifier, int?>((ref) {
+  return DefaultShoppingListIdNotifier();
+});
+
+class DefaultShoppingListIdNotifier extends StateNotifier<int?> {
+  DefaultShoppingListIdNotifier() : super(null) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getInt(AppConstants.defaultShoppingListIdKey);
+    state = value;
+  }
+
+  Future<void> setListId(int? listId) async {
+    state = listId;
+    final prefs = await SharedPreferences.getInstance();
+    if (listId == null) {
+      await prefs.remove(AppConstants.defaultShoppingListIdKey);
+    } else {
+      await prefs.setInt(AppConstants.defaultShoppingListIdKey, listId);
+    }
+  }
+}
+
+final mealPlanItemsProvider =
+    StreamProvider<List<MealPlanItemWithMeal>>((ref) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchPlanItems();
+});
+
+final mealProvider = StreamProvider.family<Meal?, int>((ref, mealId) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchMeal(mealId);
+});
+
+final mealIngredientsProvider =
+    StreamProvider.family<List<MealIngredient>, int>((ref, mealId) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchIngredientsForMeal(mealId);
+});
+
+final lastEatenDateProvider =
+    FutureProvider.family<DateTime?, int>((ref, mealId) async {
+  ref.watch(appInitProvider);
+  ref.watch(mealPlanItemsProvider);
+  return ref.watch(mealRepositoryProvider).getLastEatenDate(mealId);
+});
+
+final mealsEatenOnDateProvider =
+    StreamProvider.family<List<MealCheckOffEventWithMeal>, DateTime>(
+        (ref, date) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchMealsEatenOnDate(date);
 });

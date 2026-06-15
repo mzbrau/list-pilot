@@ -24,6 +24,7 @@ class AppConstants {
 
   static const String themeModeKey = 'theme_mode';
   static const String shopStatsEnabledKey = 'shop_stats_enabled';
+  static const String defaultShoppingListIdKey = 'default_shopping_list_id';
 }
 
 class QuantityUnits {

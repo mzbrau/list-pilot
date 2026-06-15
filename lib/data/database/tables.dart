@@ -88,3 +88,43 @@ class ItemRankStats extends Table {
   @override
   Set<Column<Object>> get primaryKey => {listId, catalogItemId};
 }
+
+class Meals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get displayName => text()();
+  TextColumn get photoPath => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  IntColumn get portions => integer().withDefault(const Constant(4))();
+  TextColumn get recipeLink => text().nullable()();
+  BoolColumn get isUserAdded =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+class MealPlanItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get mealId => integer().references(Meals, #id)();
+  BoolColumn get isCompleted =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get completedAt => dateTime().nullable()();
+  DateTimeColumn get addedAt => dateTime()();
+}
+
+class MealIngredients extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get mealId => integer().references(Meals, #id)();
+  IntColumn get catalogItemId =>
+      integer().nullable().references(CatalogItems, #id)();
+  TextColumn get displayName => text()();
+  BoolColumn get addToShoppingList =>
+      boolean().withDefault(const Constant(true))();
+}
+
+class MealCheckOffEvents extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get mealId => integer().references(Meals, #id)();
+  IntColumn get mealPlanItemId =>
+      integer().nullable().references(MealPlanItems, #id)();
+  DateTimeColumn get checkedAt => dateTime()();
+}

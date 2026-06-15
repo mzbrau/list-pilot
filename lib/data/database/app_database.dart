@@ -16,6 +16,10 @@ part 'app_database.g.dart';
   CategoryRankStats,
   ItemRankStats,
   ShopStatsRecords,
+  Meals,
+  MealPlanItems,
+  MealIngredients,
+  MealCheckOffEvents,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -23,7 +27,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -37,6 +41,12 @@ class AppDatabase extends _$AppDatabase {
               shoppingLists.activeShopStartedAt,
             );
             await m.createTable(shopStatsRecords);
+          }
+          if (from < 3) {
+            await m.createTable(meals);
+            await m.createTable(mealPlanItems);
+            await m.createTable(mealIngredients);
+            await m.createTable(mealCheckOffEvents);
           }
         },
         beforeOpen: (details) async {
@@ -163,4 +173,116 @@ class AppDatabase extends _$AppDatabase {
         .go();
     await (delete(itemRankStats)..where((t) => t.listId.equals(listId))).go();
   }
+
+  Future<List<Meal>> searchMeals(String query, {int limit = 8}) {
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return (select(meals)
+            ..orderBy([(t) => OrderingTerm.asc(t.displayName)])
+            ..limit(limit))
+          .get();
+    }
+    return (select(meals)
+          ..where((t) => t.name.like('$normalized%'))
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)])
+          ..limit(limit))
+        .get();
+  }
+
+  Future<Meal?> findMealByName(String name) {
+    final normalized = name.trim().toLowerCase();
+    return (select(meals)..where((t) => t.name.equals(normalized)))
+        .getSingleOrNull();
+  }
+
+  Future<Meal?> getMealById(int id) {
+    return (select(meals)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Stream<List<MealPlanItemWithMeal>> watchMealPlanItems() {
+    final query = select(mealPlanItems).join([
+      innerJoin(meals, meals.id.equalsExp(mealPlanItems.mealId)),
+    ])
+      ..orderBy([
+        OrderingTerm.asc(mealPlanItems.isCompleted),
+        OrderingTerm.asc(mealPlanItems.addedAt),
+      ]);
+    return query.watch().map((rows) {
+      return rows
+          .map(
+            (row) => MealPlanItemWithMeal(
+              planItem: row.readTable(mealPlanItems),
+              meal: row.readTable(meals),
+            ),
+          )
+          .toList();
+    });
+  }
+
+  Future<DateTime?> getLastEatenDate(int mealId) async {
+    final result = await (select(mealCheckOffEvents)
+          ..where((t) => t.mealId.equals(mealId))
+          ..orderBy([(t) => OrderingTerm.desc(t.checkedAt)])
+          ..limit(1))
+        .getSingleOrNull();
+    return result?.checkedAt;
+  }
+
+  Stream<List<MealCheckOffEventWithMeal>> watchMealsEatenOnDate(DateTime date) {
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+    final query = select(mealCheckOffEvents).join([
+      innerJoin(meals, meals.id.equalsExp(mealCheckOffEvents.mealId)),
+    ])
+      ..where(mealCheckOffEvents.checkedAt.isBetweenValues(start, end))
+      ..orderBy([OrderingTerm.asc(mealCheckOffEvents.checkedAt)]);
+    return query.watch().map((rows) {
+      return rows
+          .map(
+            (row) => MealCheckOffEventWithMeal(
+              event: row.readTable(mealCheckOffEvents),
+              meal: row.readTable(meals),
+            ),
+          )
+          .toList();
+    });
+  }
+
+  Future<List<MealCheckOffEvent>> getCheckOffEventsInRange(
+    DateTime start,
+    DateTime end,
+  ) {
+    return (select(mealCheckOffEvents)
+          ..where((t) => t.checkedAt.isBetweenValues(start, end))
+          ..orderBy([(t) => OrderingTerm.asc(t.checkedAt)]))
+        .get();
+  }
+
+  Future<List<MealIngredient>> getIngredientsForMeal(int mealId) {
+    return (select(mealIngredients)
+          ..where((t) => t.mealId.equals(mealId))
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+        .get();
+  }
+
+  Stream<List<MealIngredient>> watchIngredientsForMeal(int mealId) {
+    return (select(mealIngredients)
+          ..where((t) => t.mealId.equals(mealId))
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+        .watch();
+  }
+}
+
+class MealPlanItemWithMeal {
+  const MealPlanItemWithMeal({required this.planItem, required this.meal});
+
+  final MealPlanItem planItem;
+  final Meal meal;
+}
+
+class MealCheckOffEventWithMeal {
+  const MealCheckOffEventWithMeal({required this.event, required this.meal});
+
+  final MealCheckOffEvent event;
+  final Meal meal;
 }

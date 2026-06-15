@@ -19,6 +19,11 @@ class ListsOverviewScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('List Pilot'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.restaurant_menu_outlined),
+            tooltip: 'Meal Planning',
+            onPressed: () => context.push('/meals'),
+          ),
           if (shopStatsEnabled)
             IconButton(
               icon: const Icon(Icons.bar_chart_outlined),
@@ -37,41 +42,54 @@ class ListsOverviewScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (lists) {
           if (lists.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 64,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const _MealPlanningCard(),
+                const SizedBox(height: 24),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.shopping_cart_outlined,
+                          size: 64,
+                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No shopping lists yet',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Create a list for each store you visit',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No shopping lists yet',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Create a list for each store you visit',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             );
           }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: lists.length,
+            itemCount: lists.length + 1,
             itemBuilder: (context, index) {
-              final list = lists[index];
+              if (index == 0) {
+                return const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: _MealPlanningCard(),
+                );
+              }
+              final list = lists[index - 1];
               return _ListCard(list: list);
             },
           );
@@ -98,7 +116,7 @@ class ListsOverviewScreen extends ConsumerWidget {
       context: context,
       builder: (sheetContext) {
         return _SettingsSheet(
-          onExport: () async {
+          onExportCatalog: () async {
             final messenger = ScaffoldMessenger.of(context);
             try {
               final result =
@@ -121,6 +139,29 @@ class ListsOverviewScreen extends ConsumerWidget {
               );
             }
           },
+          onExportMeals: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              final result =
+                  await ref.read(mealExportServiceProvider).exportToFile();
+              if (sheetContext.mounted) Navigator.pop(sheetContext);
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Exported ${result.mealCount} meals and '
+                    '${result.checkOffCount} history entries to '
+                    '${result.displayLocation}',
+                  ),
+                ),
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(content: Text('Export failed: $e')),
+              );
+            }
+          },
         );
       },
     );
@@ -128,24 +169,39 @@ class ListsOverviewScreen extends ConsumerWidget {
 }
 
 class _SettingsSheet extends ConsumerStatefulWidget {
-  const _SettingsSheet({required this.onExport});
+  const _SettingsSheet({
+    required this.onExportCatalog,
+    required this.onExportMeals,
+  });
 
-  final Future<void> Function() onExport;
+  final Future<void> Function() onExportCatalog;
+  final Future<void> Function() onExportMeals;
 
   @override
   ConsumerState<_SettingsSheet> createState() => _SettingsSheetState();
 }
 
 class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
-  bool _exporting = false;
+  bool _exportingCatalog = false;
+  bool _exportingMeals = false;
 
-  Future<void> _handleExport() async {
-    if (_exporting) return;
-    setState(() => _exporting = true);
+  Future<void> _handleExportCatalog() async {
+    if (_exportingCatalog) return;
+    setState(() => _exportingCatalog = true);
     try {
-      await widget.onExport();
+      await widget.onExportCatalog();
     } finally {
-      if (mounted) setState(() => _exporting = false);
+      if (mounted) setState(() => _exportingCatalog = false);
+    }
+  }
+
+  Future<void> _handleExportMeals() async {
+    if (_exportingMeals) return;
+    setState(() => _exportingMeals = true);
+    try {
+      await widget.onExportMeals();
+    } finally {
+      if (mounted) setState(() => _exportingMeals = false);
     }
   }
 
@@ -153,13 +209,16 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   Widget build(BuildContext context) {
     final versionAsync = ref.watch(appVersionProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
+    final listsAsync = ref.watch(shoppingListsProvider);
+    final defaultListId = ref.watch(defaultShoppingListIdProvider);
     final theme = Theme.of(context);
 
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
@@ -214,6 +273,76 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
+              'Meal Planning',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          listsAsync.when(
+            loading: () => const ListTile(
+              title: Text('Default shopping list'),
+              subtitle: Text('Loading lists…'),
+            ),
+            error: (e, _) => ListTile(
+              title: const Text('Default shopping list'),
+              subtitle: Text('Error: $e'),
+            ),
+            data: (lists) {
+              if (lists.isEmpty) {
+                return const ListTile(
+                  leading: Icon(Icons.shopping_cart_outlined),
+                  title: Text('Default shopping list'),
+                  subtitle: Text('Create a shopping list first'),
+                  enabled: false,
+                );
+              }
+              return ListTile(
+                leading: const Icon(Icons.shopping_cart_outlined),
+                title: const Text('Default shopping list'),
+                subtitle: DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    isExpanded: true,
+                    value: lists.any((l) => l.id == defaultListId)
+                        ? defaultListId
+                        : null,
+                    hint: const Text('Select a list'),
+                    items: [
+                      for (final list in lists)
+                        DropdownMenuItem(
+                          value: list.id,
+                          child: Text(list.name),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      ref
+                          .read(defaultShoppingListIdProvider.notifier)
+                          .setListId(value);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: _exportingMeals
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.primary,
+                    ),
+                  )
+                : const Icon(Icons.download_outlined),
+            title: const Text('Export meals'),
+            subtitle: const Text('Save meals and eat history as JSON'),
+            enabled: !_exportingMeals,
+            onTap: _handleExportMeals,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
               'Catalog',
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -221,7 +350,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             ),
           ),
           ListTile(
-            leading: _exporting
+            leading: _exportingCatalog
                 ? SizedBox(
                     width: 24,
                     height: 24,
@@ -235,8 +364,8 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             subtitle: const Text(
               'Save custom and recategorized items as JSON',
             ),
-            enabled: !_exporting,
-            onTap: _handleExport,
+            enabled: !_exportingCatalog,
+            onTap: _handleExportCatalog,
           ),
           versionAsync.when(
             loading: () => const SizedBox.shrink(),
@@ -252,6 +381,62 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             ),
           ),
         ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MealPlanningCard extends StatelessWidget {
+  const _MealPlanningCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => context.push('/meals'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: theme.colorScheme.secondaryContainer,
+                child: Icon(
+                  Icons.restaurant_menu_outlined,
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meal Planning',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Plan your week and fill your shopping list',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
