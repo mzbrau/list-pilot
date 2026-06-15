@@ -18,7 +18,15 @@ Choose how List Pilot looks:
 
 Your choice is saved locally and persists across app restarts.
 
-## Export custom catalog
+## Features
+
+| Option | Behavior |
+|--------|----------|
+| **Shop Stats** (off by default) | Time shopping trips and compare pace to past shops on the same list |
+
+See [Shop Stats](/docs/features/shop-stats) for full details on timing, the live ticker, and the stats page.
+
+## Catalog
 
 **Export custom catalog** saves your personal catalog changes to a JSON file:
 

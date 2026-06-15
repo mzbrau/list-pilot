@@ -34,3 +34,4 @@ The app bar shows your progress as a count (e.g. **8/10**) and a thin progress b
 - [Multiple lists](/docs/features/multiple-lists) — manage lists for different stores
 - [Adding items](/docs/features/adding-items) — catalog autocomplete in detail
 - [Smart ordering](/docs/features/smart-ordering) — how the app learns your route
+- [Shop Stats](/docs/features/shop-stats) — optional shopping pace tracking

@@ -28,6 +28,15 @@ class ShoppingLists extends Table {
   IntColumn get currentTripId => integer().withDefault(const Constant(0))();
   IntColumn get currentTripSequence =>
       integer().withDefault(const Constant(0))();
+  DateTimeColumn get activeShopStartedAt => dateTime().nullable()();
+}
+
+class ShopStatsRecords extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listId => integer().references(ShoppingLists, #id)();
+  DateTimeColumn get startedAt => dateTime()();
+  DateTimeColumn get completedAt => dateTime()();
+  IntColumn get itemCount => integer()();
 }
 
 class ListItems extends Table {

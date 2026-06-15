@@ -23,6 +23,7 @@ class AppConstants {
   static const double bulkCheckWeight = 0.25;
 
   static const String themeModeKey = 'theme_mode';
+  static const String shopStatsEnabledKey = 'shop_stats_enabled';
 }
 
 class QuantityUnits {

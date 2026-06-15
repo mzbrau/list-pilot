@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../features/learning/ordering_service.dart';
+import '../shop_stats/widgets/shop_stats_ticker.dart';
+import '../shop_stats/widgets/shop_summary_sheet.dart';
 import 'widgets/categorized_item_list.dart';
 import 'widgets/completed_items_section.dart';
 import 'widgets/item_autocomplete_field.dart';
@@ -90,6 +92,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final items = itemsAsync.valueOrNull ?? [];
     final remaining = items.where((i) => !i.isCompleted).length;
     final total = items.length;
+    final completedCount = total - remaining;
+    final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final categoryStatsAsync =
         ref.watch(categoryRankStatsProvider(widget.listId));
@@ -187,6 +191,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                           );
                         }
 
+                        final showTicker = shopStatsEnabled &&
+                            list.activeShopStartedAt != null &&
+                            remaining > 0;
+
                         return CustomScrollView(
                           slivers: [
                             if (grouped.isNotEmpty)
@@ -207,7 +215,11 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                                 '/list/${widget.listId}/item/${item.id}',
                               ),
                             ),
-                            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+                            SliverPadding(
+                              padding: EdgeInsets.only(
+                                bottom: showTicker ? 8 : 24,
+                              ),
+                            ),
                           ],
                         );
                       },
@@ -215,6 +227,15 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                   },
                 ),
               ),
+              if (shopStatsEnabled &&
+                  list.activeShopStartedAt != null &&
+                  remaining > 0)
+                ShopStatsTicker(
+                  listId: widget.listId,
+                  startedAt: list.activeShopStartedAt!,
+                  completedCount: completedCount,
+                  totalItems: total,
+                ),
             ],
           ),
         );
@@ -223,11 +244,32 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
   }
 
   Future<void> _toggleItem(ListItem item, bool completed) async {
-    await ref.read(listRepositoryProvider).setItemCompleted(
+    final items = ref.read(listItemsProvider(widget.listId)).valueOrNull ?? [];
+    final remainingAfter = completed
+        ? items.where((i) => !i.isCompleted && i.id != item.id).length
+        : items.where((i) => !i.isCompleted).length;
+    final totalItems = items.length;
+    final shopStatsEnabled = ref.read(shopStatsEnabledProvider);
+    final listName =
+        ref.read(shoppingListProvider(widget.listId)).valueOrNull?.name ?? 'List';
+
+    final result = await ref.read(listRepositoryProvider).setItemCompleted(
           widget.listId,
           item.id,
           completed,
+          shopStatsEnabled: shopStatsEnabled,
+          remainingAfter: completed ? remainingAfter : null,
+          totalItems: completed ? totalItems : null,
         );
+
+    if (!mounted) return;
+    if (result != null) {
+      await ShopSummarySheet.show(
+        context,
+        result: result,
+        listName: listName,
+      );
+    }
   }
 
   Future<void> _clearCompleted(int count) async {
@@ -252,7 +294,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       if (confirmed != true) return;
     }
 
-    await ref.read(listRepositoryProvider).clearCompleted(widget.listId);
+    await ref.read(listRepositoryProvider).clearCompleted(
+          widget.listId,
+          shopStatsEnabled: ref.read(shopStatsEnabledProvider),
+        );
   }
 
   Future<void> _renameList(BuildContext context, ShoppingList list) async {

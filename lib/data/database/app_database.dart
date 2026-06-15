@@ -15,6 +15,7 @@ part 'app_database.g.dart';
   CheckOffEvents,
   CategoryRankStats,
   ItemRankStats,
+  ShopStatsRecords,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -22,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -30,7 +31,13 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
         },
         onUpgrade: (m, from, to) async {
-          // Add step-by-step migrations here when schemaVersion is bumped.
+          if (from < 2) {
+            await m.addColumn(
+              shoppingLists,
+              shoppingLists.activeShopStartedAt,
+            );
+            await m.createTable(shopStatsRecords);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

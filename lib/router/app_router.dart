@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/item_detail/item_detail_screen.dart';
 import '../features/lists/lists_overview_screen.dart';
+import '../features/shop_stats/shop_stats_screen.dart';
 import '../features/shopping_list/shopping_list_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -12,6 +13,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const ListsOverviewScreen(),
+      ),
+      GoRoute(
+        path: '/stats',
+        builder: (context, state) => const ShopStatsScreen(),
       ),
       GoRoute(
         path: '/list/:id',

@@ -8,6 +8,7 @@ import '../../data/database/app_database.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/learning_repository.dart';
 import '../../data/repositories/list_repository.dart';
+import '../../data/repositories/shop_stats_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
 
@@ -29,11 +30,16 @@ final learningRepositoryProvider = Provider<LearningRepository>((ref) {
   return LearningRepository(ref.watch(databaseProvider));
 });
 
+final shopStatsRepositoryProvider = Provider<ShopStatsRepository>((ref) {
+  return ShopStatsRepository(ref.watch(databaseProvider));
+});
+
 final listRepositoryProvider = Provider<ListRepository>((ref) {
   return ListRepository(
     ref.watch(databaseProvider),
     ref.watch(catalogRepositoryProvider),
     ref.watch(learningRepositoryProvider),
+    ref.watch(shopStatsRepositoryProvider),
   );
 });
 
@@ -90,6 +96,36 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
+final shopStatsEnabledProvider =
+    StateNotifierProvider<ShopStatsEnabledNotifier, bool>((ref) {
+  return ShopStatsEnabledNotifier(ref.watch(shopStatsRepositoryProvider));
+});
+
+class ShopStatsEnabledNotifier extends StateNotifier<bool> {
+  ShopStatsEnabledNotifier(this._shopStats) : super(false) {
+    _load();
+  }
+
+  final ShopStatsRepository _shopStats;
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(AppConstants.shopStatsEnabledKey) ?? false;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    if (state == enabled) return;
+
+    if (!enabled) {
+      await _shopStats.abandonAllSessions();
+    }
+
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.shopStatsEnabledKey, enabled);
+  }
+}
+
 final shoppingListProvider =
     StreamProvider.family<ShoppingList?, int>((ref, listId) {
   ref.watch(appInitProvider);
@@ -133,4 +169,22 @@ final catalogSearchProvider =
   ref.watch(appInitProvider);
   if (query.trim().isEmpty) return [];
   return ref.watch(catalogRepositoryProvider).search(query);
+});
+
+final shopStatsRecordsProvider =
+    StreamProvider<List<ShopStatsRecord>>((ref) {
+  ref.watch(appInitProvider);
+  return ref.watch(shopStatsRepositoryProvider).watchAllRecords();
+});
+
+final shopStatsRecordsForListProvider =
+    StreamProvider.family<List<ShopStatsRecord>, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  return ref.watch(shopStatsRepositoryProvider).watchRecordsForList(listId);
+});
+
+final shopStatsAverageMsPerItemProvider =
+    FutureProvider.family<int?, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  return ref.watch(shopStatsRepositoryProvider).getLongTermAverageMsPerItem(listId);
 });

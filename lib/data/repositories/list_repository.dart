@@ -3,13 +3,20 @@ import 'package:drift/drift.dart';
 import '../database/app_database.dart';
 import 'catalog_repository.dart';
 import 'learning_repository.dart';
+import 'shop_stats_repository.dart';
 
 class ListRepository {
-  ListRepository(this._db, this._catalog, this._learning);
+  ListRepository(
+    this._db,
+    this._catalog,
+    this._learning,
+    this._shopStats,
+  );
 
   final AppDatabase _db;
   final CatalogRepository _catalog;
   final LearningRepository _learning;
+  final ShopStatsRepository _shopStats;
 
   Stream<List<ShoppingList>> watchAllLists() => _db.watchAllLists();
 
@@ -42,6 +49,7 @@ class ListRepository {
         .go();
     await (_db.delete(_db.itemRankStats)..where((t) => t.listId.equals(id)))
         .go();
+    await _shopStats.deleteRecordsForList(id);
     await (_db.delete(_db.listItems)..where((t) => t.listId.equals(id))).go();
     await (_db.delete(_db.shoppingLists)..where((t) => t.id.equals(id))).go();
   }
@@ -134,7 +142,14 @@ class ListRepository {
     await (_db.delete(_db.listItems)..where((t) => t.id.equals(id))).go();
   }
 
-  Future<void> setItemCompleted(int listId, int itemId, bool completed) async {
+  Future<ShopCompletionResult?> setItemCompleted(
+    int listId,
+    int itemId,
+    bool completed, {
+    bool shopStatsEnabled = false,
+    int? remainingAfter,
+    int? totalItems,
+  }) async {
     final now = DateTime.now();
     if (completed) {
       await _learning.recordCheckOff(listId: listId, listItemId: itemId);
@@ -162,9 +177,27 @@ class ListRepository {
         lastCheckOffAt: completed ? Value(now) : const Value.absent(),
       ),
     );
+
+    if (shopStatsEnabled && completed && remainingAfter != null && totalItems != null) {
+      return _shopStats.onItemCheckedOff(
+        listId: listId,
+        remainingAfter: remainingAfter,
+        totalItems: totalItems,
+        checkedAt: now,
+      );
+    }
+
+    return null;
   }
 
-  Future<void> clearCompleted(int listId) async {
+  Future<void> clearCompleted(
+    int listId, {
+    bool shopStatsEnabled = false,
+  }) async {
+    if (shopStatsEnabled) {
+      await _shopStats.abandonSession(listId);
+    }
+
     await (_db.delete(_db.listItems)
           ..where((t) => t.listId.equals(listId) & t.isCompleted.equals(true)))
         .go();

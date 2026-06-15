@@ -8,6 +8,7 @@ import 'package:list_pilot/data/database/app_database.dart';
 import 'package:list_pilot/data/repositories/catalog_repository.dart';
 import 'package:list_pilot/data/repositories/learning_repository.dart';
 import 'package:list_pilot/data/repositories/list_repository.dart';
+import 'package:list_pilot/data/repositories/shop_stats_repository.dart';
 import 'package:list_pilot/features/shopping_list/widgets/item_autocomplete_field.dart';
 
 void main() {
@@ -54,6 +55,7 @@ void main() {
               db,
               CatalogRepository(db),
               LearningRepository(db),
+              ShopStatsRepository(db),
             ),
           ),
           appInitProvider.overrideWith((ref) async {}),

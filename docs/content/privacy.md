@@ -13,6 +13,7 @@ All data is stored **on your device** in a local SQLite database:
 - Shopping lists and items
 - Custom catalog entries
 - Learned check-off order
+- Shop stats records (when Shop Stats is enabled)
 - Theme preference
 
 Nothing is sent to a server. There is no cloud sync, no analytics, and no account system.

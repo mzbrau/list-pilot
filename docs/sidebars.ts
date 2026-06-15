@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'features/in-your-cart',
         'features/item-details',
         'features/settings-and-export',
+        'features/shop-stats',
       ],
     },
     'upgrading',

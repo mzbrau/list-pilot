@@ -15,6 +15,7 @@ slug: /intro
 - **Smart ordering** — learns your check-off sequence per list and reorders active items over time
 - **In your cart** — checked items move to a muted section at the bottom; clear all when done
 - **Item details** — edit name, quantity (count or weight), category; remove custom items from memory
+- **Shop Stats** — optional timing and pace comparisons per list (disabled by default)
 - **Light & dark mode** — follows system theme with manual override
 - **Local only** — all data stored on device via SQLite (no cloud sync)
 

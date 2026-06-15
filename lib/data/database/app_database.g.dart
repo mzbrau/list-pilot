@@ -630,6 +630,12 @@ class $ShoppingListsTable extends ShoppingLists
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _activeShopStartedAtMeta =
+      const VerificationMeta('activeShopStartedAt');
+  @override
+  late final GeneratedColumn<DateTime> activeShopStartedAt =
+      GeneratedColumn<DateTime>('active_shop_started_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -638,7 +644,8 @@ class $ShoppingListsTable extends ShoppingLists
         updatedAt,
         lastCheckOffAt,
         currentTripId,
-        currentTripSequence
+        currentTripSequence,
+        activeShopStartedAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -689,6 +696,12 @@ class $ShoppingListsTable extends ShoppingLists
           currentTripSequence.isAcceptableOrUnknown(
               data['current_trip_sequence']!, _currentTripSequenceMeta));
     }
+    if (data.containsKey('active_shop_started_at')) {
+      context.handle(
+          _activeShopStartedAtMeta,
+          activeShopStartedAt.isAcceptableOrUnknown(
+              data['active_shop_started_at']!, _activeShopStartedAtMeta));
+    }
     return context;
   }
 
@@ -712,6 +725,9 @@ class $ShoppingListsTable extends ShoppingLists
           .read(DriftSqlType.int, data['${effectivePrefix}current_trip_id'])!,
       currentTripSequence: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}current_trip_sequence'])!,
+      activeShopStartedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}active_shop_started_at']),
     );
   }
 
@@ -729,6 +745,7 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
   final DateTime? lastCheckOffAt;
   final int currentTripId;
   final int currentTripSequence;
+  final DateTime? activeShopStartedAt;
   const ShoppingList(
       {required this.id,
       required this.name,
@@ -736,7 +753,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       required this.updatedAt,
       this.lastCheckOffAt,
       required this.currentTripId,
-      required this.currentTripSequence});
+      required this.currentTripSequence,
+      this.activeShopStartedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -749,6 +767,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
     }
     map['current_trip_id'] = Variable<int>(currentTripId);
     map['current_trip_sequence'] = Variable<int>(currentTripSequence);
+    if (!nullToAbsent || activeShopStartedAt != null) {
+      map['active_shop_started_at'] = Variable<DateTime>(activeShopStartedAt);
+    }
     return map;
   }
 
@@ -763,6 +784,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           : Value(lastCheckOffAt),
       currentTripId: Value(currentTripId),
       currentTripSequence: Value(currentTripSequence),
+      activeShopStartedAt: activeShopStartedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activeShopStartedAt),
     );
   }
 
@@ -778,6 +802,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       currentTripId: serializer.fromJson<int>(json['currentTripId']),
       currentTripSequence:
           serializer.fromJson<int>(json['currentTripSequence']),
+      activeShopStartedAt:
+          serializer.fromJson<DateTime?>(json['activeShopStartedAt']),
     );
   }
   @override
@@ -791,6 +817,7 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       'lastCheckOffAt': serializer.toJson<DateTime?>(lastCheckOffAt),
       'currentTripId': serializer.toJson<int>(currentTripId),
       'currentTripSequence': serializer.toJson<int>(currentTripSequence),
+      'activeShopStartedAt': serializer.toJson<DateTime?>(activeShopStartedAt),
     };
   }
 
@@ -801,7 +828,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           DateTime? updatedAt,
           Value<DateTime?> lastCheckOffAt = const Value.absent(),
           int? currentTripId,
-          int? currentTripSequence}) =>
+          int? currentTripSequence,
+          Value<DateTime?> activeShopStartedAt = const Value.absent()}) =>
       ShoppingList(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -811,6 +839,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
             lastCheckOffAt.present ? lastCheckOffAt.value : this.lastCheckOffAt,
         currentTripId: currentTripId ?? this.currentTripId,
         currentTripSequence: currentTripSequence ?? this.currentTripSequence,
+        activeShopStartedAt: activeShopStartedAt.present
+            ? activeShopStartedAt.value
+            : this.activeShopStartedAt,
       );
   ShoppingList copyWithCompanion(ShoppingListsCompanion data) {
     return ShoppingList(
@@ -827,6 +858,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       currentTripSequence: data.currentTripSequence.present
           ? data.currentTripSequence.value
           : this.currentTripSequence,
+      activeShopStartedAt: data.activeShopStartedAt.present
+          ? data.activeShopStartedAt.value
+          : this.activeShopStartedAt,
     );
   }
 
@@ -839,14 +873,15 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           ..write('updatedAt: $updatedAt, ')
           ..write('lastCheckOffAt: $lastCheckOffAt, ')
           ..write('currentTripId: $currentTripId, ')
-          ..write('currentTripSequence: $currentTripSequence')
+          ..write('currentTripSequence: $currentTripSequence, ')
+          ..write('activeShopStartedAt: $activeShopStartedAt')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, name, createdAt, updatedAt,
-      lastCheckOffAt, currentTripId, currentTripSequence);
+      lastCheckOffAt, currentTripId, currentTripSequence, activeShopStartedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -857,7 +892,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           other.updatedAt == this.updatedAt &&
           other.lastCheckOffAt == this.lastCheckOffAt &&
           other.currentTripId == this.currentTripId &&
-          other.currentTripSequence == this.currentTripSequence);
+          other.currentTripSequence == this.currentTripSequence &&
+          other.activeShopStartedAt == this.activeShopStartedAt);
 }
 
 class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
@@ -868,6 +904,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
   final Value<DateTime?> lastCheckOffAt;
   final Value<int> currentTripId;
   final Value<int> currentTripSequence;
+  final Value<DateTime?> activeShopStartedAt;
   const ShoppingListsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -876,6 +913,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     this.lastCheckOffAt = const Value.absent(),
     this.currentTripId = const Value.absent(),
     this.currentTripSequence = const Value.absent(),
+    this.activeShopStartedAt = const Value.absent(),
   });
   ShoppingListsCompanion.insert({
     this.id = const Value.absent(),
@@ -885,6 +923,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     this.lastCheckOffAt = const Value.absent(),
     this.currentTripId = const Value.absent(),
     this.currentTripSequence = const Value.absent(),
+    this.activeShopStartedAt = const Value.absent(),
   })  : name = Value(name),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
@@ -896,6 +935,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     Expression<DateTime>? lastCheckOffAt,
     Expression<int>? currentTripId,
     Expression<int>? currentTripSequence,
+    Expression<DateTime>? activeShopStartedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -906,6 +946,8 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
       if (currentTripId != null) 'current_trip_id': currentTripId,
       if (currentTripSequence != null)
         'current_trip_sequence': currentTripSequence,
+      if (activeShopStartedAt != null)
+        'active_shop_started_at': activeShopStartedAt,
     });
   }
 
@@ -916,7 +958,8 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
       Value<DateTime>? updatedAt,
       Value<DateTime?>? lastCheckOffAt,
       Value<int>? currentTripId,
-      Value<int>? currentTripSequence}) {
+      Value<int>? currentTripSequence,
+      Value<DateTime?>? activeShopStartedAt}) {
     return ShoppingListsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -925,6 +968,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
       lastCheckOffAt: lastCheckOffAt ?? this.lastCheckOffAt,
       currentTripId: currentTripId ?? this.currentTripId,
       currentTripSequence: currentTripSequence ?? this.currentTripSequence,
+      activeShopStartedAt: activeShopStartedAt ?? this.activeShopStartedAt,
     );
   }
 
@@ -952,6 +996,10 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     if (currentTripSequence.present) {
       map['current_trip_sequence'] = Variable<int>(currentTripSequence.value);
     }
+    if (activeShopStartedAt.present) {
+      map['active_shop_started_at'] =
+          Variable<DateTime>(activeShopStartedAt.value);
+    }
     return map;
   }
 
@@ -964,7 +1012,8 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
           ..write('updatedAt: $updatedAt, ')
           ..write('lastCheckOffAt: $lastCheckOffAt, ')
           ..write('currentTripId: $currentTripId, ')
-          ..write('currentTripSequence: $currentTripSequence')
+          ..write('currentTripSequence: $currentTripSequence, ')
+          ..write('activeShopStartedAt: $activeShopStartedAt')
           ..write(')'))
         .toString();
   }
@@ -2662,6 +2711,308 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
   }
 }
 
+class $ShopStatsRecordsTable extends ShopStatsRecords
+    with TableInfo<$ShopStatsRecordsTable, ShopStatsRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ShopStatsRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<int> listId = GeneratedColumn<int>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _startedAtMeta =
+      const VerificationMeta('startedAt');
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+      'started_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _completedAtMeta =
+      const VerificationMeta('completedAt');
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+      'completed_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _itemCountMeta =
+      const VerificationMeta('itemCount');
+  @override
+  late final GeneratedColumn<int> itemCount = GeneratedColumn<int>(
+      'item_count', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, listId, startedAt, completedAt, itemCount];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shop_stats_records';
+  @override
+  VerificationContext validateIntegrity(Insertable<ShopStatsRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(_startedAtMeta,
+          startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta));
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+          _completedAtMeta,
+          completedAt.isAcceptableOrUnknown(
+              data['completed_at']!, _completedAtMeta));
+    } else if (isInserting) {
+      context.missing(_completedAtMeta);
+    }
+    if (data.containsKey('item_count')) {
+      context.handle(_itemCountMeta,
+          itemCount.isAcceptableOrUnknown(data['item_count']!, _itemCountMeta));
+    } else if (isInserting) {
+      context.missing(_itemCountMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ShopStatsRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShopStatsRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
+      startedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}started_at'])!,
+      completedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at'])!,
+      itemCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}item_count'])!,
+    );
+  }
+
+  @override
+  $ShopStatsRecordsTable createAlias(String alias) {
+    return $ShopStatsRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class ShopStatsRecord extends DataClass implements Insertable<ShopStatsRecord> {
+  final int id;
+  final int listId;
+  final DateTime startedAt;
+  final DateTime completedAt;
+  final int itemCount;
+  const ShopStatsRecord(
+      {required this.id,
+      required this.listId,
+      required this.startedAt,
+      required this.completedAt,
+      required this.itemCount});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['list_id'] = Variable<int>(listId);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['completed_at'] = Variable<DateTime>(completedAt);
+    map['item_count'] = Variable<int>(itemCount);
+    return map;
+  }
+
+  ShopStatsRecordsCompanion toCompanion(bool nullToAbsent) {
+    return ShopStatsRecordsCompanion(
+      id: Value(id),
+      listId: Value(listId),
+      startedAt: Value(startedAt),
+      completedAt: Value(completedAt),
+      itemCount: Value(itemCount),
+    );
+  }
+
+  factory ShopStatsRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShopStatsRecord(
+      id: serializer.fromJson<int>(json['id']),
+      listId: serializer.fromJson<int>(json['listId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+      itemCount: serializer.fromJson<int>(json['itemCount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'listId': serializer.toJson<int>(listId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'completedAt': serializer.toJson<DateTime>(completedAt),
+      'itemCount': serializer.toJson<int>(itemCount),
+    };
+  }
+
+  ShopStatsRecord copyWith(
+          {int? id,
+          int? listId,
+          DateTime? startedAt,
+          DateTime? completedAt,
+          int? itemCount}) =>
+      ShopStatsRecord(
+        id: id ?? this.id,
+        listId: listId ?? this.listId,
+        startedAt: startedAt ?? this.startedAt,
+        completedAt: completedAt ?? this.completedAt,
+        itemCount: itemCount ?? this.itemCount,
+      );
+  ShopStatsRecord copyWithCompanion(ShopStatsRecordsCompanion data) {
+    return ShopStatsRecord(
+      id: data.id.present ? data.id.value : this.id,
+      listId: data.listId.present ? data.listId.value : this.listId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      completedAt:
+          data.completedAt.present ? data.completedAt.value : this.completedAt,
+      itemCount: data.itemCount.present ? data.itemCount.value : this.itemCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShopStatsRecord(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('itemCount: $itemCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, listId, startedAt, completedAt, itemCount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShopStatsRecord &&
+          other.id == this.id &&
+          other.listId == this.listId &&
+          other.startedAt == this.startedAt &&
+          other.completedAt == this.completedAt &&
+          other.itemCount == this.itemCount);
+}
+
+class ShopStatsRecordsCompanion extends UpdateCompanion<ShopStatsRecord> {
+  final Value<int> id;
+  final Value<int> listId;
+  final Value<DateTime> startedAt;
+  final Value<DateTime> completedAt;
+  final Value<int> itemCount;
+  const ShopStatsRecordsCompanion({
+    this.id = const Value.absent(),
+    this.listId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.itemCount = const Value.absent(),
+  });
+  ShopStatsRecordsCompanion.insert({
+    this.id = const Value.absent(),
+    required int listId,
+    required DateTime startedAt,
+    required DateTime completedAt,
+    required int itemCount,
+  })  : listId = Value(listId),
+        startedAt = Value(startedAt),
+        completedAt = Value(completedAt),
+        itemCount = Value(itemCount);
+  static Insertable<ShopStatsRecord> custom({
+    Expression<int>? id,
+    Expression<int>? listId,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? completedAt,
+    Expression<int>? itemCount,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (listId != null) 'list_id': listId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (itemCount != null) 'item_count': itemCount,
+    });
+  }
+
+  ShopStatsRecordsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? listId,
+      Value<DateTime>? startedAt,
+      Value<DateTime>? completedAt,
+      Value<int>? itemCount}) {
+    return ShopStatsRecordsCompanion(
+      id: id ?? this.id,
+      listId: listId ?? this.listId,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      itemCount: itemCount ?? this.itemCount,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (listId.present) {
+      map['list_id'] = Variable<int>(listId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (itemCount.present) {
+      map['item_count'] = Variable<int>(itemCount.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShopStatsRecordsCompanion(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('itemCount: $itemCount')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2673,6 +3024,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CategoryRankStatsTable categoryRankStats =
       $CategoryRankStatsTable(this);
   late final $ItemRankStatsTable itemRankStats = $ItemRankStatsTable(this);
+  late final $ShopStatsRecordsTable shopStatsRecords =
+      $ShopStatsRecordsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2684,7 +3037,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         listItems,
         checkOffEvents,
         categoryRankStats,
-        itemRankStats
+        itemRankStats,
+        shopStatsRecords
       ];
 }
 
@@ -3014,6 +3368,7 @@ typedef $$ShoppingListsTableCreateCompanionBuilder = ShoppingListsCompanion
   Value<DateTime?> lastCheckOffAt,
   Value<int> currentTripId,
   Value<int> currentTripSequence,
+  Value<DateTime?> activeShopStartedAt,
 });
 typedef $$ShoppingListsTableUpdateCompanionBuilder = ShoppingListsCompanion
     Function({
@@ -3024,6 +3379,7 @@ typedef $$ShoppingListsTableUpdateCompanionBuilder = ShoppingListsCompanion
   Value<DateTime?> lastCheckOffAt,
   Value<int> currentTripId,
   Value<int> currentTripSequence,
+  Value<DateTime?> activeShopStartedAt,
 });
 
 class $$ShoppingListsTableFilterComposer
@@ -3056,6 +3412,10 @@ class $$ShoppingListsTableFilterComposer
 
   ColumnFilters<int> get currentTripSequence => $composableBuilder(
       column: $table.currentTripSequence,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get activeShopStartedAt => $composableBuilder(
+      column: $table.activeShopStartedAt,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -3091,6 +3451,10 @@ class $$ShoppingListsTableOrderingComposer
   ColumnOrderings<int> get currentTripSequence => $composableBuilder(
       column: $table.currentTripSequence,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get activeShopStartedAt => $composableBuilder(
+      column: $table.activeShopStartedAt,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$ShoppingListsTableAnnotationComposer
@@ -3122,6 +3486,9 @@ class $$ShoppingListsTableAnnotationComposer
 
   GeneratedColumn<int> get currentTripSequence => $composableBuilder(
       column: $table.currentTripSequence, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get activeShopStartedAt => $composableBuilder(
+      column: $table.activeShopStartedAt, builder: (column) => column);
 }
 
 class $$ShoppingListsTableTableManager extends RootTableManager<
@@ -3157,6 +3524,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             Value<DateTime?> lastCheckOffAt = const Value.absent(),
             Value<int> currentTripId = const Value.absent(),
             Value<int> currentTripSequence = const Value.absent(),
+            Value<DateTime?> activeShopStartedAt = const Value.absent(),
           }) =>
               ShoppingListsCompanion(
             id: id,
@@ -3166,6 +3534,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             lastCheckOffAt: lastCheckOffAt,
             currentTripId: currentTripId,
             currentTripSequence: currentTripSequence,
+            activeShopStartedAt: activeShopStartedAt,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -3175,6 +3544,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             Value<DateTime?> lastCheckOffAt = const Value.absent(),
             Value<int> currentTripId = const Value.absent(),
             Value<int> currentTripSequence = const Value.absent(),
+            Value<DateTime?> activeShopStartedAt = const Value.absent(),
           }) =>
               ShoppingListsCompanion.insert(
             id: id,
@@ -3184,6 +3554,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             lastCheckOffAt: lastCheckOffAt,
             currentTripId: currentTripId,
             currentTripSequence: currentTripSequence,
+            activeShopStartedAt: activeShopStartedAt,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -4038,6 +4409,174 @@ typedef $$ItemRankStatsTableProcessedTableManager = ProcessedTableManager<
     ),
     ItemRankStat,
     PrefetchHooks Function()>;
+typedef $$ShopStatsRecordsTableCreateCompanionBuilder
+    = ShopStatsRecordsCompanion Function({
+  Value<int> id,
+  required int listId,
+  required DateTime startedAt,
+  required DateTime completedAt,
+  required int itemCount,
+});
+typedef $$ShopStatsRecordsTableUpdateCompanionBuilder
+    = ShopStatsRecordsCompanion Function({
+  Value<int> id,
+  Value<int> listId,
+  Value<DateTime> startedAt,
+  Value<DateTime> completedAt,
+  Value<int> itemCount,
+});
+
+class $$ShopStatsRecordsTableFilterComposer
+    extends Composer<_$AppDatabase, $ShopStatsRecordsTable> {
+  $$ShopStatsRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+      column: $table.startedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get itemCount => $composableBuilder(
+      column: $table.itemCount, builder: (column) => ColumnFilters(column));
+}
+
+class $$ShopStatsRecordsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ShopStatsRecordsTable> {
+  $$ShopStatsRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+      column: $table.startedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get itemCount => $composableBuilder(
+      column: $table.itemCount, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ShopStatsRecordsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ShopStatsRecordsTable> {
+  $$ShopStatsRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get itemCount =>
+      $composableBuilder(column: $table.itemCount, builder: (column) => column);
+}
+
+class $$ShopStatsRecordsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ShopStatsRecordsTable,
+    ShopStatsRecord,
+    $$ShopStatsRecordsTableFilterComposer,
+    $$ShopStatsRecordsTableOrderingComposer,
+    $$ShopStatsRecordsTableAnnotationComposer,
+    $$ShopStatsRecordsTableCreateCompanionBuilder,
+    $$ShopStatsRecordsTableUpdateCompanionBuilder,
+    (
+      ShopStatsRecord,
+      BaseReferences<_$AppDatabase, $ShopStatsRecordsTable, ShopStatsRecord>
+    ),
+    ShopStatsRecord,
+    PrefetchHooks Function()> {
+  $$ShopStatsRecordsTableTableManager(
+      _$AppDatabase db, $ShopStatsRecordsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ShopStatsRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ShopStatsRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ShopStatsRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> listId = const Value.absent(),
+            Value<DateTime> startedAt = const Value.absent(),
+            Value<DateTime> completedAt = const Value.absent(),
+            Value<int> itemCount = const Value.absent(),
+          }) =>
+              ShopStatsRecordsCompanion(
+            id: id,
+            listId: listId,
+            startedAt: startedAt,
+            completedAt: completedAt,
+            itemCount: itemCount,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int listId,
+            required DateTime startedAt,
+            required DateTime completedAt,
+            required int itemCount,
+          }) =>
+              ShopStatsRecordsCompanion.insert(
+            id: id,
+            listId: listId,
+            startedAt: startedAt,
+            completedAt: completedAt,
+            itemCount: itemCount,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ShopStatsRecordsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ShopStatsRecordsTable,
+    ShopStatsRecord,
+    $$ShopStatsRecordsTableFilterComposer,
+    $$ShopStatsRecordsTableOrderingComposer,
+    $$ShopStatsRecordsTableAnnotationComposer,
+    $$ShopStatsRecordsTableCreateCompanionBuilder,
+    $$ShopStatsRecordsTableUpdateCompanionBuilder,
+    (
+      ShopStatsRecord,
+      BaseReferences<_$AppDatabase, $ShopStatsRecordsTable, ShopStatsRecord>
+    ),
+    ShopStatsRecord,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4056,4 +4595,6 @@ class $AppDatabaseManager {
       $$CategoryRankStatsTableTableManager(_db, _db.categoryRankStats);
   $$ItemRankStatsTableTableManager get itemRankStats =>
       $$ItemRankStatsTableTableManager(_db, _db.itemRankStats);
+  $$ShopStatsRecordsTableTableManager get shopStatsRecords =>
+      $$ShopStatsRecordsTableTableManager(_db, _db.shopStatsRecords);
 }

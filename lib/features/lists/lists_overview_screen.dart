@@ -12,12 +12,19 @@ class ListsOverviewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final listsAsync = ref.watch(shoppingListsProvider);
+    final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('List Pilot'),
         actions: [
+          if (shopStatsEnabled)
+            IconButton(
+              icon: const Icon(Icons.bar_chart_outlined),
+              tooltip: 'Shop Stats',
+              onPressed: () => context.push('/stats'),
+            ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
@@ -145,6 +152,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final versionAsync = ref.watch(appVersionProvider);
+    final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
     final theme = Theme.of(context);
 
     return SafeArea(
@@ -183,6 +191,24 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             onTap: () {
               ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
               Navigator.pop(context);
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              'Features',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.timer_outlined),
+            title: const Text('Shop Stats'),
+            subtitle: const Text('Time your shops and compare to past trips'),
+            value: shopStatsEnabled,
+            onChanged: (value) {
+              ref.read(shopStatsEnabledProvider.notifier).setEnabled(value);
             },
           ),
           Padding(
