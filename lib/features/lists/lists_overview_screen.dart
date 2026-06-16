@@ -13,17 +13,26 @@ class ListsOverviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final listsAsync = ref.watch(shoppingListsProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
+    final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);
+    final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('List Pilot'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.restaurant_menu_outlined),
-            tooltip: 'Meal Planning',
-            onPressed: () => context.push('/meals'),
-          ),
+          if (mealManagerEnabled)
+            IconButton(
+              icon: const Icon(Icons.menu_book_outlined),
+              tooltip: 'Meal Manager',
+              onPressed: () => context.push('/meal-manager'),
+            ),
+          if (mealPlanningEnabled)
+            IconButton(
+              icon: const Icon(Icons.restaurant_menu_outlined),
+              tooltip: 'Meal Planning',
+              onPressed: () => context.push('/meals'),
+            ),
           if (shopStatsEnabled)
             IconButton(
               icon: const Icon(Icons.bar_chart_outlined),
@@ -45,7 +54,10 @@ class ListsOverviewScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                const _MealPlanningCard(),
+                _MealFeatureCards(
+                  mealManagerEnabled: mealManagerEnabled,
+                  mealPlanningEnabled: mealPlanningEnabled,
+                ),
                 const SizedBox(height: 24),
                 Center(
                   child: Padding(
@@ -84,9 +96,12 @@ class ListsOverviewScreen extends ConsumerWidget {
             itemCount: lists.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: _MealPlanningCard(),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _MealFeatureCards(
+                    mealManagerEnabled: mealManagerEnabled,
+                    mealPlanningEnabled: mealPlanningEnabled,
+                  ),
                 );
               }
               final list = lists[index - 1];
@@ -184,6 +199,47 @@ class _SettingsSheet extends ConsumerStatefulWidget {
 class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   bool _exportingCatalog = false;
   bool _exportingMeals = false;
+  late final TextEditingController _aiUriController;
+  late final TextEditingController _aiKeyController;
+  late final TextEditingController _aiModelController;
+  bool _aiFieldsInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _aiUriController = TextEditingController();
+    _aiKeyController = TextEditingController();
+    _aiModelController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _aiUriController.dispose();
+    _aiKeyController.dispose();
+    _aiModelController.dispose();
+    super.dispose();
+  }
+
+  void _initAiFields(AiConfig config) {
+    if (_aiFieldsInitialized) return;
+    _aiFieldsInitialized = true;
+    _aiUriController.text = config.apiUri ?? '';
+    _aiKeyController.text = config.apiKey ?? '';
+    _aiModelController.text = config.modelName ?? '';
+  }
+
+  Future<void> _saveAiConfig() async {
+    await ref.read(aiConfigProvider.notifier).update(
+          apiUri: _aiUriController.text.trim(),
+          apiKey: _aiKeyController.text.trim(),
+          modelName: _aiModelController.text.trim(),
+        );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI settings saved')),
+      );
+    }
+  }
 
   Future<void> _handleExportCatalog() async {
     if (_exportingCatalog) return;
@@ -209,9 +265,13 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   Widget build(BuildContext context) {
     final versionAsync = ref.watch(appVersionProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
+    final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);
+    final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
+    final aiConfig = ref.watch(aiConfigProvider);
     final listsAsync = ref.watch(shoppingListsProvider);
     final defaultListId = ref.watch(defaultShoppingListIdProvider);
     final theme = Theme.of(context);
+    _initAiFields(aiConfig);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -270,6 +330,85 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               ref.read(shopStatsEnabledProvider.notifier).setEnabled(value);
             },
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.menu_book_outlined),
+            title: const Text('Meal Manager'),
+            subtitle: const Text('Browse and create recipes'),
+            value: mealManagerEnabled,
+            onChanged: (value) {
+              ref.read(mealManagerEnabledProvider.notifier).setEnabled(value);
+            },
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.restaurant_menu_outlined),
+            title: const Text('Meal Planning'),
+            subtitle: const Text('Plan meals and fill your shopping list'),
+            value: mealPlanningEnabled,
+            onChanged: (value) {
+              ref.read(mealPlanningEnabledProvider.notifier).setEnabled(value);
+            },
+          ),
+          if (mealManagerEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'AI Import',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'OpenAI-compatible API for importing recipes from webpages '
+                '(uses /chat/completions).',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextField(
+                controller: _aiUriController,
+                decoration: const InputDecoration(
+                  labelText: 'API URI',
+                  hintText: 'https://api.openai.com/v1',
+                ),
+                keyboardType: TextInputType.url,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextField(
+                controller: _aiKeyController,
+                decoration: const InputDecoration(labelText: 'API Key'),
+                obscureText: true,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextField(
+                controller: _aiModelController,
+                decoration: const InputDecoration(
+                  labelText: 'Model name',
+                  hintText: 'gpt-4o-mini',
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _saveAiConfig,
+                  child: const Text('Save AI settings'),
+                ),
+              ),
+            ),
+          ],
+          if (mealPlanningEnabled) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
@@ -340,6 +479,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             enabled: !_exportingMeals,
             onTap: _handleExportMeals,
           ),
+          ],
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
@@ -381,6 +521,88 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             ),
           ),
         ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MealFeatureCards extends StatelessWidget {
+  const _MealFeatureCards({
+    required this.mealManagerEnabled,
+    required this.mealPlanningEnabled,
+  });
+
+  final bool mealManagerEnabled;
+  final bool mealPlanningEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!mealManagerEnabled && !mealPlanningEnabled) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        if (mealManagerEnabled) ...[
+          const _MealManagerCard(),
+          if (mealPlanningEnabled) const SizedBox(height: 12),
+        ],
+        if (mealPlanningEnabled) const _MealPlanningCard(),
+      ],
+    );
+  }
+}
+
+class _MealManagerCard extends StatelessWidget {
+  const _MealManagerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => context.push('/meal-manager'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: theme.colorScheme.tertiaryContainer,
+                child: Icon(
+                  Icons.menu_book_outlined,
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meal Manager',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Create and browse your recipes',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
         ),
       ),
     );

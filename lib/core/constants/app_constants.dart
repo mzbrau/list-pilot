@@ -25,6 +25,12 @@ class AppConstants {
   static const String themeModeKey = 'theme_mode';
   static const String shopStatsEnabledKey = 'shop_stats_enabled';
   static const String defaultShoppingListIdKey = 'default_shopping_list_id';
+  static const String mealManagerEnabledKey = 'meal_manager_enabled';
+  static const String mealPlanningEnabledKey = 'meal_planning_enabled';
+  static const String aiApiUriKey = 'ai_api_uri';
+  static const String aiApiKeyKey = 'ai_api_key';
+  static const String aiModelNameKey = 'ai_model_name';
+  static const String mealManagerLayoutModeKey = 'meal_manager_layout_mode';
 }
 
 class QuantityUnits {

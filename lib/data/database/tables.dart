@@ -128,3 +128,24 @@ class MealCheckOffEvents extends Table {
       integer().nullable().references(MealPlanItems, #id)();
   DateTimeColumn get checkedAt => dateTime()();
 }
+
+class MealSteps extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get mealId => integer().references(Meals, #id)();
+  IntColumn get stepOrder => integer()();
+  TextColumn get instruction => text()();
+}
+
+class MealTags extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().unique()();
+  TextColumn get displayName => text()();
+}
+
+class MealTagAssignments extends Table {
+  IntColumn get mealId => integer().references(Meals, #id)();
+  IntColumn get tagId => integer().references(MealTags, #id)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {mealId, tagId};
+}

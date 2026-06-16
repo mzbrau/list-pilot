@@ -42,6 +42,8 @@ Map<String, dynamic> buildMealExportPayload(MealExportData data) {
                   },
                 )
                 .toList(),
+            if (meal.steps.isNotEmpty) 'steps': meal.steps,
+            if (meal.tags.isNotEmpty) 'tags': meal.tags,
           },
         )
         .toList(),

@@ -120,4 +120,80 @@ void main() {
     expect(export.checkOffHistory, hasLength(1));
     expect(export.checkOffHistory.first.displayName, 'Risotto');
   });
+
+  test('steps CRUD and reorder', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Pancakes',
+      steps: ['Mix batter', 'Cook'],
+    );
+
+    var steps = await repo.getStepsForMeal(meal.id);
+    expect(steps, hasLength(2));
+    expect(steps.first.instruction, 'Mix batter');
+
+    await repo.updateStep(id: steps.first.id, instruction: 'Mix dry ingredients');
+    steps = await repo.getStepsForMeal(meal.id);
+    expect(steps.first.instruction, 'Mix dry ingredients');
+
+    await repo.reorderSteps(meal.id, [steps.last.id, steps.first.id]);
+    steps = await repo.getStepsForMeal(meal.id);
+    expect(steps.first.instruction, 'Cook');
+
+    await repo.deleteStep(steps.first.id);
+    steps = await repo.getStepsForMeal(meal.id);
+    expect(steps, hasLength(1));
+  });
+
+  test('tags upsert and searchMealsWithTags', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Roast Chicken',
+      tags: ['Dinner', 'Chicken'],
+    );
+
+    final tags = await repo.getTagsForMeal(meal.id);
+    expect(tags.map((t) => t.displayName), containsAll(['Dinner', 'Chicken']));
+
+    await repo.setMealTags(meal.id, ['Dinner', 'Sunday']);
+    final updated = await repo.getTagsForMeal(meal.id);
+    expect(updated.map((t) => t.displayName), containsAll(['Dinner', 'Sunday']));
+    expect(updated.map((t) => t.displayName), isNot(contains('Chicken')));
+
+    final byTag = await repo.searchMealsWithTags('din');
+    expect(byTag.map((m) => m.displayName), contains('Roast Chicken'));
+
+    final byName = await repo.searchMealsWithTags('roast');
+    expect(byName, hasLength(1));
+  });
+
+  test('deleteMeal cascades steps and tags', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Temp Meal',
+      steps: ['Step 1'],
+      tags: ['Test'],
+    );
+    await repo.deleteMeal(meal.id);
+
+    final steps = await repo.getStepsForMeal(meal.id);
+    final tags = await repo.getTagsForMeal(meal.id);
+    expect(steps, isEmpty);
+    expect(tags, isEmpty);
+  });
+
+  test('createMeal with full data', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Full Recipe',
+      notes: 'Tasty',
+      portions: 2,
+      recipeLink: 'https://example.com',
+      ingredients: ['Flour', 'Eggs'],
+      steps: ['Bake'],
+      tags: ['Dessert'],
+    );
+
+    expect(meal.displayName, 'Full Recipe');
+    expect(meal.portions, 2);
+    expect((await repo.getIngredientsForMeal(meal.id)), hasLength(2));
+    expect((await repo.getStepsForMeal(meal.id)), hasLength(1));
+    expect((await repo.getTagsForMeal(meal.id)), hasLength(1));
+  });
 }

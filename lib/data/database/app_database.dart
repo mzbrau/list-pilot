@@ -20,6 +20,9 @@ part 'app_database.g.dart';
   MealPlanItems,
   MealIngredients,
   MealCheckOffEvents,
+  MealSteps,
+  MealTags,
+  MealTagAssignments,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -27,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -47,6 +50,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(mealPlanItems);
             await m.createTable(mealIngredients);
             await m.createTable(mealCheckOffEvents);
+          }
+          if (from < 4) {
+            await m.createTable(mealSteps);
+            await m.createTable(mealTags);
+            await m.createTable(mealTagAssignments);
           }
         },
         beforeOpen: (details) async {
@@ -270,6 +278,108 @@ class AppDatabase extends _$AppDatabase {
           ..where((t) => t.mealId.equals(mealId))
           ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
         .watch();
+  }
+
+  Stream<List<Meal>> watchAllMeals() {
+    return (select(meals)
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+        .watch();
+  }
+
+  Future<List<Meal>> searchMealsWithTags(String query) async {
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return (select(meals)
+            ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+          .get();
+    }
+    final rows = await customSelect(
+      '''
+      SELECT DISTINCT m.*
+      FROM meals m
+      LEFT JOIN meal_tag_assignments mta ON mta.meal_id = m.id
+      LEFT JOIN meal_tags mt ON mt.id = mta.tag_id
+      WHERE m.name LIKE ? OR mt.name LIKE ?
+      ORDER BY m.display_name ASC
+      ''',
+      variables: [
+        Variable<String>('$normalized%'),
+        Variable<String>('$normalized%'),
+      ],
+      readsFrom: {meals, mealTagAssignments, mealTags},
+    ).get();
+    return rows
+        .map(
+          (row) => Meal(
+            id: row.read<int>('id'),
+            name: row.read<String>('name'),
+            displayName: row.read<String>('display_name'),
+            photoPath: row.read<String?>('photo_path'),
+            notes: row.read<String?>('notes'),
+            portions: row.read<int>('portions'),
+            recipeLink: row.read<String?>('recipe_link'),
+            isUserAdded: row.read<bool>('is_user_added'),
+            createdAt: row.read<DateTime>('created_at'),
+          ),
+        )
+        .toList();
+  }
+
+  Future<List<MealStep>> getStepsForMeal(int mealId) {
+    return (select(mealSteps)
+          ..where((t) => t.mealId.equals(mealId))
+          ..orderBy([(t) => OrderingTerm.asc(t.stepOrder)]))
+        .get();
+  }
+
+  Stream<List<MealStep>> watchStepsForMeal(int mealId) {
+    return (select(mealSteps)
+          ..where((t) => t.mealId.equals(mealId))
+          ..orderBy([(t) => OrderingTerm.asc(t.stepOrder)]))
+        .watch();
+  }
+
+  Future<List<MealTag>> searchTags(String query, {int limit = 8}) {
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return (select(mealTags)
+            ..orderBy([(t) => OrderingTerm.asc(t.displayName)])
+            ..limit(limit))
+          .get();
+    }
+    return (select(mealTags)
+          ..where((t) => t.name.like('$normalized%'))
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)])
+          ..limit(limit))
+        .get();
+  }
+
+  Future<List<MealTag>> getTagsForMeal(int mealId) {
+    final query = select(mealTags).join([
+      innerJoin(
+        mealTagAssignments,
+        mealTagAssignments.tagId.equalsExp(mealTags.id),
+      ),
+    ])
+      ..where(mealTagAssignments.mealId.equals(mealId))
+      ..orderBy([OrderingTerm.asc(mealTags.displayName)]);
+    return query.get().then(
+          (rows) => rows.map((row) => row.readTable(mealTags)).toList(),
+        );
+  }
+
+  Stream<List<MealTag>> watchTagsForMeal(int mealId) {
+    final query = select(mealTags).join([
+      innerJoin(
+        mealTagAssignments,
+        mealTagAssignments.tagId.equalsExp(mealTags.id),
+      ),
+    ])
+      ..where(mealTagAssignments.mealId.equals(mealId))
+      ..orderBy([OrderingTerm.asc(mealTags.displayName)]);
+    return query.watch().map(
+          (rows) => rows.map((row) => row.readTable(mealTags)).toList(),
+        );
   }
 }
 

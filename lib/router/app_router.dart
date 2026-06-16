@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../features/item_detail/item_detail_screen.dart';
 import '../features/lists/lists_overview_screen.dart';
+import '../features/meal_manager/meal_import_screen.dart';
+import '../features/meal_manager/meal_manager_screen.dart';
 import '../features/meal_planning/meal_calendar_screen.dart';
 import '../features/meal_planning/meal_detail_screen.dart';
 import '../features/meal_planning/meal_plan_screen.dart';
@@ -33,7 +35,32 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: ':mealId',
             builder: (context, state) {
               final mealId = int.parse(state.pathParameters['mealId']!);
-              return MealDetailScreen(mealId: mealId);
+              final initialEditMode = state.extra == true;
+              return MealDetailScreen(
+                mealId: mealId,
+                initialEditMode: initialEditMode,
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/meal-manager',
+        builder: (context, state) => const MealManagerScreen(),
+        routes: [
+          GoRoute(
+            path: 'import',
+            builder: (context, state) => const MealImportScreen(),
+          ),
+          GoRoute(
+            path: ':mealId',
+            builder: (context, state) {
+              final mealId = int.parse(state.pathParameters['mealId']!);
+              final initialEditMode = state.extra == true;
+              return MealDetailScreen(
+                mealId: mealId,
+                initialEditMode: initialEditMode,
+              );
             },
           ),
         ],

@@ -23,6 +23,8 @@ void main() {
                 addToShoppingList: false,
               ),
             ],
+            steps: ['Cut chicken', 'Stir fry'],
+            tags: ['Dinner', 'Chicken'],
           ),
         ],
         checkOffHistory: [
@@ -48,6 +50,9 @@ void main() {
     expect(ingredients, hasLength(2));
     expect(ingredients.first['addToShoppingList'], isTrue);
     expect(ingredients.last['addToShoppingList'], isFalse);
+
+    expect(meals.first['steps'], ['Cut chicken', 'Stir fry']);
+    expect(meals.first['tags'], ['Dinner', 'Chicken']);
 
     final history = payload['checkOffHistory'] as List;
     expect(history, hasLength(1));

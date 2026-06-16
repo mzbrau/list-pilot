@@ -4365,6 +4365,676 @@ class MealCheckOffEventsCompanion extends UpdateCompanion<MealCheckOffEvent> {
   }
 }
 
+class $MealStepsTable extends MealSteps
+    with TableInfo<$MealStepsTable, MealStep> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MealStepsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _mealIdMeta = const VerificationMeta('mealId');
+  @override
+  late final GeneratedColumn<int> mealId = GeneratedColumn<int>(
+      'meal_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _stepOrderMeta =
+      const VerificationMeta('stepOrder');
+  @override
+  late final GeneratedColumn<int> stepOrder = GeneratedColumn<int>(
+      'step_order', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _instructionMeta =
+      const VerificationMeta('instruction');
+  @override
+  late final GeneratedColumn<String> instruction = GeneratedColumn<String>(
+      'instruction', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, mealId, stepOrder, instruction];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meal_steps';
+  @override
+  VerificationContext validateIntegrity(Insertable<MealStep> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('meal_id')) {
+      context.handle(_mealIdMeta,
+          mealId.isAcceptableOrUnknown(data['meal_id']!, _mealIdMeta));
+    } else if (isInserting) {
+      context.missing(_mealIdMeta);
+    }
+    if (data.containsKey('step_order')) {
+      context.handle(_stepOrderMeta,
+          stepOrder.isAcceptableOrUnknown(data['step_order']!, _stepOrderMeta));
+    } else if (isInserting) {
+      context.missing(_stepOrderMeta);
+    }
+    if (data.containsKey('instruction')) {
+      context.handle(
+          _instructionMeta,
+          instruction.isAcceptableOrUnknown(
+              data['instruction']!, _instructionMeta));
+    } else if (isInserting) {
+      context.missing(_instructionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MealStep map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MealStep(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      mealId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}meal_id'])!,
+      stepOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}step_order'])!,
+      instruction: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instruction'])!,
+    );
+  }
+
+  @override
+  $MealStepsTable createAlias(String alias) {
+    return $MealStepsTable(attachedDatabase, alias);
+  }
+}
+
+class MealStep extends DataClass implements Insertable<MealStep> {
+  final int id;
+  final int mealId;
+  final int stepOrder;
+  final String instruction;
+  const MealStep(
+      {required this.id,
+      required this.mealId,
+      required this.stepOrder,
+      required this.instruction});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['meal_id'] = Variable<int>(mealId);
+    map['step_order'] = Variable<int>(stepOrder);
+    map['instruction'] = Variable<String>(instruction);
+    return map;
+  }
+
+  MealStepsCompanion toCompanion(bool nullToAbsent) {
+    return MealStepsCompanion(
+      id: Value(id),
+      mealId: Value(mealId),
+      stepOrder: Value(stepOrder),
+      instruction: Value(instruction),
+    );
+  }
+
+  factory MealStep.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MealStep(
+      id: serializer.fromJson<int>(json['id']),
+      mealId: serializer.fromJson<int>(json['mealId']),
+      stepOrder: serializer.fromJson<int>(json['stepOrder']),
+      instruction: serializer.fromJson<String>(json['instruction']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'mealId': serializer.toJson<int>(mealId),
+      'stepOrder': serializer.toJson<int>(stepOrder),
+      'instruction': serializer.toJson<String>(instruction),
+    };
+  }
+
+  MealStep copyWith(
+          {int? id, int? mealId, int? stepOrder, String? instruction}) =>
+      MealStep(
+        id: id ?? this.id,
+        mealId: mealId ?? this.mealId,
+        stepOrder: stepOrder ?? this.stepOrder,
+        instruction: instruction ?? this.instruction,
+      );
+  MealStep copyWithCompanion(MealStepsCompanion data) {
+    return MealStep(
+      id: data.id.present ? data.id.value : this.id,
+      mealId: data.mealId.present ? data.mealId.value : this.mealId,
+      stepOrder: data.stepOrder.present ? data.stepOrder.value : this.stepOrder,
+      instruction:
+          data.instruction.present ? data.instruction.value : this.instruction,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealStep(')
+          ..write('id: $id, ')
+          ..write('mealId: $mealId, ')
+          ..write('stepOrder: $stepOrder, ')
+          ..write('instruction: $instruction')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, mealId, stepOrder, instruction);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MealStep &&
+          other.id == this.id &&
+          other.mealId == this.mealId &&
+          other.stepOrder == this.stepOrder &&
+          other.instruction == this.instruction);
+}
+
+class MealStepsCompanion extends UpdateCompanion<MealStep> {
+  final Value<int> id;
+  final Value<int> mealId;
+  final Value<int> stepOrder;
+  final Value<String> instruction;
+  const MealStepsCompanion({
+    this.id = const Value.absent(),
+    this.mealId = const Value.absent(),
+    this.stepOrder = const Value.absent(),
+    this.instruction = const Value.absent(),
+  });
+  MealStepsCompanion.insert({
+    this.id = const Value.absent(),
+    required int mealId,
+    required int stepOrder,
+    required String instruction,
+  })  : mealId = Value(mealId),
+        stepOrder = Value(stepOrder),
+        instruction = Value(instruction);
+  static Insertable<MealStep> custom({
+    Expression<int>? id,
+    Expression<int>? mealId,
+    Expression<int>? stepOrder,
+    Expression<String>? instruction,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mealId != null) 'meal_id': mealId,
+      if (stepOrder != null) 'step_order': stepOrder,
+      if (instruction != null) 'instruction': instruction,
+    });
+  }
+
+  MealStepsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? mealId,
+      Value<int>? stepOrder,
+      Value<String>? instruction}) {
+    return MealStepsCompanion(
+      id: id ?? this.id,
+      mealId: mealId ?? this.mealId,
+      stepOrder: stepOrder ?? this.stepOrder,
+      instruction: instruction ?? this.instruction,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (mealId.present) {
+      map['meal_id'] = Variable<int>(mealId.value);
+    }
+    if (stepOrder.present) {
+      map['step_order'] = Variable<int>(stepOrder.value);
+    }
+    if (instruction.present) {
+      map['instruction'] = Variable<String>(instruction.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealStepsCompanion(')
+          ..write('id: $id, ')
+          ..write('mealId: $mealId, ')
+          ..write('stepOrder: $stepOrder, ')
+          ..write('instruction: $instruction')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MealTagsTable extends MealTags with TableInfo<$MealTagsTable, MealTag> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MealTagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _displayNameMeta =
+      const VerificationMeta('displayName');
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+      'display_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, displayName];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meal_tags';
+  @override
+  VerificationContext validateIntegrity(Insertable<MealTag> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+          _displayNameMeta,
+          displayName.isAcceptableOrUnknown(
+              data['display_name']!, _displayNameMeta));
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MealTag map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MealTag(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      displayName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+    );
+  }
+
+  @override
+  $MealTagsTable createAlias(String alias) {
+    return $MealTagsTable(attachedDatabase, alias);
+  }
+}
+
+class MealTag extends DataClass implements Insertable<MealTag> {
+  final int id;
+  final String name;
+  final String displayName;
+  const MealTag(
+      {required this.id, required this.name, required this.displayName});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['display_name'] = Variable<String>(displayName);
+    return map;
+  }
+
+  MealTagsCompanion toCompanion(bool nullToAbsent) {
+    return MealTagsCompanion(
+      id: Value(id),
+      name: Value(name),
+      displayName: Value(displayName),
+    );
+  }
+
+  factory MealTag.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MealTag(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'displayName': serializer.toJson<String>(displayName),
+    };
+  }
+
+  MealTag copyWith({int? id, String? name, String? displayName}) => MealTag(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        displayName: displayName ?? this.displayName,
+      );
+  MealTag copyWithCompanion(MealTagsCompanion data) {
+    return MealTag(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      displayName:
+          data.displayName.present ? data.displayName.value : this.displayName,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealTag(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('displayName: $displayName')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, displayName);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MealTag &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.displayName == this.displayName);
+}
+
+class MealTagsCompanion extends UpdateCompanion<MealTag> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> displayName;
+  const MealTagsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.displayName = const Value.absent(),
+  });
+  MealTagsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String displayName,
+  })  : name = Value(name),
+        displayName = Value(displayName);
+  static Insertable<MealTag> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? displayName,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (displayName != null) 'display_name': displayName,
+    });
+  }
+
+  MealTagsCompanion copyWith(
+      {Value<int>? id, Value<String>? name, Value<String>? displayName}) {
+    return MealTagsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      displayName: displayName ?? this.displayName,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealTagsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('displayName: $displayName')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MealTagAssignmentsTable extends MealTagAssignments
+    with TableInfo<$MealTagAssignmentsTable, MealTagAssignment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MealTagAssignmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _mealIdMeta = const VerificationMeta('mealId');
+  @override
+  late final GeneratedColumn<int> mealId = GeneratedColumn<int>(
+      'meal_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
+  @override
+  late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
+      'tag_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [mealId, tagId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meal_tag_assignments';
+  @override
+  VerificationContext validateIntegrity(Insertable<MealTagAssignment> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('meal_id')) {
+      context.handle(_mealIdMeta,
+          mealId.isAcceptableOrUnknown(data['meal_id']!, _mealIdMeta));
+    } else if (isInserting) {
+      context.missing(_mealIdMeta);
+    }
+    if (data.containsKey('tag_id')) {
+      context.handle(
+          _tagIdMeta, tagId.isAcceptableOrUnknown(data['tag_id']!, _tagIdMeta));
+    } else if (isInserting) {
+      context.missing(_tagIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {mealId, tagId};
+  @override
+  MealTagAssignment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MealTagAssignment(
+      mealId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}meal_id'])!,
+      tagId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}tag_id'])!,
+    );
+  }
+
+  @override
+  $MealTagAssignmentsTable createAlias(String alias) {
+    return $MealTagAssignmentsTable(attachedDatabase, alias);
+  }
+}
+
+class MealTagAssignment extends DataClass
+    implements Insertable<MealTagAssignment> {
+  final int mealId;
+  final int tagId;
+  const MealTagAssignment({required this.mealId, required this.tagId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['meal_id'] = Variable<int>(mealId);
+    map['tag_id'] = Variable<int>(tagId);
+    return map;
+  }
+
+  MealTagAssignmentsCompanion toCompanion(bool nullToAbsent) {
+    return MealTagAssignmentsCompanion(
+      mealId: Value(mealId),
+      tagId: Value(tagId),
+    );
+  }
+
+  factory MealTagAssignment.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MealTagAssignment(
+      mealId: serializer.fromJson<int>(json['mealId']),
+      tagId: serializer.fromJson<int>(json['tagId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'mealId': serializer.toJson<int>(mealId),
+      'tagId': serializer.toJson<int>(tagId),
+    };
+  }
+
+  MealTagAssignment copyWith({int? mealId, int? tagId}) => MealTagAssignment(
+        mealId: mealId ?? this.mealId,
+        tagId: tagId ?? this.tagId,
+      );
+  MealTagAssignment copyWithCompanion(MealTagAssignmentsCompanion data) {
+    return MealTagAssignment(
+      mealId: data.mealId.present ? data.mealId.value : this.mealId,
+      tagId: data.tagId.present ? data.tagId.value : this.tagId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealTagAssignment(')
+          ..write('mealId: $mealId, ')
+          ..write('tagId: $tagId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(mealId, tagId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MealTagAssignment &&
+          other.mealId == this.mealId &&
+          other.tagId == this.tagId);
+}
+
+class MealTagAssignmentsCompanion extends UpdateCompanion<MealTagAssignment> {
+  final Value<int> mealId;
+  final Value<int> tagId;
+  final Value<int> rowid;
+  const MealTagAssignmentsCompanion({
+    this.mealId = const Value.absent(),
+    this.tagId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MealTagAssignmentsCompanion.insert({
+    required int mealId,
+    required int tagId,
+    this.rowid = const Value.absent(),
+  })  : mealId = Value(mealId),
+        tagId = Value(tagId);
+  static Insertable<MealTagAssignment> custom({
+    Expression<int>? mealId,
+    Expression<int>? tagId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (mealId != null) 'meal_id': mealId,
+      if (tagId != null) 'tag_id': tagId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MealTagAssignmentsCompanion copyWith(
+      {Value<int>? mealId, Value<int>? tagId, Value<int>? rowid}) {
+    return MealTagAssignmentsCompanion(
+      mealId: mealId ?? this.mealId,
+      tagId: tagId ?? this.tagId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (mealId.present) {
+      map['meal_id'] = Variable<int>(mealId.value);
+    }
+    if (tagId.present) {
+      map['tag_id'] = Variable<int>(tagId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealTagAssignmentsCompanion(')
+          ..write('mealId: $mealId, ')
+          ..write('tagId: $tagId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4384,6 +5054,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $MealIngredientsTable(this);
   late final $MealCheckOffEventsTable mealCheckOffEvents =
       $MealCheckOffEventsTable(this);
+  late final $MealStepsTable mealSteps = $MealStepsTable(this);
+  late final $MealTagsTable mealTags = $MealTagsTable(this);
+  late final $MealTagAssignmentsTable mealTagAssignments =
+      $MealTagAssignmentsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4400,7 +5074,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         meals,
         mealPlanItems,
         mealIngredients,
-        mealCheckOffEvents
+        mealCheckOffEvents,
+        mealSteps,
+        mealTags,
+        mealTagAssignments
       ];
 }
 
@@ -6651,6 +7328,409 @@ typedef $$MealCheckOffEventsTableProcessedTableManager = ProcessedTableManager<
     ),
     MealCheckOffEvent,
     PrefetchHooks Function()>;
+typedef $$MealStepsTableCreateCompanionBuilder = MealStepsCompanion Function({
+  Value<int> id,
+  required int mealId,
+  required int stepOrder,
+  required String instruction,
+});
+typedef $$MealStepsTableUpdateCompanionBuilder = MealStepsCompanion Function({
+  Value<int> id,
+  Value<int> mealId,
+  Value<int> stepOrder,
+  Value<String> instruction,
+});
+
+class $$MealStepsTableFilterComposer
+    extends Composer<_$AppDatabase, $MealStepsTable> {
+  $$MealStepsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get mealId => $composableBuilder(
+      column: $table.mealId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stepOrder => $composableBuilder(
+      column: $table.stepOrder, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get instruction => $composableBuilder(
+      column: $table.instruction, builder: (column) => ColumnFilters(column));
+}
+
+class $$MealStepsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MealStepsTable> {
+  $$MealStepsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get mealId => $composableBuilder(
+      column: $table.mealId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stepOrder => $composableBuilder(
+      column: $table.stepOrder, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get instruction => $composableBuilder(
+      column: $table.instruction, builder: (column) => ColumnOrderings(column));
+}
+
+class $$MealStepsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MealStepsTable> {
+  $$MealStepsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get mealId =>
+      $composableBuilder(column: $table.mealId, builder: (column) => column);
+
+  GeneratedColumn<int> get stepOrder =>
+      $composableBuilder(column: $table.stepOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get instruction => $composableBuilder(
+      column: $table.instruction, builder: (column) => column);
+}
+
+class $$MealStepsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $MealStepsTable,
+    MealStep,
+    $$MealStepsTableFilterComposer,
+    $$MealStepsTableOrderingComposer,
+    $$MealStepsTableAnnotationComposer,
+    $$MealStepsTableCreateCompanionBuilder,
+    $$MealStepsTableUpdateCompanionBuilder,
+    (MealStep, BaseReferences<_$AppDatabase, $MealStepsTable, MealStep>),
+    MealStep,
+    PrefetchHooks Function()> {
+  $$MealStepsTableTableManager(_$AppDatabase db, $MealStepsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MealStepsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MealStepsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MealStepsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> mealId = const Value.absent(),
+            Value<int> stepOrder = const Value.absent(),
+            Value<String> instruction = const Value.absent(),
+          }) =>
+              MealStepsCompanion(
+            id: id,
+            mealId: mealId,
+            stepOrder: stepOrder,
+            instruction: instruction,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int mealId,
+            required int stepOrder,
+            required String instruction,
+          }) =>
+              MealStepsCompanion.insert(
+            id: id,
+            mealId: mealId,
+            stepOrder: stepOrder,
+            instruction: instruction,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$MealStepsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $MealStepsTable,
+    MealStep,
+    $$MealStepsTableFilterComposer,
+    $$MealStepsTableOrderingComposer,
+    $$MealStepsTableAnnotationComposer,
+    $$MealStepsTableCreateCompanionBuilder,
+    $$MealStepsTableUpdateCompanionBuilder,
+    (MealStep, BaseReferences<_$AppDatabase, $MealStepsTable, MealStep>),
+    MealStep,
+    PrefetchHooks Function()>;
+typedef $$MealTagsTableCreateCompanionBuilder = MealTagsCompanion Function({
+  Value<int> id,
+  required String name,
+  required String displayName,
+});
+typedef $$MealTagsTableUpdateCompanionBuilder = MealTagsCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String> displayName,
+});
+
+class $$MealTagsTableFilterComposer
+    extends Composer<_$AppDatabase, $MealTagsTable> {
+  $$MealTagsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnFilters(column));
+}
+
+class $$MealTagsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MealTagsTable> {
+  $$MealTagsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnOrderings(column));
+}
+
+class $$MealTagsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MealTagsTable> {
+  $$MealTagsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => column);
+}
+
+class $$MealTagsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $MealTagsTable,
+    MealTag,
+    $$MealTagsTableFilterComposer,
+    $$MealTagsTableOrderingComposer,
+    $$MealTagsTableAnnotationComposer,
+    $$MealTagsTableCreateCompanionBuilder,
+    $$MealTagsTableUpdateCompanionBuilder,
+    (MealTag, BaseReferences<_$AppDatabase, $MealTagsTable, MealTag>),
+    MealTag,
+    PrefetchHooks Function()> {
+  $$MealTagsTableTableManager(_$AppDatabase db, $MealTagsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MealTagsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MealTagsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MealTagsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> displayName = const Value.absent(),
+          }) =>
+              MealTagsCompanion(
+            id: id,
+            name: name,
+            displayName: displayName,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            required String displayName,
+          }) =>
+              MealTagsCompanion.insert(
+            id: id,
+            name: name,
+            displayName: displayName,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$MealTagsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $MealTagsTable,
+    MealTag,
+    $$MealTagsTableFilterComposer,
+    $$MealTagsTableOrderingComposer,
+    $$MealTagsTableAnnotationComposer,
+    $$MealTagsTableCreateCompanionBuilder,
+    $$MealTagsTableUpdateCompanionBuilder,
+    (MealTag, BaseReferences<_$AppDatabase, $MealTagsTable, MealTag>),
+    MealTag,
+    PrefetchHooks Function()>;
+typedef $$MealTagAssignmentsTableCreateCompanionBuilder
+    = MealTagAssignmentsCompanion Function({
+  required int mealId,
+  required int tagId,
+  Value<int> rowid,
+});
+typedef $$MealTagAssignmentsTableUpdateCompanionBuilder
+    = MealTagAssignmentsCompanion Function({
+  Value<int> mealId,
+  Value<int> tagId,
+  Value<int> rowid,
+});
+
+class $$MealTagAssignmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $MealTagAssignmentsTable> {
+  $$MealTagAssignmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get mealId => $composableBuilder(
+      column: $table.mealId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get tagId => $composableBuilder(
+      column: $table.tagId, builder: (column) => ColumnFilters(column));
+}
+
+class $$MealTagAssignmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MealTagAssignmentsTable> {
+  $$MealTagAssignmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get mealId => $composableBuilder(
+      column: $table.mealId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get tagId => $composableBuilder(
+      column: $table.tagId, builder: (column) => ColumnOrderings(column));
+}
+
+class $$MealTagAssignmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MealTagAssignmentsTable> {
+  $$MealTagAssignmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get mealId =>
+      $composableBuilder(column: $table.mealId, builder: (column) => column);
+
+  GeneratedColumn<int> get tagId =>
+      $composableBuilder(column: $table.tagId, builder: (column) => column);
+}
+
+class $$MealTagAssignmentsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $MealTagAssignmentsTable,
+    MealTagAssignment,
+    $$MealTagAssignmentsTableFilterComposer,
+    $$MealTagAssignmentsTableOrderingComposer,
+    $$MealTagAssignmentsTableAnnotationComposer,
+    $$MealTagAssignmentsTableCreateCompanionBuilder,
+    $$MealTagAssignmentsTableUpdateCompanionBuilder,
+    (
+      MealTagAssignment,
+      BaseReferences<_$AppDatabase, $MealTagAssignmentsTable, MealTagAssignment>
+    ),
+    MealTagAssignment,
+    PrefetchHooks Function()> {
+  $$MealTagAssignmentsTableTableManager(
+      _$AppDatabase db, $MealTagAssignmentsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MealTagAssignmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MealTagAssignmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MealTagAssignmentsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> mealId = const Value.absent(),
+            Value<int> tagId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              MealTagAssignmentsCompanion(
+            mealId: mealId,
+            tagId: tagId,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int mealId,
+            required int tagId,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              MealTagAssignmentsCompanion.insert(
+            mealId: mealId,
+            tagId: tagId,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$MealTagAssignmentsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $MealTagAssignmentsTable,
+    MealTagAssignment,
+    $$MealTagAssignmentsTableFilterComposer,
+    $$MealTagAssignmentsTableOrderingComposer,
+    $$MealTagAssignmentsTableAnnotationComposer,
+    $$MealTagAssignmentsTableCreateCompanionBuilder,
+    $$MealTagAssignmentsTableUpdateCompanionBuilder,
+    (
+      MealTagAssignment,
+      BaseReferences<_$AppDatabase, $MealTagAssignmentsTable, MealTagAssignment>
+    ),
+    MealTagAssignment,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6679,4 +7759,10 @@ class $AppDatabaseManager {
       $$MealIngredientsTableTableManager(_db, _db.mealIngredients);
   $$MealCheckOffEventsTableTableManager get mealCheckOffEvents =>
       $$MealCheckOffEventsTableTableManager(_db, _db.mealCheckOffEvents);
+  $$MealStepsTableTableManager get mealSteps =>
+      $$MealStepsTableTableManager(_db, _db.mealSteps);
+  $$MealTagsTableTableManager get mealTags =>
+      $$MealTagsTableTableManager(_db, _db.mealTags);
+  $$MealTagAssignmentsTableTableManager get mealTagAssignments =>
+      $$MealTagAssignmentsTableTableManager(_db, _db.mealTagAssignments);
 }

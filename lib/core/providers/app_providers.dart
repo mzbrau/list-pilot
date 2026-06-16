@@ -13,6 +13,7 @@ import '../../data/repositories/shop_stats_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
 import '../../data/services/meal_export_service.dart';
+import '../../data/services/meal_import_service.dart';
 import '../../data/services/meal_photo_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -39,6 +40,10 @@ final mealPhotoServiceProvider = Provider<MealPhotoService>((ref) {
 
 final mealExportServiceProvider = Provider<MealExportService>((ref) {
   return MealExportService(ref.watch(mealRepositoryProvider));
+});
+
+final mealImportServiceProvider = Provider<MealImportService>((ref) {
+  return MealImportService(aiConfig: ref.watch(aiConfigProvider));
 });
 
 final learningRepositoryProvider = Provider<LearningRepository>((ref) {
@@ -260,4 +265,153 @@ final mealsEatenOnDateProvider =
         (ref, date) {
   ref.watch(appInitProvider);
   return ref.watch(mealRepositoryProvider).watchMealsEatenOnDate(date);
+});
+
+final mealManagerEnabledProvider =
+    StateNotifierProvider<MealManagerEnabledNotifier, bool>((ref) {
+  return MealManagerEnabledNotifier();
+});
+
+class MealManagerEnabledNotifier extends StateNotifier<bool> {
+  MealManagerEnabledNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(AppConstants.mealManagerEnabledKey) ?? true;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.mealManagerEnabledKey, enabled);
+  }
+}
+
+final mealPlanningEnabledProvider =
+    StateNotifierProvider<MealPlanningEnabledNotifier, bool>((ref) {
+  return MealPlanningEnabledNotifier();
+});
+
+class MealPlanningEnabledNotifier extends StateNotifier<bool> {
+  MealPlanningEnabledNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(AppConstants.mealPlanningEnabledKey) ?? true;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.mealPlanningEnabledKey, enabled);
+  }
+}
+
+class AiConfig {
+  const AiConfig({this.apiUri, this.apiKey, this.modelName});
+
+  final String? apiUri;
+  final String? apiKey;
+  final String? modelName;
+
+  bool get isConfigured =>
+      apiUri != null &&
+      apiUri!.trim().isNotEmpty &&
+      apiKey != null &&
+      apiKey!.trim().isNotEmpty &&
+      modelName != null &&
+      modelName!.trim().isNotEmpty;
+}
+
+final aiConfigProvider =
+    StateNotifierProvider<AiConfigNotifier, AiConfig>((ref) {
+  return AiConfigNotifier();
+});
+
+class AiConfigNotifier extends StateNotifier<AiConfig> {
+  AiConfigNotifier() : super(const AiConfig()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = AiConfig(
+      apiUri: prefs.getString(AppConstants.aiApiUriKey),
+      apiKey: prefs.getString(AppConstants.aiApiKeyKey),
+      modelName: prefs.getString(AppConstants.aiModelNameKey),
+    );
+  }
+
+  Future<void> update({
+    String? apiUri,
+    String? apiKey,
+    String? modelName,
+  }) async {
+    state = AiConfig(
+      apiUri: apiUri ?? state.apiUri,
+      apiKey: apiKey ?? state.apiKey,
+      modelName: modelName ?? state.modelName,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    if (apiUri != null) {
+      await prefs.setString(AppConstants.aiApiUriKey, apiUri);
+    }
+    if (apiKey != null) {
+      await prefs.setString(AppConstants.aiApiKeyKey, apiKey);
+    }
+    if (modelName != null) {
+      await prefs.setString(AppConstants.aiModelNameKey, modelName);
+    }
+  }
+}
+
+enum MealManagerLayoutMode { list, tiles }
+
+final mealManagerLayoutModeProvider =
+    StateNotifierProvider<MealManagerLayoutModeNotifier, MealManagerLayoutMode>(
+        (ref) {
+  return MealManagerLayoutModeNotifier();
+});
+
+class MealManagerLayoutModeNotifier
+    extends StateNotifier<MealManagerLayoutMode> {
+  MealManagerLayoutModeNotifier() : super(MealManagerLayoutMode.list) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getString(AppConstants.mealManagerLayoutModeKey);
+    if (value == 'tiles') state = MealManagerLayoutMode.tiles;
+  }
+
+  Future<void> setMode(MealManagerLayoutMode mode) async {
+    state = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      AppConstants.mealManagerLayoutModeKey,
+      mode == MealManagerLayoutMode.tiles ? 'tiles' : 'list',
+    );
+  }
+}
+
+final mealManagerMealsProvider = StreamProvider<List<Meal>>((ref) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchAllMeals();
+});
+
+final mealStepsProvider =
+    StreamProvider.family<List<MealStep>, int>((ref, mealId) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchStepsForMeal(mealId);
+});
+
+final mealTagsProvider =
+    StreamProvider.family<List<MealTag>, int>((ref, mealId) {
+  ref.watch(appInitProvider);
+  return ref.watch(mealRepositoryProvider).watchTagsForMeal(mealId);
 });

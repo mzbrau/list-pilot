@@ -19,6 +19,8 @@ class MealExportMeal {
     required this.portions,
     this.recipeLink,
     required this.ingredients,
+    required this.steps,
+    required this.tags,
   });
 
   final String displayName;
@@ -26,6 +28,8 @@ class MealExportMeal {
   final int portions;
   final String? recipeLink;
   final List<MealExportIngredient> ingredients;
+  final List<String> steps;
+  final List<String> tags;
 }
 
 class MealExportIngredient {
@@ -188,6 +192,11 @@ class MealRepository {
   }
 
   Future<void> deleteMeal(int mealId) async {
+    await (_db.delete(_db.mealTagAssignments)
+          ..where((t) => t.mealId.equals(mealId)))
+        .go();
+    await (_db.delete(_db.mealSteps)..where((t) => t.mealId.equals(mealId)))
+        .go();
     await (_db.delete(_db.mealIngredients)
           ..where((t) => t.mealId.equals(mealId)))
         .go();
@@ -198,6 +207,162 @@ class MealRepository {
           ..where((t) => t.mealId.equals(mealId)))
         .go();
     await (_db.delete(_db.meals)..where((t) => t.id.equals(mealId))).go();
+  }
+
+  Stream<List<Meal>> watchAllMeals() {
+    return _db.watchAllMeals();
+  }
+
+  Future<List<Meal>> searchMealsWithTags(String query) {
+    return _db.searchMealsWithTags(query);
+  }
+
+  Future<Meal> createMeal({
+    required String displayName,
+    String? notes,
+    int portions = 4,
+    String? recipeLink,
+    List<String> ingredients = const [],
+    List<String> steps = const [],
+    List<String> tags = const [],
+    bool isUserAdded = true,
+  }) async {
+    final id = await _db.into(_db.meals).insert(
+          MealsCompanion.insert(
+            name: displayName.trim().toLowerCase(),
+            displayName: displayName.trim(),
+            notes: Value(notes),
+            portions: Value(portions.clamp(1, 99)),
+            recipeLink: Value(recipeLink),
+            isUserAdded: Value(isUserAdded),
+            createdAt: DateTime.now(),
+          ),
+        );
+
+    for (final ingredient in ingredients) {
+      final trimmed = ingredient.trim();
+      if (trimmed.isEmpty) continue;
+      await addIngredient(mealId: id, displayName: trimmed);
+    }
+
+    await replaceSteps(id, steps);
+    await setMealTags(id, tags);
+
+    return (await (_db.select(_db.meals)..where((t) => t.id.equals(id)))
+        .getSingle());
+  }
+
+  Future<void> replaceSteps(int mealId, List<String> instructions) async {
+    await (_db.delete(_db.mealSteps)..where((t) => t.mealId.equals(mealId)))
+        .go();
+    var order = 0;
+    for (final instruction in instructions) {
+      final trimmed = instruction.trim();
+      if (trimmed.isEmpty) continue;
+      await _db.into(_db.mealSteps).insert(
+            MealStepsCompanion.insert(
+              mealId: mealId,
+              stepOrder: order++,
+              instruction: trimmed,
+            ),
+          );
+    }
+  }
+
+  Future<int> addStep({
+    required int mealId,
+    required String instruction,
+    int? stepOrder,
+  }) async {
+    final steps = await getStepsForMeal(mealId);
+    final order = stepOrder ?? steps.length;
+    return _db.into(_db.mealSteps).insert(
+          MealStepsCompanion.insert(
+            mealId: mealId,
+            stepOrder: order,
+            instruction: instruction.trim(),
+          ),
+        );
+  }
+
+  Future<void> updateStep({
+    required int id,
+    String? instruction,
+    int? stepOrder,
+  }) async {
+    await (_db.update(_db.mealSteps)..where((t) => t.id.equals(id))).write(
+      MealStepsCompanion(
+        instruction:
+            instruction != null ? Value(instruction.trim()) : const Value.absent(),
+        stepOrder: stepOrder != null ? Value(stepOrder) : const Value.absent(),
+      ),
+    );
+  }
+
+  Future<void> deleteStep(int id) async {
+    await (_db.delete(_db.mealSteps)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> reorderSteps(int mealId, List<int> stepIdsInOrder) async {
+    for (var i = 0; i < stepIdsInOrder.length; i++) {
+      await updateStep(id: stepIdsInOrder[i], stepOrder: i);
+    }
+  }
+
+  Future<List<MealStep>> getStepsForMeal(int mealId) {
+    return _db.getStepsForMeal(mealId);
+  }
+
+  Stream<List<MealStep>> watchStepsForMeal(int mealId) {
+    return _db.watchStepsForMeal(mealId);
+  }
+
+  Future<List<MealTag>> searchTags(String query, {int limit = 8}) {
+    return _db.searchTags(query, limit: limit);
+  }
+
+  Future<List<MealTag>> getTagsForMeal(int mealId) {
+    return _db.getTagsForMeal(mealId);
+  }
+
+  Stream<List<MealTag>> watchTagsForMeal(int mealId) {
+    return _db.watchTagsForMeal(mealId);
+  }
+
+  Future<void> setMealTags(int mealId, List<String> tagNames) async {
+    await (_db.delete(_db.mealTagAssignments)
+          ..where((t) => t.mealId.equals(mealId)))
+        .go();
+
+    for (final raw in tagNames) {
+      final display = raw.trim();
+      if (display.isEmpty) continue;
+      final normalized = display.toLowerCase();
+
+      var tag = await (_db.select(_db.mealTags)
+            ..where((t) => t.name.equals(normalized)))
+          .getSingleOrNull();
+
+      if (tag == null) {
+        final tagId = await _db.into(_db.mealTags).insert(
+              MealTagsCompanion.insert(
+                name: normalized,
+                displayName: display,
+              ),
+            );
+        tag = await (_db.select(_db.mealTags)
+              ..where((t) => t.id.equals(tagId)))
+            .getSingle();
+      }
+
+      await _db.into(_db.mealTagAssignments).insert(
+            MealTagAssignmentsCompanion.insert(
+              mealId: mealId,
+              tagId: tag.id,
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+    }
   }
 
   Stream<List<MealPlanItemWithMeal>> watchPlanItems() {
@@ -278,6 +443,8 @@ class MealRepository {
     final meals = <MealExportMeal>[];
     for (final meal in allMeals) {
       final ingredients = await getIngredientsForMeal(meal.id);
+      final steps = await getStepsForMeal(meal.id);
+      final tags = await getTagsForMeal(meal.id);
       meals.add(
         MealExportMeal(
           displayName: meal.displayName,
@@ -292,6 +459,8 @@ class MealRepository {
                 ),
               )
               .toList(),
+          steps: steps.map((s) => s.instruction).toList(),
+          tags: tags.map((t) => t.displayName).toList(),
         ),
       );
     }
