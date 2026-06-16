@@ -23,6 +23,9 @@ part 'app_database.g.dart';
   MealSteps,
   MealTags,
   MealTagAssignments,
+  TodoLists,
+  TodoItems,
+  TodoCompletedArchive,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -30,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +58,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(mealSteps);
             await m.createTable(mealTags);
             await m.createTable(mealTagAssignments);
+          }
+          if (from < 5) {
+            await m.createTable(todoLists);
+            await m.createTable(todoItems);
+            await m.createTable(todoCompletedArchive);
           }
         },
         beforeOpen: (details) async {
@@ -380,6 +388,81 @@ class AppDatabase extends _$AppDatabase {
     return query.watch().map(
           (rows) => rows.map((row) => row.readTable(mealTags)).toList(),
         );
+  }
+
+  Stream<List<TodoList>> watchAllTodoLists() {
+    return (select(todoLists)
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .watch();
+  }
+
+  Future<TodoList?> getTodoListById(int id) {
+    return (select(todoLists)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Stream<List<TodoItem>> watchTodoItems(int listId) {
+    return (select(todoItems)..where((t) => t.listId.equals(listId))).watch();
+  }
+
+  Future<TodoItem?> getTodoItemById(int id) {
+    return (select(todoItems)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<List<TodoItem>> getTodoItemsWithReminders() {
+    return (select(todoItems)
+          ..where((t) => t.reminderAt.isNotNull() & t.isCompleted.equals(false)))
+        .get();
+  }
+
+  Stream<List<TodoCompletedArchiveData>> watchArchivedCompleted(int listId) {
+    return (select(todoCompletedArchive)
+          ..where((t) => t.listId.equals(listId))
+          ..orderBy([(t) => OrderingTerm.desc(t.completedAt)]))
+        .watch();
+  }
+
+  Future<List<String>> searchTodoTaskTitles(
+    int listId,
+    String query, {
+    int limit = 8,
+  }) async {
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) return [];
+
+    final activeRows = await customSelect(
+      '''
+      SELECT DISTINCT display_name FROM todo_items
+      WHERE list_id = ? AND LOWER(display_name) LIKE ?
+      ''',
+      variables: [
+        Variable<int>(listId),
+        Variable<String>('$normalized%'),
+      ],
+      readsFrom: {todoItems},
+    ).get();
+
+    final archiveRows = await customSelect(
+      '''
+      SELECT DISTINCT display_name FROM todo_completed_archive
+      WHERE list_id = ? AND LOWER(display_name) LIKE ?
+      ''',
+      variables: [
+        Variable<int>(listId),
+        Variable<String>('$normalized%'),
+      ],
+      readsFrom: {todoCompletedArchive},
+    ).get();
+
+    final names = <String>{};
+    for (final row in activeRows) {
+      names.add(row.read<String>('display_name'));
+    }
+    for (final row in archiveRows) {
+      names.add(row.read<String>('display_name'));
+    }
+    final sorted = names.toList()..sort();
+    return sorted.take(limit).toList();
   }
 }
 

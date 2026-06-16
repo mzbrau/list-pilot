@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/models/overview_list_entry.dart';
 import '../../core/providers/app_providers.dart';
-import '../../data/database/app_database.dart';
 
 class ListsOverviewScreen extends ConsumerWidget {
   const ListsOverviewScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final listsAsync = ref.watch(shoppingListsProvider);
+    final listsAsync = ref.watch(overviewListsProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
     final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);
     final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
@@ -72,12 +72,12 @@ class ListsOverviewScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No shopping lists yet',
+                          'No lists yet',
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Create a list for each store you visit',
+                          'Create a shopping list or todo list to get started',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -105,7 +105,7 @@ class ListsOverviewScreen extends ConsumerWidget {
                 );
               }
               final list = lists[index - 1];
-              return _ListCard(list: list);
+              return _ListCard(entry: list);
             },
           );
         },
@@ -119,11 +119,40 @@ class ListsOverviewScreen extends ConsumerWidget {
   }
 
   Future<void> _createList(BuildContext context, WidgetRef ref) async {
+    final type = await showModalBottomSheet<ListCreateType>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.store_outlined),
+              title: const Text('Shopping list'),
+              subtitle: const Text('Items grouped by store aisle'),
+              onTap: () => Navigator.pop(context, ListCreateType.shopping),
+            ),
+            ListTile(
+              leading: const Icon(Icons.checklist_outlined),
+              title: const Text('Todo list'),
+              subtitle: const Text('Tasks organized by day'),
+              onTap: () => Navigator.pop(context, ListCreateType.todo),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (type == null || !context.mounted) return;
+
     final name = await _showNameDialog(context, title: 'New list');
     if (name == null || name.trim().isEmpty) return;
 
-    final id = await ref.read(listRepositoryProvider).createList(name);
-    if (context.mounted) context.push('/list/$id');
+    if (type == ListCreateType.shopping) {
+      final id = await ref.read(listRepositoryProvider).createList(name);
+      if (context.mounted) context.push('/list/$id');
+    } else {
+      final id = await ref.read(todoRepositoryProvider).createList(name);
+      if (context.mounted) context.push('/todo/$id');
+    }
   }
 
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
@@ -665,20 +694,22 @@ class _MealPlanningCard extends StatelessWidget {
 }
 
 class _ListCard extends ConsumerWidget {
-  const _ListCard({required this.list});
+  const _ListCard({required this.entry});
 
-  final ShoppingList list;
+  final OverviewListEntry entry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat.MMMd().add_jm();
+    final isShopping = entry is ShoppingListEntry;
+    final route = isShopping ? '/list/${entry.id}' : '/todo/${entry.id}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/list/${list.id}'),
+        onTap: () => context.push(route),
         onLongPress: () => _showListOptions(context, ref),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -687,7 +718,9 @@ class _ListCard extends ConsumerWidget {
               CircleAvatar(
                 backgroundColor: theme.colorScheme.primaryContainer,
                 child: Icon(
-                  Icons.store_outlined,
+                  isShopping
+                      ? Icons.store_outlined
+                      : Icons.checklist_outlined,
                   color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
@@ -697,14 +730,14 @@ class _ListCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      list.name,
+                      entry.name,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Updated ${dateFormat.format(list.updatedAt)}',
+                      'Updated ${dateFormat.format(entry.updatedAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -751,17 +784,21 @@ class _ListCard extends ConsumerWidget {
       final name = await _showNameDialog(
         context,
         title: 'Rename list',
-        initialValue: list.name,
+        initialValue: entry.name,
       );
       if (name != null && name.trim().isNotEmpty) {
-        await ref.read(listRepositoryProvider).renameList(list.id, name);
+        if (entry is ShoppingListEntry) {
+          await ref.read(listRepositoryProvider).renameList(entry.id, name);
+        } else {
+          await ref.read(todoRepositoryProvider).renameList(entry.id, name);
+        }
       }
     } else if (action == 'delete') {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Delete list?'),
-          content: Text('Delete "${list.name}" and all its items?'),
+          content: Text('Delete "${entry.name}" and all its items?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -775,7 +812,11 @@ class _ListCard extends ConsumerWidget {
         ),
       );
       if (confirmed == true) {
-        await ref.read(listRepositoryProvider).deleteList(list.id);
+        if (entry is ShoppingListEntry) {
+          await ref.read(listRepositoryProvider).deleteList(entry.id);
+        } else {
+          await ref.read(todoRepositoryProvider).deleteList(entry.id);
+        }
       }
     }
   }

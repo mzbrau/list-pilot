@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,9 +11,15 @@ import '../features/meal_planning/meal_detail_screen.dart';
 import '../features/meal_planning/meal_plan_screen.dart';
 import '../features/shop_stats/shop_stats_screen.dart';
 import '../features/shopping_list/shopping_list_screen.dart';
+import '../features/todo_list/todo_completed_history_screen.dart';
+import '../features/todo_list/todo_list_screen.dart';
+import '../features/todo_list/todo_task_detail_screen.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     routes: [
       GoRoute(
@@ -78,6 +85,30 @@ final routerProvider = Provider<GoRouter>((ref) {
               final listId = int.parse(state.pathParameters['id']!);
               final itemId = int.parse(state.pathParameters['itemId']!);
               return ItemDetailScreen(listId: listId, itemId: itemId);
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/todo/:id',
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return TodoListScreen(listId: id);
+        },
+        routes: [
+          GoRoute(
+            path: 'history',
+            builder: (context, state) {
+              final listId = int.parse(state.pathParameters['id']!);
+              return TodoCompletedHistoryScreen(listId: listId);
+            },
+          ),
+          GoRoute(
+            path: 'task/:taskId',
+            builder: (context, state) {
+              final listId = int.parse(state.pathParameters['id']!);
+              final taskId = int.parse(state.pathParameters['taskId']!);
+              return TodoTaskDetailScreen(listId: listId, taskId: taskId);
             },
           ),
         ],

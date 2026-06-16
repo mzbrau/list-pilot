@@ -149,3 +149,34 @@ class MealTagAssignments extends Table {
   @override
   Set<Column<Object>> get primaryKey => {mealId, tagId};
 }
+
+class TodoLists extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+class TodoItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listId => integer().references(TodoLists, #id)();
+  TextColumn get displayName => text()();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get scheduledDate => dateTime()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get isCompleted =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get completedAt => dateTime().nullable()();
+  DateTimeColumn get addedAt => dateTime()();
+  DateTimeColumn get reminderAt => dateTime().nullable()();
+}
+
+class TodoCompletedArchive extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listId => integer().references(TodoLists, #id)();
+  TextColumn get displayName => text()();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get scheduledDate => dateTime()();
+  DateTimeColumn get completedAt => dateTime()();
+  DateTimeColumn get archivedAt => dateTime()();
+}

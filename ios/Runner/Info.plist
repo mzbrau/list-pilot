@@ -68,5 +68,7 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>List Pilot needs access to your photo library to add meal photos.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>List Pilot can remind you about upcoming todo tasks.</string>
 </dict>
 </plist>
