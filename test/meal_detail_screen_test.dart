@@ -68,5 +68,17 @@ void main() {
     await tester.tap(find.widgetWithText(Tab, 'Steps'));
     await tester.pumpAndSettle();
     expect(find.text('Cook it'), findsOneWidget);
+
+    final stepField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.labelText == 'Step 1',
+    );
+    await tester.enterText(stepField, 'Simmer gently');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Simmer gently'), findsOneWidget);
+    expect(find.text('Cook it'), findsNothing);
   });
 }

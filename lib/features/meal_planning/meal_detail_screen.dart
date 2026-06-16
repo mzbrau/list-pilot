@@ -29,6 +29,7 @@ class MealDetailScreen extends ConsumerStatefulWidget {
 class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _stepsTabKey = GlobalKey<MealDetailStepsTabState>();
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
   final _portionsController = TextEditingController();
@@ -118,6 +119,7 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
   }
 
   Future<void> _finishEditing(Meal meal) async {
+    await _stepsTabKey.currentState?.savePendingChanges();
     await _save(meal);
     if (mounted) setState(() => _isEditing = false);
   }
@@ -284,6 +286,7 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
                           isEditing: _isEditing,
                         ),
                         MealDetailStepsTab(
+                          key: _stepsTabKey,
                           mealId: widget.mealId,
                           isEditing: _isEditing,
                         ),

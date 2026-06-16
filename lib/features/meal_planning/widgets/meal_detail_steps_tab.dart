@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
 
-class MealDetailStepsTab extends ConsumerWidget {
+class MealDetailStepsTab extends ConsumerStatefulWidget {
   const MealDetailStepsTab({
     super.key,
     required this.mealId,
@@ -19,24 +19,36 @@ class MealDetailStepsTab extends ConsumerWidget {
   final ValueChanged<List<String>>? onDraftStepsChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MealDetailStepsTab> createState() =>
+      MealDetailStepsTabState();
+}
+
+class MealDetailStepsTabState extends ConsumerState<MealDetailStepsTab> {
+  final _editableListKey = GlobalKey<_EditableStepsListState>();
+
+  Future<void> savePendingChanges() async {
+    await _editableListKey.currentState?.saveAllSteps();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (mealId == null) {
+    if (widget.mealId == null) {
       return _DraftStepsEditor(
-        steps: draftSteps ?? [],
-        isEditing: isEditing,
-        onChanged: onDraftStepsChanged ?? (_) {},
+        steps: widget.draftSteps ?? [],
+        isEditing: widget.isEditing,
+        onChanged: widget.onDraftStepsChanged ?? (_) {},
       );
     }
 
-    final stepsAsync = ref.watch(mealStepsProvider(mealId!));
+    final stepsAsync = ref.watch(mealStepsProvider(widget.mealId!));
 
     return stepsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (steps) {
-        if (!isEditing) {
+        if (!widget.isEditing) {
           if (steps.isEmpty) {
             return Center(
               child: Text(
@@ -74,7 +86,8 @@ class MealDetailStepsTab extends ConsumerWidget {
         }
 
         return _EditableStepsList(
-          mealId: mealId!,
+          key: _editableListKey,
+          mealId: widget.mealId!,
           steps: steps,
         );
       },
@@ -83,7 +96,11 @@ class MealDetailStepsTab extends ConsumerWidget {
 }
 
 class _EditableStepsList extends ConsumerStatefulWidget {
-  const _EditableStepsList({required this.mealId, required this.steps});
+  const _EditableStepsList({
+    super.key,
+    required this.mealId,
+    required this.steps,
+  });
 
   final int mealId;
   final List<MealStep> steps;
@@ -142,6 +159,16 @@ class _EditableStepsListState extends ConsumerState<_EditableStepsList> {
           mealId: widget.mealId,
           instruction: 'New step',
         );
+  }
+
+  Future<void> saveAllSteps() async {
+    final repo = ref.read(mealRepositoryProvider);
+    for (final step in _steps) {
+      final text = _controllers[step.id]?.text.trim() ?? step.instruction;
+      if (text.isEmpty) continue;
+      await repo.updateStep(id: step.id, instruction: text);
+    }
+    await _persistOrder();
   }
 
   Future<void> _saveStep(MealStep step) async {
