@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../features/learning/ordering_service.dart';
+import '../../router/navigation_helpers.dart';
 import '../shop_stats/widgets/shop_stats_ticker.dart';
 import '../shop_stats/widgets/shop_summary_sheet.dart';
 import 'widgets/categorized_item_list.dart';
@@ -35,12 +36,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final theme = Theme.of(context);
 
     return AppBar(
-      leading: context.canPop()
-          ? IconButton(
-              icon: const BackButtonIcon(),
-              onPressed: () => context.pop(),
-            )
-          : null,
+      leading: overviewBackButton(context),
       title: listName != null
           ? ListProgressTitle(
               listName: listName,
@@ -99,7 +95,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
         ref.watch(categoryRankStatsProvider(widget.listId));
     final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
 
-    return listAsync.when(
+    return popOrGoHomeScope(
+      child: listAsync.when(
       loading: () => Scaffold(
         appBar: _buildAppBar(
           context,
@@ -240,6 +237,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
           ),
         );
       },
+    ),
     );
   }
 

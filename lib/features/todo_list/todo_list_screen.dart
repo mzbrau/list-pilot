@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
+import '../../router/navigation_helpers.dart';
 import 'widgets/segmented_todo_list.dart';
 import 'widgets/task_autocomplete_field.dart';
 
@@ -65,14 +66,10 @@ class _TodoListScreenState extends ConsumerState<TodoListScreen> {
     final remaining = items.where((i) => !i.isCompleted).length;
     final total = items.length;
 
-    return Scaffold(
+    return popOrGoHomeScope(
+      child: Scaffold(
       appBar: AppBar(
-        leading: context.canPop()
-            ? IconButton(
-                icon: const BackButtonIcon(),
-                onPressed: () => context.pop(),
-              )
-            : null,
+        leading: overviewBackButton(context),
         title: listAsync.when(
           data: (list) => list == null
               ? const Text('Todo list')
@@ -128,6 +125,7 @@ class _TodoListScreenState extends ConsumerState<TodoListScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

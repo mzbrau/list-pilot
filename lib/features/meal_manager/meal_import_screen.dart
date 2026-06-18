@@ -116,7 +116,8 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     }
 
     if (mounted) {
-      context.go('/meal-manager/${meal.id}');
+      context.pop();
+      context.push('/meal-manager/${meal.id}');
     }
   }
 

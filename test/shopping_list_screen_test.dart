@@ -157,6 +157,69 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('Shopping list back button returns home when stack has no parent route',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+
+    final listId = await db.into(db.shoppingLists).insert(
+          ShoppingListsCompanion.insert(
+            name: 'Orphaned list',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+    final catalogRepo = CatalogRepository(db);
+    final learningRepo = LearningRepository(db);
+    final shopStatsRepo = ShopStatsRepository(db);
+    final listRepo = ListRepository(db, catalogRepo, learningRepo, shopStatsRepo);
+
+    late GoRouter router;
+    router = GoRouter(
+      initialLocation: '/list/$listId',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(
+            body: Center(child: Text('Home')),
+          ),
+        ),
+        GoRoute(
+          path: '/list/:id',
+          builder: (context, state) {
+            final id = int.parse(state.pathParameters['id']!);
+            return ShoppingListScreen(listId: id);
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          catalogRepositoryProvider.overrideWithValue(catalogRepo),
+          learningRepositoryProvider.overrideWithValue(learningRepo),
+          listRepositoryProvider.overrideWithValue(listRepo),
+          appInitProvider.overrideWith((ref) async {}),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Orphaned list'), findsOneWidget);
+    expect(find.byType(BackButtonIcon), findsOneWidget);
+
+    await tester.tap(find.byType(BackButtonIcon));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Orphaned list'), findsNothing);
+
+    await db.close();
+  });
+
   testWidgets('Shop stats ticker shows when enabled and shop is active',
       (tester) async {
     SharedPreferences.setMockInitialValues({

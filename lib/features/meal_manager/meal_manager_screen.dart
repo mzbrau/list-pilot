@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
+import '../../router/navigation_helpers.dart';
 import 'widgets/create_meal_sheet.dart';
 import 'widgets/meal_manager_grid_tile.dart';
 import 'widgets/meal_manager_list_tile.dart';
@@ -79,8 +80,10 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
     final layoutMode = ref.watch(mealManagerLayoutModeProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return popOrGoHomeScope(
+      child: Scaffold(
       appBar: AppBar(
+        leading: overviewBackButton(context),
         title: const Text('Meal Manager'),
         actions: [
           IconButton(
@@ -213,6 +216,7 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
         onPressed: () => CreateMealSheet.show(context, ref),
         child: const Icon(Icons.add),
       ),
+    ),
     );
   }
 }

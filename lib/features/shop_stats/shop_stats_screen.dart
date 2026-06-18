@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
+import '../../router/navigation_helpers.dart';
 import 'shop_stats_formatters.dart';
 
 class ShopStatsScreen extends ConsumerWidget {
@@ -15,8 +16,10 @@ class ShopStatsScreen extends ConsumerWidget {
     final listsAsync = ref.watch(shoppingListsProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return popOrGoHomeScope(
+      child: Scaffold(
       appBar: AppBar(
+        leading: overviewBackButton(context),
         title: const Text('Shop Stats'),
       ),
       body: recordsAsync.when(
@@ -114,6 +117,7 @@ class ShopStatsScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 

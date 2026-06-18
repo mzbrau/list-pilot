@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
+import '../../router/navigation_helpers.dart';
 import 'widgets/add_ingredients_dialog.dart';
 import 'widgets/completed_meals_section.dart';
 import 'widgets/meal_autocomplete_field.dart';
@@ -16,8 +17,10 @@ class MealPlanScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(mealPlanItemsProvider);
 
-    return Scaffold(
+    return popOrGoHomeScope(
+      child: Scaffold(
       appBar: AppBar(
+        leading: overviewBackButton(context),
         title: const Text('Meal Planning'),
         actions: [
           IconButton(
@@ -110,6 +113,7 @@ class MealPlanScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 
