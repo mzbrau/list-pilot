@@ -42,12 +42,14 @@ class MealDetailHeader extends StatelessWidget {
             controller: nameController,
             decoration: const InputDecoration(labelText: 'Name'),
             textCapitalization: TextCapitalization.sentences,
-            style: theme.textTheme.headlineSmall,
+            style: theme.textTheme.titleLarge,
           )
         else
           Text(
             displayName,
-            style: theme.textTheme.headlineSmall?.copyWith(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),

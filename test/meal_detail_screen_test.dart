@@ -9,9 +9,32 @@ import 'package:list_pilot/data/repositories/catalog_repository.dart';
 import 'package:list_pilot/data/repositories/meal_repository.dart';
 import 'package:list_pilot/data/services/meal_photo_service.dart';
 import 'package:list_pilot/features/meal_planning/meal_detail_screen.dart';
+import 'package:list_pilot/features/meal_planning/widgets/meal_detail_other_tab.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('MealDetailOtherTab.openRecipeLink', () {
+    test('normalizeRecipeLinkUri prepends https when scheme is missing', () {
+      final uri = MealDetailOtherTab.normalizeRecipeLinkUri('example.com/recipe');
+      expect(uri, isNotNull);
+      expect(uri!.scheme, 'https');
+      expect(uri.host, 'example.com');
+      expect(uri.path, '/recipe');
+    });
+
+    test('normalizeRecipeLinkUri preserves existing scheme', () {
+      final uri =
+          MealDetailOtherTab.normalizeRecipeLinkUri('https://example.com/a');
+      expect(uri, isNotNull);
+      expect(uri!.toString(), 'https://example.com/a');
+    });
+
+    test('normalizeRecipeLinkUri returns null for empty input', () {
+      expect(MealDetailOtherTab.normalizeRecipeLinkUri(''), isNull);
+      expect(MealDetailOtherTab.normalizeRecipeLinkUri('   '), isNull);
+    });
+  });
 
   testWidgets('Meal detail shows tabs and toggles edit mode', (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -27,6 +50,9 @@ void main() {
       tags: ['Dinner'],
       notes: 'Yummy',
     );
+
+    final mealTags = await mealRepo.getTagsForMeal(meal.id);
+    expect(mealTags.map((t) => t.displayName), contains('Dinner'));
 
     final container = ProviderContainer(
       overrides: [
@@ -49,24 +75,24 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
     expect(find.text('Test Meal'), findsWidgets);
     expect(find.text('Ingredients'), findsOneWidget);
     expect(find.text('Salt'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(Tab, 'Other'));
-    await tester.pumpAndSettle();
-    expect(find.text('Dinner'), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(find.text('Recipe link'), findsOneWidget);
     expect(find.text('Yummy'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.edit_outlined));
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
     expect(find.text('Save'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(Tab, 'Steps'));
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(find.text('Cook it'), findsOneWidget);
 
     final stepField = find.byWidgetPredicate(
@@ -76,7 +102,7 @@ void main() {
     );
     await tester.enterText(stepField, 'Simmer gently');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
     expect(find.text('Simmer gently'), findsOneWidget);
     expect(find.text('Cook it'), findsNothing);

@@ -255,67 +255,108 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
                   ),
                 ],
               ),
-              body: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: MealDetailHeader(
-                      displayName: meal.displayName,
-                      photoPath: meal.photoPath,
-                      photoFile: _photoFile,
-                      lastEatenSummary: lastEatenSummary,
-                      isEditing: _isEditing,
-                      nameController: _nameController,
-                      onPhotoTap: () => _showPhotoOptions(meal),
+              body: NestedScrollView(
+                physics: const ClampingScrollPhysics(),
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: MealDetailHeader(
+                        displayName: meal.displayName,
+                        photoPath: meal.photoPath,
+                        photoFile: _photoFile,
+                        lastEatenSummary: lastEatenSummary,
+                        isEditing: _isEditing,
+                        nameController: _nameController,
+                        onPhotoTap: () => _showPhotoOptions(meal),
+                      ),
                     ),
                   ),
-                  TabBar(
-                    controller: _tabController,
-                    tabs: const [
-                      Tab(text: 'Ingredients'),
-                      Tab(text: 'Steps'),
-                      Tab(text: 'Other'),
-                    ],
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        MealDetailIngredientsTab(
-                          mealId: widget.mealId,
-                          isEditing: _isEditing,
+                  SliverOverlapAbsorber(
+                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                      context,
+                    ),
+                    sliver: SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _StickyTabBarDelegate(
+                        TabBar(
+                          controller: _tabController,
+                          tabs: const [
+                            Tab(text: 'Ingredients'),
+                            Tab(text: 'Steps'),
+                            Tab(text: 'Other'),
+                          ],
                         ),
-                        MealDetailStepsTab(
-                          key: _stepsTabKey,
-                          mealId: widget.mealId,
-                          isEditing: _isEditing,
-                        ),
-                        MealDetailOtherTab(
-                          isEditing: _isEditing,
-                          tags: _tags,
-                          onTagsChanged: (value) =>
-                              setState(() => _tags = value),
-                          notes: meal.notes ?? '',
-                          portions: meal.portions,
-                          recipeLink: meal.recipeLink,
-                          notesController: _notesController,
-                          portionsController: _portionsController,
-                          recipeController: _recipeController,
-                          onRecipeLinkTap: meal.recipeLink != null
-                              ? () => MealDetailOtherTab.openRecipeLink(
-                                    meal.recipeLink!,
-                                  )
-                              : null,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
+                body: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    MealDetailIngredientsTab(
+                      mealId: widget.mealId,
+                      isEditing: _isEditing,
+                      nestedScroll: true,
+                    ),
+                    MealDetailStepsTab(
+                      key: _stepsTabKey,
+                      mealId: widget.mealId,
+                      isEditing: _isEditing,
+                      nestedScroll: true,
+                    ),
+                    MealDetailOtherTab(
+                      isEditing: _isEditing,
+                      tags: _isEditing
+                          ? _tags
+                          : tags.map((t) => t.displayName).toList(),
+                      onTagsChanged: (value) =>
+                          setState(() => _tags = value),
+                      notes: meal.notes ?? '',
+                      portions: meal.portions,
+                      recipeLink: meal.recipeLink,
+                      notesController: _notesController,
+                      portionsController: _portionsController,
+                      recipeController: _recipeController,
+                      nestedScroll: true,
+                    ),
+                  ],
+                ),
               ),
             );
           },
         );
       },
     );
+  }
+}
+
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _StickyTabBarDelegate(this.tabBar);
+
+  final TabBar tabBar;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar;
   }
 }

@@ -11,12 +11,14 @@ class MealDetailStepsTab extends ConsumerStatefulWidget {
     required this.isEditing,
     this.draftSteps,
     this.onDraftStepsChanged,
+    this.nestedScroll = false,
   });
 
   final int? mealId;
   final bool isEditing;
   final List<String>? draftSteps;
   final ValueChanged<List<String>>? onDraftStepsChanged;
+  final bool nestedScroll;
 
   @override
   ConsumerState<MealDetailStepsTab> createState() =>
@@ -28,6 +30,61 @@ class MealDetailStepsTabState extends ConsumerState<MealDetailStepsTab> {
 
   Future<void> savePendingChanges() async {
     await _editableListKey.currentState?.saveAllSteps();
+  }
+
+  Widget _buildStepRow(ThemeData theme, int index, String instruction) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 14,
+          child: Text('${index + 1}'),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            instruction,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadOnlyStepsList(
+    BuildContext context,
+    ThemeData theme,
+    List<MealStep> steps,
+  ) {
+    if (!widget.nestedScroll) {
+      return ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: steps.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _buildStepRow(theme, index, steps[index].instruction);
+        },
+      );
+    }
+
+    return CustomScrollView(
+      key: const PageStorageKey('meal-detail-steps'),
+      slivers: [
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverList.separated(
+            itemCount: steps.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              return _buildStepRow(theme, index, steps[index].instruction);
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -59,30 +116,7 @@ class MealDetailStepsTabState extends ConsumerState<MealDetailStepsTab> {
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: steps.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final step = steps[index];
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    child: Text('${index + 1}'),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      step.instruction,
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
+          return _buildReadOnlyStepsList(context, theme, steps);
         }
 
         return _EditableStepsList(

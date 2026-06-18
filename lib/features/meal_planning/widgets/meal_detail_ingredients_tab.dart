@@ -14,12 +14,14 @@ class MealDetailIngredientsTab extends ConsumerStatefulWidget {
     required this.isEditing,
     this.draftIngredients,
     this.onDraftIngredientsChanged,
+    this.nestedScroll = false,
   });
 
   final int? mealId;
   final bool isEditing;
   final List<String>? draftIngredients;
   final ValueChanged<List<String>>? onDraftIngredientsChanged;
+  final bool nestedScroll;
 
   @override
   ConsumerState<MealDetailIngredientsTab> createState() =>
@@ -105,6 +107,70 @@ class _MealDetailIngredientsTabState
     widget.onDraftIngredientsChanged?.call(list);
   }
 
+  Widget _buildAddIngredientField(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _ingredientController,
+          focusNode: _ingredientFocusNode,
+          decoration: InputDecoration(
+            hintText: 'Add ingredient…',
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _addIngredient(),
+            ),
+          ),
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (_) => _addIngredient(),
+          onTap: () => setState(() => _showSuggestions = true),
+        ),
+        if (_showSuggestions && _suggestions.isNotEmpty)
+          Material(
+            elevation: 2,
+            borderRadius: BorderRadius.circular(8),
+            color: theme.colorScheme.surfaceContainerHighest,
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _suggestions.length,
+              itemBuilder: (context, index) {
+                final item = _suggestions[index];
+                return ListTile(
+                  dense: true,
+                  title: Text(item.displayName),
+                  onTap: () => _addIngredient(catalogItem: item),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _wrapScrollView(BuildContext context, List<Widget> children) {
+    if (!widget.nestedScroll) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: children,
+      );
+    }
+    return CustomScrollView(
+      key: const PageStorageKey('meal-detail-ingredients'),
+      slivers: [
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate(children),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -119,9 +185,13 @@ class _MealDetailIngredientsTabState
     return ingredientsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
-      data: (ingredients) => ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+      data: (ingredients) => _wrapScrollView(
+        context,
+        [
+          if (widget.isEditing) ...[
+            _buildAddIngredientField(theme),
+            const SizedBox(height: 8),
+          ],
           if (ingredients.isEmpty && !widget.isEditing)
             Text(
               'No ingredients yet',
@@ -129,10 +199,20 @@ class _MealDetailIngredientsTabState
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+          if (ingredients.isEmpty && widget.isEditing)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'No ingredients yet',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           ...ingredients.map((ingredient) {
             if (!widget.isEditing) {
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -173,42 +253,6 @@ class _MealDetailIngredientsTabState
               ),
             );
           }),
-          if (widget.isEditing) ...[
-            const SizedBox(height: 8),
-            TextField(
-              controller: _ingredientController,
-              focusNode: _ingredientFocusNode,
-              decoration: InputDecoration(
-                hintText: 'Add ingredient…',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _addIngredient(),
-                ),
-              ),
-              textCapitalization: TextCapitalization.sentences,
-              onSubmitted: (_) => _addIngredient(),
-              onTap: () => setState(() => _showSuggestions = true),
-            ),
-            if (_showSuggestions && _suggestions.isNotEmpty)
-              Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(8),
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _suggestions.length,
-                  itemBuilder: (context, index) {
-                    final item = _suggestions[index];
-                    return ListTile(
-                      dense: true,
-                      title: Text(item.displayName),
-                      onTap: () => _addIngredient(catalogItem: item),
-                    );
-                  },
-                ),
-              ),
-          ],
         ],
       ),
     );
@@ -216,9 +260,11 @@ class _MealDetailIngredientsTabState
 
   Widget _buildDraftList(ThemeData theme) {
     final ingredients = widget.draftIngredients ?? [];
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
+    return _wrapScrollView(
+      context,
+      [
+        _buildAddIngredientField(theme),
+        const SizedBox(height: 8),
         ...ingredients.asMap().entries.map((entry) {
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
@@ -231,39 +277,6 @@ class _MealDetailIngredientsTabState
             ),
           );
         }),
-        TextField(
-          controller: _ingredientController,
-          focusNode: _ingredientFocusNode,
-          decoration: InputDecoration(
-            hintText: 'Add ingredient…',
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _addIngredient(),
-            ),
-          ),
-          textCapitalization: TextCapitalization.sentences,
-          onSubmitted: (_) => _addIngredient(),
-          onTap: () => setState(() => _showSuggestions = true),
-        ),
-        if (_showSuggestions && _suggestions.isNotEmpty)
-          Material(
-            elevation: 2,
-            borderRadius: BorderRadius.circular(8),
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _suggestions.length,
-              itemBuilder: (context, index) {
-                final item = _suggestions[index];
-                return ListTile(
-                  dense: true,
-                  title: Text(item.displayName),
-                  onTap: () => _addIngredient(catalogItem: item),
-                );
-              },
-            ),
-          ),
       ],
     );
   }
