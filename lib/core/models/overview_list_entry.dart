@@ -38,4 +38,19 @@ class TodoListEntry extends OverviewListEntry {
   DateTime get updatedAt => list.updatedAt;
 }
 
-enum ListCreateType { shopping, todo }
+class TakeAwayListEntry extends OverviewListEntry {
+  const TakeAwayListEntry(this.list);
+
+  final TakeAwayList list;
+
+  @override
+  int get id => list.id;
+
+  @override
+  String get name => list.name;
+
+  @override
+  DateTime get updatedAt => list.updatedAt;
+}
+
+enum ListCreateType { shopping, todo, takeAway }

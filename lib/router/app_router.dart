@@ -14,6 +14,10 @@ import '../features/shopping_list/shopping_list_screen.dart';
 import '../features/todo_list/todo_completed_history_screen.dart';
 import '../features/todo_list/todo_list_screen.dart';
 import '../features/todo_list/todo_task_detail_screen.dart';
+import '../features/take_away/take_away_list_screen.dart';
+import '../features/take_away/take_away_menu_import_screen.dart';
+import '../features/take_away/take_away_menu_screen.dart';
+import '../features/take_away/take_away_order_plan_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -117,6 +121,43 @@ final routerProvider = Provider<GoRouter>((ref) {
               final taskId = int.parse(state.pathParameters['taskId']!);
               return TodoTaskDetailScreen(listId: listId, taskId: taskId);
             },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/take-away/:id',
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return TakeAwayListScreen(listId: id);
+        },
+        routes: [
+          GoRoute(
+            path: 'import',
+            builder: (context, state) {
+              final listId = int.parse(state.pathParameters['id']!);
+              return TakeAwayMenuImportScreen(listId: listId);
+            },
+          ),
+          GoRoute(
+            path: 'menu/:menuId',
+            builder: (context, state) {
+              final listId = int.parse(state.pathParameters['id']!);
+              final menuId = int.parse(state.pathParameters['menuId']!);
+              return TakeAwayMenuScreen(listId: listId, menuId: menuId);
+            },
+            routes: [
+              GoRoute(
+                path: 'order',
+                builder: (context, state) {
+                  final listId = int.parse(state.pathParameters['id']!);
+                  final menuId = int.parse(state.pathParameters['menuId']!);
+                  return TakeAwayOrderPlanScreen(
+                    listId: listId,
+                    menuId: menuId,
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),

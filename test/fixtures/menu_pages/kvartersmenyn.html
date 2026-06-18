@@ -1,0 +1,242 @@
+<!doctype html>
+<!--[if IEMobile 7 ]>    <html class="no-js iem7"> <![endif]-->
+<!--[if (gt IEMobile 7)|!(IEMobile)]><!--> <html class="no-js"> <!--<![endif]-->
+
+<head>
+	<meta charset="utf-8">
+
+	<title>Kvartersmenyn</title>
+	<meta name="description" content="">
+
+	<meta name="HandheldFriendly" content="True">
+	<meta name="MobileOptimized" content="320">
+	<meta name="viewport" content="width=device-width, user-scalable=no, maximum-scale=1">
+
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="https://www.kvmcdn.se/assets/img/mobile_site/touch/apple-touch-icon-retina.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="57x57" href="https://www.kvmcdn.se/assets/img/mobile_site/touch/apple-touch-icon.png" />
+	<link rel="shortcut icon" href="https://www.kvmcdn.se/assets/img/mobile_site/touch/apple-touch-icon.png" />
+	<meta name="apple-itunes-app" content="app-id=399224038">
+	<meta name="google-play-app" content="app-id=se.kvartersmenyn.lunch">
+  
+	<meta http-equiv="cleartype" content="on">
+
+	<link rel="stylesheet" type="text/css" href="https://www.kvmcdn.se/assets/css/mobile_site/normalize.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cloud.typography.com/7657892/796788/css/fonts.css" />
+	<link rel="stylesheet" type="text/css" href="https://www.kvmcdn.se/assets/css/mobile_site/style.css">
+	<link rel="stylesheet" type="text/css" href="https://www.kvmcdn.se/assets/css/mobile_site/jquery.smartbanner.css">
+
+	<script src="https://www.kvmcdn.se/assets/js/mobile_site/libs/modernizr-2.0.6.min.js"></script>
+	<script type="text/javascript">
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-18657233-1']);
+	  _gaq.push(['_setDomainName', 'kvartersmenyn.se']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+	</script>
+    <script data-cfasync="false" type="text/javascript">
+        var base_url = 'https://www.kvartersmenyn.se/mobile_site/';
+        var base_domain = 'kvartersmenyn.se';
+        var base_assets = 'https://www.kvmcdn.se/assets/';
+        var base_counter = 'https://www.kvartersmenyn.se/mobile_site/n_start/counter/';
+
+        document.domain = base_domain;
+		var search_url = 'https://www.kvartersmenyn.se/mobile_site/search/0/0/';
+		
+        function callAjax(url) {
+            var xmlhttp;
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("POST", url, true);
+            xmlhttp.send();
+        }
+        function kvm_cr(t, r) {
+            if (typeof (Storage) !== "undefined") {
+                var old_time = localStorage.getItem("c_" + t + "_" + r);
+                var timestamp = Date.now() / 1000 | 0;
+                if (old_time === null || old_time < timestamp) {
+                    callAjax(base_counter + t + "/" + r);
+                    try {
+                        localStorage.setItem("c_" + t + "_" + r, timestamp + 3600);
+                    } catch (e) {
+                    }
+                }
+
+            }
+        }
+        kvm_cr('resm9', 'zfZliTijH2AT42qWzw1eWA..');
+    </script>
+	<script src="https://www.kvmcdn.se/assets/js/mobile_site/libs/jquery-1.7.1.min.js"></script>
+	<script src="https://www.kvmcdn.se/assets/js/base64.js"></script>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8zc74y23hBJmC58QdfK6yJssaCCGVVNs&libraries=geometry"></script>
+	<script src="https://www.kvmcdn.se/assets/js/mobile_site/libs/jquery.cookie.js"></script>
+	<script src="https://www.kvmcdn.se/assets/js/mobile_site/helper.js"></script>
+	<script src="https://www.kvmcdn.se/assets/js/mobile_site/redirect.js"></script>
+</head>
+<body>
+	<!-- Thanks to Arnold Daniels (http://www.jasny.net/portfolio/) for smartbanner script -->
+	<script src="https://www.kvmcdn.se/assets/js/mobile_site/libs/jquery.smartbanner.js"></script>
+	<script>
+		$.smartbanner({
+			title: 'Lunch', 
+			author: 'Kvartersmenyn AB', 
+			price: 'Gratis', 
+			appStoreLanguage: 'se', 
+			inAppStore: 'Finns på App Store', 
+			inGooglePlay: 'På Google Play', 
+			icon: null, 
+			iconGloss: null, 
+			button: 'Hämta', 
+			scale: 'auto', 
+			speedIn: 300, 
+			speedOut: 400, 
+			daysHidden: 15, 
+			daysReminder: 90, 
+			force: null 
+		});
+	</script>
+
+	<div id="fb-root"></div>
+	<script>
+		window.fbAsyncInit = function(){
+			FB.init({
+				appId: '427475153983812', 
+				status: true, 
+				cookie: true, 
+			});
+		};
+		(function(d, s, id){
+		  var js, fjs = d.getElementsByTagName(s)[0];
+		  if (d.getElementById(id)) return;
+		  js = d.createElement(s); js.id = id;
+		  js.src = "//connect.facebook.net/sv_SE/all.js";
+		  fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));
+	</script>
+	<script>
+		$(document).ready(function(){
+			$("#nav-button").click(function(){
+				$("#nav").slideToggle("fast");
+			});
+
+			$("#search-button").click(function(){
+				$("#search").slideToggle("fast");
+			});
+			
+			$('#search_input').keyup(function(e){
+				// Enter was pressed
+				if(e.which === 13){
+					var url = search_url+base64_encode($('#search_input').val(),1);
+					window.location = url;
+				}
+			});
+            $('#search_button').click(function(){
+                var url = search_url+base64_encode($('#search_input').val(),1);
+                window.location = url;
+            });
+		});
+	</script>
+	<div id="container">
+		<header>
+			<a href="https://www.kvartersmenyn.se/mobile_site/"><img src="https://www.kvmcdn.se/assets/img/mobile_site/logo.png" alt width="190" style="margin:15px;" /></a>
+			<img src="https://www.kvmcdn.se/assets/img/mobile_site/search.png" alt width="17" id="search-button" />
+			<div id="search">
+                <input id="search_input" type="search" placeholder="Sök restaurang eller område" />
+                <input id="search_button" type="submit" value="Sök" />
+            </div>
+			<img src="https://www.kvmcdn.se/assets/img/mobile_site/nav.png" alt width="35" id="nav-button" />
+			<nav id="nav">
+				
+		<ul>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/view/catering">Catering</a></li>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/view/conference">Konferens & Festv&aring;ning</a></li>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/view/about">Om oss</a></li>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/view/tip">Tipsa om restaurang</a></li>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/view/fav">Favoriter</a></li>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/view/app">Ladda ner vår app</a></li>
+			<li><a rel="canonical" id="normal_site" href="https://www.kvartersmenyn.se/">Gå till vanliga hemsidan</a></li>
+			<li><a href="https://www.kvartersmenyn.se/mobile_site/">Startsidan</a></li>
+		</ul>			</nav>
+		</header>
+		
+		<div id="main" role="main">
+	<div style="text-align:center;">
+		<img src="https://www.kvmcdn.se/images/logos_small/16372.jpg" width="120" alt />
+		<div class="icons">
+			<a id="fav_link">
+				<img id="fav_img" src="https://www.kvartersmenyn.se/img/mobile_site/fav.png" alt />
+			</a>
+			<a href="tel://030310547">
+				<img src="https://www.kvartersmenyn.se/assets/img/mobile_site/call.png" alt />
+			</a>
+			<a href="https://www.kvartersmenyn.se/mobile_site/index/57.8700260000/11.9744970000/16372">
+				<img src="https://www.kvartersmenyn.se/assets/img/mobile_site/find.png" alt />
+			</a>
+					</div>
+		<ul class="button">
+			                                    <li><a href="https://www.kvartersmenyn.se/mobile_site/rest/16372/4">Veckans meny</a></li>
+                			                                    <li><a href="https://www.kvartersmenyn.se/mobile_site/rest/16372/9">Avhämtning</a></li>
+                			                                    <li><a href="https://www.kvartersmenyn.se/mobile_site/rest/16372/bookrequest">Bokningsförf.</a></li>
+                			                                    <li><a href="https://www.kvartersmenyn.se/mobile_site/rest/16372/email">Skicka epost</a></li>
+                			                                    <li><a href="https://www.kvartersmenyn.se/mobile_site/rest/16372/pren">Prenumerera</a></li>
+                			                                    <li><a href="https://www.kvartersmenyn.se/mobile_site/rest/16372/pics">Bilder</a></li>
+                					</ul>
+		<b>Förrätter</b><br />A. Po pia tod (vegetarisk)&nbsp; &nbsp; &nbsp;59:-<br />Friterade vårrullar med chillisås<br /><br />B. Satay kai (grillspett)&nbsp; &nbsp; &nbsp;65:-<br />Kycklinggrillspett med jordnötssås<br /><br /><b>Friterade rätter</b><br />C. Friterad kycklingfilé serveras med ris<br />Välj mellan sötsursås, jordnötssås, currysås, koreanska kokojangsås lite stark 139:-<br /><br />D. Friterade tigerräkor serveras med ris<br />Välj mellan sötsursås, jordnötssås, currysås, koreanska kokojangsås lite stark 149:-<br /><br />Räkchips 35:-<br /><br /><b>Varmrätter</b><br />1. Kaeng ped&nbsp; (med ris) (europeisk stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Rödcurry med bambuskott, kokosmjölk,grönsaker, limeblad och basilika.<br /><br />2. Kaeng paneng (med ris) (europeisk stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Panengcurry med kokosmjölk, limeblad, basilika och grönsaker<br /><br />3. Kaeg massaman (med ris) (europeisk stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Massamancurry med kokosmjölk, jordnötter och grönsaker<br /><br />4. Bom Bay Indisk Special (med ris) (europeisk stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Indisk curry med kokosmjölk och grönsaker<br /><br />5. Pad khi mao (med ris) (thai stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Wokade thai special med kryddor, färsk chili, citrongräs, citronblad, bambuskott och grönsaker<br /><br />6. Pad baigrapao (med ris) (europeisk stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Wokade grönsaker med chili och hot basilika<br /><br />7. Pad mamuang himmapan (med ris)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 139:-/ 145:- / 149:- / 139:-<br />Wokade grönsaker med cashewnötter<br /><br />8. Pad khing (med ris)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Wokade grönsaker med ingefära<br /><br />9. Pad nam prikpaow (med ris) (stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 139:-/ 149:- / 149:- / 139:-<br />Wokade grönsaker med chilipasta<br /><br />10. Pad Peaw Wan (med ris)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Wokade grönsaker med sötsursås<br /><br />11. Satay kai (grillspett) (med ris) 139:-<br />Kyckling grillspett med jordnötssås och sallad<br /><br />12. Pad sosatay (med ris)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 139:-/ 145:- / 149:- / 139:-<br />Wokade grönsaker med jordnötssås<br /><br />13. Kao Pad<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 139:-/ 145:- / 149:- / 139:-<br />Stekt ris med ägg och blandade grönsaker<br /><br /><i>Grönsaksvariationen kan variera på grund av tillgängligheten</i><br /><br />Nudelrätter<br />14. Pad Thai (thailändsk nationalrätt)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 139:-/ 145:- / 149:- / 139:-<br />Stekta risnudlar med ägg, jordnötter och grönsaker<br /><br />15. Pad mee<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 139:-/ 145:- / 149:- / 139:-<br />Wokade äggnudlar med grönsaker välj mellan sötsursås/ jordnötssås<br /><br />16. Kao Pad Namprikpaow (europeisk stark)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Stekt ris med ägg, chilipasta, curry, cashewnötter och grönsaker<br /><br />17. Kaeng Keawan (serveras med ris)<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br />Grön curry med kokosmjölk, bambuskott, limeblad, basilika och grönsaker<br /><br />18. Pad Prickeang mellan stark<br />Wokade röd currypasta med bambuskott, grönsaker<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 135:-/ 145:- / 149:- / 139:-<br /><br />19. Anyong (koreansk rätt)<br />Stekt ris med kochujang sås, blandade grönsaker<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 155:-/ 159:- / 165:- / 155:-<br /><br />20. The Seoul (koreansk rätt)<br />Wokad kochujang sås med sesamolja, grönsaker serveras med ris<br />Kyckling/Biff/Tigerräkor/Tofu&nbsp; 155:-/ 159:- / 165:- / 155:-<br /><br />21. Nudel special *<br />Khimao padsend<br />Stekta nudlar med ägg och thai kryddor<br />Kyckling/biff/Tofu/Tigerräkor 145:-/155:-/145:-/159:-<br /><br />22. Pad mee krapao *<br />Wokade äggnudlar med chli, hotbasilika, grönsaker<br />Kyckling/biff/Tofu/Tigerräkor 145:-/155:-/145:-/159:-<br /><br />23. Khaopad krapao *<br />Stekt ris med chili, hot basilika, grönsaker serveras med stekt ägg<br />Kyckling/biff/Tofu/Tigerräkor 155:-/159:-/155:-/169:-<br /><br />24. Padnammanhoi<br />Wokade med ostronsås, blandade grönsaker, champinjoner serveras med ris<br />Kyckling/biff/Tofu/Tigerräkor 145:-/149:-/145:-/169:-<br /><br />25. Friterade vegetariska vårrullar 135:-<br />Serveras med ris och sötsursås<br /><br />26. Pad Spaghetti Khimao<br />Wokad spaghetti med thaikryddor och grönsaker (lite starkt)<br />Kyckling/biff/Tofu/Tigerräkor 145:-/155:-/145:-/159:-<br /><br />27. Pas Spaghetti Tomyum<br />Wokad spaghetti med tomyum kryddor och grönsaker (lite sur stark)<br />Kyckling/biff/Tofu/Tigerräkor 145:-/155:-/145:-/159:-<br /><br /><b>Dagens lunch fr 115:-</b><br />vardagar 11.00-14.00<br />8 olika varmrätter (välj en)<br />Mån-Fre 11.00-14.00<br /><br /><b>Öppettider</b>:<br />Vardagar 11.00-20.00<br />Helger 13.00-20.00<br /><i>Köket stänger 19:45</i><div align="center"><br><b>Öppet:</b> <b>Mån-Fre</b> 11:00-20:00 <b>Lör-Sön</b> 13:00-20:00</div>	</div>
+</div>
+<script src="https://connect.facebook.net/en_US/all.js"></script>
+<script>
+	function postToFeed(){
+		var obj = {
+			method: 'feed',
+			// Example - redirect_uri: '/mobile_site/rest/16372/9', 
+			link: 'https://www.kvartersmenyn.se/mobile_site/rest/16372', 
+			picture: 'https://www.kvmcdn.se/images/logos_small/16372.jpg',
+			name: "Laithai Kung\u00e4lv ",
+			caption: 'Tips om mat',
+			description: 'Massa mysig mat.'
+		};
+
+		function callback(response) {
+			// Example: response['post_id'];
+		}
+		FB.ui(obj);
+	}
+</script>
+<script src="https://www.kvartersmenyn.se/assets/js/mobile_site/libs/jquery.cookie.js"></script>
+<script>
+	$.cookie.raw = true;
+	$(document).ready(function(){
+		$('#fav_link').click(function(){
+			var curFav = $.cookie('favourites');
+			var favSrc;
+			// Havn't added ANY favoruites
+			if(typeof curFav === 'undefined'){
+				$.cookie('favourites','16372',{ domain: '.kvartersmenyn.se', path: '/' });
+				favSrc = base_url+'assets/img/mobile_site/favDel.png';
+			} else if(curFav.indexOf('16372') === -1){
+				$.cookie('favourites',curFav+'+16372',{ domain: '.kvartersmenyn.se', path: '/' });
+				favSrc = base_url+'assets/img/mobile_site/favDel.png';
+			} else {
+				var curFavArray = curFav.split('+');
+				for(var i = 0; i < curFavArray.length; i++){
+					if(curFavArray[i] === '16372'){
+						curFavArray.splice(i,1);
+					}
+				}
+				$.cookie('favourites',curFavArray.join('+'),{ domain: '.kvartersmenyn.se', path: '/' });
+				favSrc = base_url+'assets/img/mobile_site/fav.png';
+			}
+			$('#fav_img').attr('src', favSrc);
+		});
+	});
+</script>		
+		<footer></footer>
+	</div> <!--! end of #container -->
+	<script>
+		MBP.hideUrlBarOnLoad();
+	</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0dc9a5e8fc2ac17',t:'MTc4MTgwOTkxOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

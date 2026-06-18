@@ -26,6 +26,11 @@ part 'app_database.g.dart';
   TodoLists,
   TodoItems,
   TodoCompletedArchive,
+  TakeAwayLists,
+  TakeAwayMenus,
+  TakeAwayMenuItems,
+  TakeAwayOrders,
+  TakeAwayOrderLines,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -33,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +68,13 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(todoLists);
             await m.createTable(todoItems);
             await m.createTable(todoCompletedArchive);
+          }
+          if (from < 6) {
+            await m.createTable(takeAwayLists);
+            await m.createTable(takeAwayMenus);
+            await m.createTable(takeAwayMenuItems);
+            await m.createTable(takeAwayOrders);
+            await m.createTable(takeAwayOrderLines);
           }
         },
         beforeOpen: (details) async {
@@ -473,6 +485,90 @@ class AppDatabase extends _$AppDatabase {
     final sorted = names.toList()..sort();
     return sorted.take(limit).toList();
   }
+
+  Stream<List<TakeAwayList>> watchAllTakeAwayLists() {
+    return (select(takeAwayLists)
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .watch();
+  }
+
+  Future<TakeAwayList?> getTakeAwayListById(int id) {
+    return (select(takeAwayLists)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Stream<List<TakeAwayMenu>> watchMenusForList(int listId) {
+    return (select(takeAwayMenus)
+          ..where((t) => t.listId.equals(listId))
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .watch();
+  }
+
+  Future<TakeAwayMenu?> getTakeAwayMenuById(int id) {
+    return (select(takeAwayMenus)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Stream<TakeAwayMenu?> watchTakeAwayMenuById(int id) {
+    return (select(takeAwayMenus)..where((t) => t.id.equals(id)))
+        .watchSingleOrNull();
+  }
+
+  Stream<List<TakeAwayMenuItem>> watchMenuItems(int menuId) {
+    return (select(takeAwayMenuItems)
+          ..where((t) => t.menuId.equals(menuId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .watch();
+  }
+
+  Future<List<TakeAwayMenuItem>> getMenuItems(int menuId) {
+    return (select(takeAwayMenuItems)
+          ..where((t) => t.menuId.equals(menuId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+  }
+
+  Stream<TakeAwayOrderWithLines?> watchOrderWithLines(int menuId) {
+    final orderQuery = select(takeAwayOrders)
+      ..where((t) => t.menuId.equals(menuId));
+    return orderQuery.watchSingleOrNull().asyncExpand((order) {
+      if (order == null) {
+        return Stream.value(null);
+      }
+      final linesQuery = select(takeAwayOrderLines).join([
+        innerJoin(
+          takeAwayMenuItems,
+          takeAwayMenuItems.id.equalsExp(takeAwayOrderLines.menuItemId),
+        ),
+      ])
+        ..where(takeAwayOrderLines.orderId.equals(order.id))
+        ..orderBy([OrderingTerm.asc(takeAwayMenuItems.sortOrder)]);
+      return linesQuery.watch().map((rows) {
+        final lines = rows
+            .map(
+              (row) => TakeAwayOrderLineWithItem(
+                line: row.readTable(takeAwayOrderLines),
+                menuItem: row.readTable(takeAwayMenuItems),
+              ),
+            )
+            .toList();
+        return TakeAwayOrderWithLines(order: order, lines: lines);
+      });
+    });
+  }
+
+  Future<int> countOrderLinesForMenu(int menuId) async {
+    final order = await (select(takeAwayOrders)
+          ..where((t) => t.menuId.equals(menuId)))
+        .getSingleOrNull();
+    if (order == null) return 0;
+    final count = await customSelect(
+      'SELECT COUNT(*) AS c FROM take_away_order_lines WHERE order_id = ?',
+      variables: [Variable<int>(order.id)],
+      readsFrom: {takeAwayOrderLines},
+    ).getSingle();
+    return count.read<int>('c');
+  }
 }
 
 class MealPlanItemWithMeal {
@@ -487,4 +583,18 @@ class MealCheckOffEventWithMeal {
 
   final MealCheckOffEvent event;
   final Meal meal;
+}
+
+class TakeAwayOrderLineWithItem {
+  const TakeAwayOrderLineWithItem({required this.line, required this.menuItem});
+
+  final TakeAwayOrderLine line;
+  final TakeAwayMenuItem menuItem;
+}
+
+class TakeAwayOrderWithLines {
+  const TakeAwayOrderWithLines({required this.order, required this.lines});
+
+  final TakeAwayOrder order;
+  final List<TakeAwayOrderLineWithItem> lines;
 }

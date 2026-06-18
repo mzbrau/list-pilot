@@ -138,6 +138,12 @@ class ListsOverviewScreen extends ConsumerWidget {
               subtitle: const Text('Tasks organized by day'),
               onTap: () => Navigator.pop(context, ListCreateType.todo),
             ),
+            ListTile(
+              leading: const Icon(Icons.restaurant_outlined),
+              title: const Text('Take away list'),
+              subtitle: const Text('Restaurant menus and order plans'),
+              onTap: () => Navigator.pop(context, ListCreateType.takeAway),
+            ),
           ],
         ),
       ),
@@ -150,9 +156,12 @@ class ListsOverviewScreen extends ConsumerWidget {
     if (type == ListCreateType.shopping) {
       final id = await ref.read(listRepositoryProvider).createList(name);
       if (context.mounted) context.push('/list/$id');
-    } else {
+    } else if (type == ListCreateType.todo) {
       final id = await ref.read(todoRepositoryProvider).createList(name);
       if (context.mounted) context.push('/todo/$id');
+    } else {
+      final id = await ref.read(takeAwayRepositoryProvider).createList(name);
+      if (context.mounted) context.push('/take-away/$id');
     }
   }
 
@@ -869,7 +878,17 @@ class _ListCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final dateFormat = DateFormat.MMMd().add_jm();
     final isShopping = entry is ShoppingListEntry;
-    final route = isShopping ? '/list/${entry.id}' : '/todo/${entry.id}';
+    final isTakeAway = entry is TakeAwayListEntry;
+    final route = isShopping
+        ? '/list/${entry.id}'
+        : isTakeAway
+            ? '/take-away/${entry.id}'
+            : '/todo/${entry.id}';
+    final icon = isShopping
+        ? Icons.store_outlined
+        : isTakeAway
+            ? Icons.restaurant_outlined
+            : Icons.checklist_outlined;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -884,9 +903,7 @@ class _ListCard extends ConsumerWidget {
               CircleAvatar(
                 backgroundColor: theme.colorScheme.primaryContainer,
                 child: Icon(
-                  isShopping
-                      ? Icons.store_outlined
-                      : Icons.checklist_outlined,
+                  icon,
                   color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
@@ -955,6 +972,8 @@ class _ListCard extends ConsumerWidget {
       if (name != null && name.trim().isNotEmpty) {
         if (entry is ShoppingListEntry) {
           await ref.read(listRepositoryProvider).renameList(entry.id, name);
+        } else if (entry is TakeAwayListEntry) {
+          await ref.read(takeAwayRepositoryProvider).renameList(entry.id, name);
         } else {
           await ref.read(todoRepositoryProvider).renameList(entry.id, name);
         }
@@ -980,6 +999,8 @@ class _ListCard extends ConsumerWidget {
       if (confirmed == true) {
         if (entry is ShoppingListEntry) {
           await ref.read(listRepositoryProvider).deleteList(entry.id);
+        } else if (entry is TakeAwayListEntry) {
+          await ref.read(takeAwayRepositoryProvider).deleteList(entry.id);
         } else {
           await ref.read(todoRepositoryProvider).deleteList(entry.id);
         }

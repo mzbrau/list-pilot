@@ -180,3 +180,52 @@ class TodoCompletedArchive extends Table {
   DateTimeColumn get completedAt => dateTime()();
   DateTimeColumn get archivedAt => dateTime()();
 }
+
+class TakeAwayLists extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+@DataClassName('TakeAwayMenu')
+class TakeAwayMenus extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listId => integer().references(TakeAwayLists, #id)();
+  TextColumn get restaurantName => text()();
+  TextColumn get location => text().nullable()();
+  TextColumn get mapsUrl => text().nullable()();
+  TextColumn get website => text().nullable()();
+  TextColumn get phone => text().nullable()();
+  TextColumn get menuUrl => text().nullable()();
+  TextColumn get currency => text().nullable()();
+  BoolColumn get isFinalized =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+class TakeAwayMenuItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get menuId => integer().references(TakeAwayMenus, #id)();
+  TextColumn get itemNumber => text().nullable()();
+  TextColumn get name => text()();
+  TextColumn get priceDisplay => text()();
+  RealColumn get priceAmount => real().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+class TakeAwayOrders extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get menuId =>
+      integer().references(TakeAwayMenus, #id).unique()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+class TakeAwayOrderLines extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get orderId => integer().references(TakeAwayOrders, #id)();
+  IntColumn get menuItemId =>
+      integer().references(TakeAwayMenuItems, #id)();
+  IntColumn get quantity => integer().withDefault(const Constant(1))();
+}

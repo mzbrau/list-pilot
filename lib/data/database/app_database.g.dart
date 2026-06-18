@@ -6193,6 +6193,1708 @@ class TodoCompletedArchiveCompanion
   }
 }
 
+class $TakeAwayListsTable extends TakeAwayLists
+    with TableInfo<$TakeAwayListsTable, TakeAwayList> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TakeAwayListsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'take_away_lists';
+  @override
+  VerificationContext validateIntegrity(Insertable<TakeAwayList> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TakeAwayList map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TakeAwayList(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $TakeAwayListsTable createAlias(String alias) {
+    return $TakeAwayListsTable(attachedDatabase, alias);
+  }
+}
+
+class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
+  final int id;
+  final String name;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const TakeAwayList(
+      {required this.id,
+      required this.name,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TakeAwayListsCompanion toCompanion(bool nullToAbsent) {
+    return TakeAwayListsCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TakeAwayList.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TakeAwayList(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TakeAwayList copyWith(
+          {int? id, String? name, DateTime? createdAt, DateTime? updatedAt}) =>
+      TakeAwayList(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  TakeAwayList copyWithCompanion(TakeAwayListsCompanion data) {
+    return TakeAwayList(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayList(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TakeAwayList &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const TakeAwayListsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  TakeAwayListsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  })  : name = Value(name),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<TakeAwayList> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  TakeAwayListsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt}) {
+    return TakeAwayListsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayListsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TakeAwayMenusTable extends TakeAwayMenus
+    with TableInfo<$TakeAwayMenusTable, TakeAwayMenu> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TakeAwayMenusTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<int> listId = GeneratedColumn<int>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _restaurantNameMeta =
+      const VerificationMeta('restaurantName');
+  @override
+  late final GeneratedColumn<String> restaurantName = GeneratedColumn<String>(
+      'restaurant_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _locationMeta =
+      const VerificationMeta('location');
+  @override
+  late final GeneratedColumn<String> location = GeneratedColumn<String>(
+      'location', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _mapsUrlMeta =
+      const VerificationMeta('mapsUrl');
+  @override
+  late final GeneratedColumn<String> mapsUrl = GeneratedColumn<String>(
+      'maps_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _websiteMeta =
+      const VerificationMeta('website');
+  @override
+  late final GeneratedColumn<String> website = GeneratedColumn<String>(
+      'website', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+      'phone', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _menuUrlMeta =
+      const VerificationMeta('menuUrl');
+  @override
+  late final GeneratedColumn<String> menuUrl = GeneratedColumn<String>(
+      'menu_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _currencyMeta =
+      const VerificationMeta('currency');
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+      'currency', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isFinalizedMeta =
+      const VerificationMeta('isFinalized');
+  @override
+  late final GeneratedColumn<bool> isFinalized = GeneratedColumn<bool>(
+      'is_finalized', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_finalized" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        listId,
+        restaurantName,
+        location,
+        mapsUrl,
+        website,
+        phone,
+        menuUrl,
+        currency,
+        isFinalized,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'take_away_menus';
+  @override
+  VerificationContext validateIntegrity(Insertable<TakeAwayMenu> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('restaurant_name')) {
+      context.handle(
+          _restaurantNameMeta,
+          restaurantName.isAcceptableOrUnknown(
+              data['restaurant_name']!, _restaurantNameMeta));
+    } else if (isInserting) {
+      context.missing(_restaurantNameMeta);
+    }
+    if (data.containsKey('location')) {
+      context.handle(_locationMeta,
+          location.isAcceptableOrUnknown(data['location']!, _locationMeta));
+    }
+    if (data.containsKey('maps_url')) {
+      context.handle(_mapsUrlMeta,
+          mapsUrl.isAcceptableOrUnknown(data['maps_url']!, _mapsUrlMeta));
+    }
+    if (data.containsKey('website')) {
+      context.handle(_websiteMeta,
+          website.isAcceptableOrUnknown(data['website']!, _websiteMeta));
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
+    }
+    if (data.containsKey('menu_url')) {
+      context.handle(_menuUrlMeta,
+          menuUrl.isAcceptableOrUnknown(data['menu_url']!, _menuUrlMeta));
+    }
+    if (data.containsKey('currency')) {
+      context.handle(_currencyMeta,
+          currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta));
+    }
+    if (data.containsKey('is_finalized')) {
+      context.handle(
+          _isFinalizedMeta,
+          isFinalized.isAcceptableOrUnknown(
+              data['is_finalized']!, _isFinalizedMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TakeAwayMenu map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TakeAwayMenu(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
+      restaurantName: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}restaurant_name'])!,
+      location: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}location']),
+      mapsUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}maps_url']),
+      website: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}website']),
+      phone: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phone']),
+      menuUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}menu_url']),
+      currency: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}currency']),
+      isFinalized: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_finalized'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $TakeAwayMenusTable createAlias(String alias) {
+    return $TakeAwayMenusTable(attachedDatabase, alias);
+  }
+}
+
+class TakeAwayMenu extends DataClass implements Insertable<TakeAwayMenu> {
+  final int id;
+  final int listId;
+  final String restaurantName;
+  final String? location;
+  final String? mapsUrl;
+  final String? website;
+  final String? phone;
+  final String? menuUrl;
+  final String? currency;
+  final bool isFinalized;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const TakeAwayMenu(
+      {required this.id,
+      required this.listId,
+      required this.restaurantName,
+      this.location,
+      this.mapsUrl,
+      this.website,
+      this.phone,
+      this.menuUrl,
+      this.currency,
+      required this.isFinalized,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['list_id'] = Variable<int>(listId);
+    map['restaurant_name'] = Variable<String>(restaurantName);
+    if (!nullToAbsent || location != null) {
+      map['location'] = Variable<String>(location);
+    }
+    if (!nullToAbsent || mapsUrl != null) {
+      map['maps_url'] = Variable<String>(mapsUrl);
+    }
+    if (!nullToAbsent || website != null) {
+      map['website'] = Variable<String>(website);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || menuUrl != null) {
+      map['menu_url'] = Variable<String>(menuUrl);
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
+    map['is_finalized'] = Variable<bool>(isFinalized);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TakeAwayMenusCompanion toCompanion(bool nullToAbsent) {
+    return TakeAwayMenusCompanion(
+      id: Value(id),
+      listId: Value(listId),
+      restaurantName: Value(restaurantName),
+      location: location == null && nullToAbsent
+          ? const Value.absent()
+          : Value(location),
+      mapsUrl: mapsUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mapsUrl),
+      website: website == null && nullToAbsent
+          ? const Value.absent()
+          : Value(website),
+      phone:
+          phone == null && nullToAbsent ? const Value.absent() : Value(phone),
+      menuUrl: menuUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(menuUrl),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
+      isFinalized: Value(isFinalized),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TakeAwayMenu.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TakeAwayMenu(
+      id: serializer.fromJson<int>(json['id']),
+      listId: serializer.fromJson<int>(json['listId']),
+      restaurantName: serializer.fromJson<String>(json['restaurantName']),
+      location: serializer.fromJson<String?>(json['location']),
+      mapsUrl: serializer.fromJson<String?>(json['mapsUrl']),
+      website: serializer.fromJson<String?>(json['website']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      menuUrl: serializer.fromJson<String?>(json['menuUrl']),
+      currency: serializer.fromJson<String?>(json['currency']),
+      isFinalized: serializer.fromJson<bool>(json['isFinalized']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'listId': serializer.toJson<int>(listId),
+      'restaurantName': serializer.toJson<String>(restaurantName),
+      'location': serializer.toJson<String?>(location),
+      'mapsUrl': serializer.toJson<String?>(mapsUrl),
+      'website': serializer.toJson<String?>(website),
+      'phone': serializer.toJson<String?>(phone),
+      'menuUrl': serializer.toJson<String?>(menuUrl),
+      'currency': serializer.toJson<String?>(currency),
+      'isFinalized': serializer.toJson<bool>(isFinalized),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TakeAwayMenu copyWith(
+          {int? id,
+          int? listId,
+          String? restaurantName,
+          Value<String?> location = const Value.absent(),
+          Value<String?> mapsUrl = const Value.absent(),
+          Value<String?> website = const Value.absent(),
+          Value<String?> phone = const Value.absent(),
+          Value<String?> menuUrl = const Value.absent(),
+          Value<String?> currency = const Value.absent(),
+          bool? isFinalized,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      TakeAwayMenu(
+        id: id ?? this.id,
+        listId: listId ?? this.listId,
+        restaurantName: restaurantName ?? this.restaurantName,
+        location: location.present ? location.value : this.location,
+        mapsUrl: mapsUrl.present ? mapsUrl.value : this.mapsUrl,
+        website: website.present ? website.value : this.website,
+        phone: phone.present ? phone.value : this.phone,
+        menuUrl: menuUrl.present ? menuUrl.value : this.menuUrl,
+        currency: currency.present ? currency.value : this.currency,
+        isFinalized: isFinalized ?? this.isFinalized,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  TakeAwayMenu copyWithCompanion(TakeAwayMenusCompanion data) {
+    return TakeAwayMenu(
+      id: data.id.present ? data.id.value : this.id,
+      listId: data.listId.present ? data.listId.value : this.listId,
+      restaurantName: data.restaurantName.present
+          ? data.restaurantName.value
+          : this.restaurantName,
+      location: data.location.present ? data.location.value : this.location,
+      mapsUrl: data.mapsUrl.present ? data.mapsUrl.value : this.mapsUrl,
+      website: data.website.present ? data.website.value : this.website,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      menuUrl: data.menuUrl.present ? data.menuUrl.value : this.menuUrl,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      isFinalized:
+          data.isFinalized.present ? data.isFinalized.value : this.isFinalized,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayMenu(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('restaurantName: $restaurantName, ')
+          ..write('location: $location, ')
+          ..write('mapsUrl: $mapsUrl, ')
+          ..write('website: $website, ')
+          ..write('phone: $phone, ')
+          ..write('menuUrl: $menuUrl, ')
+          ..write('currency: $currency, ')
+          ..write('isFinalized: $isFinalized, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, listId, restaurantName, location, mapsUrl,
+      website, phone, menuUrl, currency, isFinalized, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TakeAwayMenu &&
+          other.id == this.id &&
+          other.listId == this.listId &&
+          other.restaurantName == this.restaurantName &&
+          other.location == this.location &&
+          other.mapsUrl == this.mapsUrl &&
+          other.website == this.website &&
+          other.phone == this.phone &&
+          other.menuUrl == this.menuUrl &&
+          other.currency == this.currency &&
+          other.isFinalized == this.isFinalized &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TakeAwayMenusCompanion extends UpdateCompanion<TakeAwayMenu> {
+  final Value<int> id;
+  final Value<int> listId;
+  final Value<String> restaurantName;
+  final Value<String?> location;
+  final Value<String?> mapsUrl;
+  final Value<String?> website;
+  final Value<String?> phone;
+  final Value<String?> menuUrl;
+  final Value<String?> currency;
+  final Value<bool> isFinalized;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const TakeAwayMenusCompanion({
+    this.id = const Value.absent(),
+    this.listId = const Value.absent(),
+    this.restaurantName = const Value.absent(),
+    this.location = const Value.absent(),
+    this.mapsUrl = const Value.absent(),
+    this.website = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.menuUrl = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.isFinalized = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  TakeAwayMenusCompanion.insert({
+    this.id = const Value.absent(),
+    required int listId,
+    required String restaurantName,
+    this.location = const Value.absent(),
+    this.mapsUrl = const Value.absent(),
+    this.website = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.menuUrl = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.isFinalized = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  })  : listId = Value(listId),
+        restaurantName = Value(restaurantName),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<TakeAwayMenu> custom({
+    Expression<int>? id,
+    Expression<int>? listId,
+    Expression<String>? restaurantName,
+    Expression<String>? location,
+    Expression<String>? mapsUrl,
+    Expression<String>? website,
+    Expression<String>? phone,
+    Expression<String>? menuUrl,
+    Expression<String>? currency,
+    Expression<bool>? isFinalized,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (listId != null) 'list_id': listId,
+      if (restaurantName != null) 'restaurant_name': restaurantName,
+      if (location != null) 'location': location,
+      if (mapsUrl != null) 'maps_url': mapsUrl,
+      if (website != null) 'website': website,
+      if (phone != null) 'phone': phone,
+      if (menuUrl != null) 'menu_url': menuUrl,
+      if (currency != null) 'currency': currency,
+      if (isFinalized != null) 'is_finalized': isFinalized,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  TakeAwayMenusCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? listId,
+      Value<String>? restaurantName,
+      Value<String?>? location,
+      Value<String?>? mapsUrl,
+      Value<String?>? website,
+      Value<String?>? phone,
+      Value<String?>? menuUrl,
+      Value<String?>? currency,
+      Value<bool>? isFinalized,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt}) {
+    return TakeAwayMenusCompanion(
+      id: id ?? this.id,
+      listId: listId ?? this.listId,
+      restaurantName: restaurantName ?? this.restaurantName,
+      location: location ?? this.location,
+      mapsUrl: mapsUrl ?? this.mapsUrl,
+      website: website ?? this.website,
+      phone: phone ?? this.phone,
+      menuUrl: menuUrl ?? this.menuUrl,
+      currency: currency ?? this.currency,
+      isFinalized: isFinalized ?? this.isFinalized,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (listId.present) {
+      map['list_id'] = Variable<int>(listId.value);
+    }
+    if (restaurantName.present) {
+      map['restaurant_name'] = Variable<String>(restaurantName.value);
+    }
+    if (location.present) {
+      map['location'] = Variable<String>(location.value);
+    }
+    if (mapsUrl.present) {
+      map['maps_url'] = Variable<String>(mapsUrl.value);
+    }
+    if (website.present) {
+      map['website'] = Variable<String>(website.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (menuUrl.present) {
+      map['menu_url'] = Variable<String>(menuUrl.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (isFinalized.present) {
+      map['is_finalized'] = Variable<bool>(isFinalized.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayMenusCompanion(')
+          ..write('id: $id, ')
+          ..write('listId: $listId, ')
+          ..write('restaurantName: $restaurantName, ')
+          ..write('location: $location, ')
+          ..write('mapsUrl: $mapsUrl, ')
+          ..write('website: $website, ')
+          ..write('phone: $phone, ')
+          ..write('menuUrl: $menuUrl, ')
+          ..write('currency: $currency, ')
+          ..write('isFinalized: $isFinalized, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TakeAwayMenuItemsTable extends TakeAwayMenuItems
+    with TableInfo<$TakeAwayMenuItemsTable, TakeAwayMenuItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TakeAwayMenuItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _menuIdMeta = const VerificationMeta('menuId');
+  @override
+  late final GeneratedColumn<int> menuId = GeneratedColumn<int>(
+      'menu_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _itemNumberMeta =
+      const VerificationMeta('itemNumber');
+  @override
+  late final GeneratedColumn<String> itemNumber = GeneratedColumn<String>(
+      'item_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _priceDisplayMeta =
+      const VerificationMeta('priceDisplay');
+  @override
+  late final GeneratedColumn<String> priceDisplay = GeneratedColumn<String>(
+      'price_display', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _priceAmountMeta =
+      const VerificationMeta('priceAmount');
+  @override
+  late final GeneratedColumn<double> priceAmount = GeneratedColumn<double>(
+      'price_amount', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, menuId, itemNumber, name, priceDisplay, priceAmount, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'take_away_menu_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<TakeAwayMenuItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('menu_id')) {
+      context.handle(_menuIdMeta,
+          menuId.isAcceptableOrUnknown(data['menu_id']!, _menuIdMeta));
+    } else if (isInserting) {
+      context.missing(_menuIdMeta);
+    }
+    if (data.containsKey('item_number')) {
+      context.handle(
+          _itemNumberMeta,
+          itemNumber.isAcceptableOrUnknown(
+              data['item_number']!, _itemNumberMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('price_display')) {
+      context.handle(
+          _priceDisplayMeta,
+          priceDisplay.isAcceptableOrUnknown(
+              data['price_display']!, _priceDisplayMeta));
+    } else if (isInserting) {
+      context.missing(_priceDisplayMeta);
+    }
+    if (data.containsKey('price_amount')) {
+      context.handle(
+          _priceAmountMeta,
+          priceAmount.isAcceptableOrUnknown(
+              data['price_amount']!, _priceAmountMeta));
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TakeAwayMenuItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TakeAwayMenuItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      menuId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}menu_id'])!,
+      itemNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_number']),
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      priceDisplay: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}price_display'])!,
+      priceAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}price_amount']),
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+    );
+  }
+
+  @override
+  $TakeAwayMenuItemsTable createAlias(String alias) {
+    return $TakeAwayMenuItemsTable(attachedDatabase, alias);
+  }
+}
+
+class TakeAwayMenuItem extends DataClass
+    implements Insertable<TakeAwayMenuItem> {
+  final int id;
+  final int menuId;
+  final String? itemNumber;
+  final String name;
+  final String priceDisplay;
+  final double? priceAmount;
+  final int sortOrder;
+  const TakeAwayMenuItem(
+      {required this.id,
+      required this.menuId,
+      this.itemNumber,
+      required this.name,
+      required this.priceDisplay,
+      this.priceAmount,
+      required this.sortOrder});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['menu_id'] = Variable<int>(menuId);
+    if (!nullToAbsent || itemNumber != null) {
+      map['item_number'] = Variable<String>(itemNumber);
+    }
+    map['name'] = Variable<String>(name);
+    map['price_display'] = Variable<String>(priceDisplay);
+    if (!nullToAbsent || priceAmount != null) {
+      map['price_amount'] = Variable<double>(priceAmount);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  TakeAwayMenuItemsCompanion toCompanion(bool nullToAbsent) {
+    return TakeAwayMenuItemsCompanion(
+      id: Value(id),
+      menuId: Value(menuId),
+      itemNumber: itemNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(itemNumber),
+      name: Value(name),
+      priceDisplay: Value(priceDisplay),
+      priceAmount: priceAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceAmount),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory TakeAwayMenuItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TakeAwayMenuItem(
+      id: serializer.fromJson<int>(json['id']),
+      menuId: serializer.fromJson<int>(json['menuId']),
+      itemNumber: serializer.fromJson<String?>(json['itemNumber']),
+      name: serializer.fromJson<String>(json['name']),
+      priceDisplay: serializer.fromJson<String>(json['priceDisplay']),
+      priceAmount: serializer.fromJson<double?>(json['priceAmount']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'menuId': serializer.toJson<int>(menuId),
+      'itemNumber': serializer.toJson<String?>(itemNumber),
+      'name': serializer.toJson<String>(name),
+      'priceDisplay': serializer.toJson<String>(priceDisplay),
+      'priceAmount': serializer.toJson<double?>(priceAmount),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  TakeAwayMenuItem copyWith(
+          {int? id,
+          int? menuId,
+          Value<String?> itemNumber = const Value.absent(),
+          String? name,
+          String? priceDisplay,
+          Value<double?> priceAmount = const Value.absent(),
+          int? sortOrder}) =>
+      TakeAwayMenuItem(
+        id: id ?? this.id,
+        menuId: menuId ?? this.menuId,
+        itemNumber: itemNumber.present ? itemNumber.value : this.itemNumber,
+        name: name ?? this.name,
+        priceDisplay: priceDisplay ?? this.priceDisplay,
+        priceAmount: priceAmount.present ? priceAmount.value : this.priceAmount,
+        sortOrder: sortOrder ?? this.sortOrder,
+      );
+  TakeAwayMenuItem copyWithCompanion(TakeAwayMenuItemsCompanion data) {
+    return TakeAwayMenuItem(
+      id: data.id.present ? data.id.value : this.id,
+      menuId: data.menuId.present ? data.menuId.value : this.menuId,
+      itemNumber:
+          data.itemNumber.present ? data.itemNumber.value : this.itemNumber,
+      name: data.name.present ? data.name.value : this.name,
+      priceDisplay: data.priceDisplay.present
+          ? data.priceDisplay.value
+          : this.priceDisplay,
+      priceAmount:
+          data.priceAmount.present ? data.priceAmount.value : this.priceAmount,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayMenuItem(')
+          ..write('id: $id, ')
+          ..write('menuId: $menuId, ')
+          ..write('itemNumber: $itemNumber, ')
+          ..write('name: $name, ')
+          ..write('priceDisplay: $priceDisplay, ')
+          ..write('priceAmount: $priceAmount, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, menuId, itemNumber, name, priceDisplay, priceAmount, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TakeAwayMenuItem &&
+          other.id == this.id &&
+          other.menuId == this.menuId &&
+          other.itemNumber == this.itemNumber &&
+          other.name == this.name &&
+          other.priceDisplay == this.priceDisplay &&
+          other.priceAmount == this.priceAmount &&
+          other.sortOrder == this.sortOrder);
+}
+
+class TakeAwayMenuItemsCompanion extends UpdateCompanion<TakeAwayMenuItem> {
+  final Value<int> id;
+  final Value<int> menuId;
+  final Value<String?> itemNumber;
+  final Value<String> name;
+  final Value<String> priceDisplay;
+  final Value<double?> priceAmount;
+  final Value<int> sortOrder;
+  const TakeAwayMenuItemsCompanion({
+    this.id = const Value.absent(),
+    this.menuId = const Value.absent(),
+    this.itemNumber = const Value.absent(),
+    this.name = const Value.absent(),
+    this.priceDisplay = const Value.absent(),
+    this.priceAmount = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+  });
+  TakeAwayMenuItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required int menuId,
+    this.itemNumber = const Value.absent(),
+    required String name,
+    required String priceDisplay,
+    this.priceAmount = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+  })  : menuId = Value(menuId),
+        name = Value(name),
+        priceDisplay = Value(priceDisplay);
+  static Insertable<TakeAwayMenuItem> custom({
+    Expression<int>? id,
+    Expression<int>? menuId,
+    Expression<String>? itemNumber,
+    Expression<String>? name,
+    Expression<String>? priceDisplay,
+    Expression<double>? priceAmount,
+    Expression<int>? sortOrder,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (menuId != null) 'menu_id': menuId,
+      if (itemNumber != null) 'item_number': itemNumber,
+      if (name != null) 'name': name,
+      if (priceDisplay != null) 'price_display': priceDisplay,
+      if (priceAmount != null) 'price_amount': priceAmount,
+      if (sortOrder != null) 'sort_order': sortOrder,
+    });
+  }
+
+  TakeAwayMenuItemsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? menuId,
+      Value<String?>? itemNumber,
+      Value<String>? name,
+      Value<String>? priceDisplay,
+      Value<double?>? priceAmount,
+      Value<int>? sortOrder}) {
+    return TakeAwayMenuItemsCompanion(
+      id: id ?? this.id,
+      menuId: menuId ?? this.menuId,
+      itemNumber: itemNumber ?? this.itemNumber,
+      name: name ?? this.name,
+      priceDisplay: priceDisplay ?? this.priceDisplay,
+      priceAmount: priceAmount ?? this.priceAmount,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (menuId.present) {
+      map['menu_id'] = Variable<int>(menuId.value);
+    }
+    if (itemNumber.present) {
+      map['item_number'] = Variable<String>(itemNumber.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (priceDisplay.present) {
+      map['price_display'] = Variable<String>(priceDisplay.value);
+    }
+    if (priceAmount.present) {
+      map['price_amount'] = Variable<double>(priceAmount.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayMenuItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('menuId: $menuId, ')
+          ..write('itemNumber: $itemNumber, ')
+          ..write('name: $name, ')
+          ..write('priceDisplay: $priceDisplay, ')
+          ..write('priceAmount: $priceAmount, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TakeAwayOrdersTable extends TakeAwayOrders
+    with TableInfo<$TakeAwayOrdersTable, TakeAwayOrder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TakeAwayOrdersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _menuIdMeta = const VerificationMeta('menuId');
+  @override
+  late final GeneratedColumn<int> menuId = GeneratedColumn<int>(
+      'menu_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, menuId, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'take_away_orders';
+  @override
+  VerificationContext validateIntegrity(Insertable<TakeAwayOrder> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('menu_id')) {
+      context.handle(_menuIdMeta,
+          menuId.isAcceptableOrUnknown(data['menu_id']!, _menuIdMeta));
+    } else if (isInserting) {
+      context.missing(_menuIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TakeAwayOrder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TakeAwayOrder(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      menuId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}menu_id'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $TakeAwayOrdersTable createAlias(String alias) {
+    return $TakeAwayOrdersTable(attachedDatabase, alias);
+  }
+}
+
+class TakeAwayOrder extends DataClass implements Insertable<TakeAwayOrder> {
+  final int id;
+  final int menuId;
+  final DateTime updatedAt;
+  const TakeAwayOrder(
+      {required this.id, required this.menuId, required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['menu_id'] = Variable<int>(menuId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TakeAwayOrdersCompanion toCompanion(bool nullToAbsent) {
+    return TakeAwayOrdersCompanion(
+      id: Value(id),
+      menuId: Value(menuId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TakeAwayOrder.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TakeAwayOrder(
+      id: serializer.fromJson<int>(json['id']),
+      menuId: serializer.fromJson<int>(json['menuId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'menuId': serializer.toJson<int>(menuId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TakeAwayOrder copyWith({int? id, int? menuId, DateTime? updatedAt}) =>
+      TakeAwayOrder(
+        id: id ?? this.id,
+        menuId: menuId ?? this.menuId,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  TakeAwayOrder copyWithCompanion(TakeAwayOrdersCompanion data) {
+    return TakeAwayOrder(
+      id: data.id.present ? data.id.value : this.id,
+      menuId: data.menuId.present ? data.menuId.value : this.menuId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayOrder(')
+          ..write('id: $id, ')
+          ..write('menuId: $menuId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, menuId, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TakeAwayOrder &&
+          other.id == this.id &&
+          other.menuId == this.menuId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TakeAwayOrdersCompanion extends UpdateCompanion<TakeAwayOrder> {
+  final Value<int> id;
+  final Value<int> menuId;
+  final Value<DateTime> updatedAt;
+  const TakeAwayOrdersCompanion({
+    this.id = const Value.absent(),
+    this.menuId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  TakeAwayOrdersCompanion.insert({
+    this.id = const Value.absent(),
+    required int menuId,
+    required DateTime updatedAt,
+  })  : menuId = Value(menuId),
+        updatedAt = Value(updatedAt);
+  static Insertable<TakeAwayOrder> custom({
+    Expression<int>? id,
+    Expression<int>? menuId,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (menuId != null) 'menu_id': menuId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  TakeAwayOrdersCompanion copyWith(
+      {Value<int>? id, Value<int>? menuId, Value<DateTime>? updatedAt}) {
+    return TakeAwayOrdersCompanion(
+      id: id ?? this.id,
+      menuId: menuId ?? this.menuId,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (menuId.present) {
+      map['menu_id'] = Variable<int>(menuId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayOrdersCompanion(')
+          ..write('id: $id, ')
+          ..write('menuId: $menuId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TakeAwayOrderLinesTable extends TakeAwayOrderLines
+    with TableInfo<$TakeAwayOrderLinesTable, TakeAwayOrderLine> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TakeAwayOrderLinesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _orderIdMeta =
+      const VerificationMeta('orderId');
+  @override
+  late final GeneratedColumn<int> orderId = GeneratedColumn<int>(
+      'order_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _menuItemIdMeta =
+      const VerificationMeta('menuItemId');
+  @override
+  late final GeneratedColumn<int> menuItemId = GeneratedColumn<int>(
+      'menu_item_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  @override
+  List<GeneratedColumn> get $columns => [id, orderId, menuItemId, quantity];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'take_away_order_lines';
+  @override
+  VerificationContext validateIntegrity(Insertable<TakeAwayOrderLine> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('order_id')) {
+      context.handle(_orderIdMeta,
+          orderId.isAcceptableOrUnknown(data['order_id']!, _orderIdMeta));
+    } else if (isInserting) {
+      context.missing(_orderIdMeta);
+    }
+    if (data.containsKey('menu_item_id')) {
+      context.handle(
+          _menuItemIdMeta,
+          menuItemId.isAcceptableOrUnknown(
+              data['menu_item_id']!, _menuItemIdMeta));
+    } else if (isInserting) {
+      context.missing(_menuItemIdMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TakeAwayOrderLine map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TakeAwayOrderLine(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      orderId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}order_id'])!,
+      menuItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}menu_item_id'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+    );
+  }
+
+  @override
+  $TakeAwayOrderLinesTable createAlias(String alias) {
+    return $TakeAwayOrderLinesTable(attachedDatabase, alias);
+  }
+}
+
+class TakeAwayOrderLine extends DataClass
+    implements Insertable<TakeAwayOrderLine> {
+  final int id;
+  final int orderId;
+  final int menuItemId;
+  final int quantity;
+  const TakeAwayOrderLine(
+      {required this.id,
+      required this.orderId,
+      required this.menuItemId,
+      required this.quantity});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['order_id'] = Variable<int>(orderId);
+    map['menu_item_id'] = Variable<int>(menuItemId);
+    map['quantity'] = Variable<int>(quantity);
+    return map;
+  }
+
+  TakeAwayOrderLinesCompanion toCompanion(bool nullToAbsent) {
+    return TakeAwayOrderLinesCompanion(
+      id: Value(id),
+      orderId: Value(orderId),
+      menuItemId: Value(menuItemId),
+      quantity: Value(quantity),
+    );
+  }
+
+  factory TakeAwayOrderLine.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TakeAwayOrderLine(
+      id: serializer.fromJson<int>(json['id']),
+      orderId: serializer.fromJson<int>(json['orderId']),
+      menuItemId: serializer.fromJson<int>(json['menuItemId']),
+      quantity: serializer.fromJson<int>(json['quantity']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'orderId': serializer.toJson<int>(orderId),
+      'menuItemId': serializer.toJson<int>(menuItemId),
+      'quantity': serializer.toJson<int>(quantity),
+    };
+  }
+
+  TakeAwayOrderLine copyWith(
+          {int? id, int? orderId, int? menuItemId, int? quantity}) =>
+      TakeAwayOrderLine(
+        id: id ?? this.id,
+        orderId: orderId ?? this.orderId,
+        menuItemId: menuItemId ?? this.menuItemId,
+        quantity: quantity ?? this.quantity,
+      );
+  TakeAwayOrderLine copyWithCompanion(TakeAwayOrderLinesCompanion data) {
+    return TakeAwayOrderLine(
+      id: data.id.present ? data.id.value : this.id,
+      orderId: data.orderId.present ? data.orderId.value : this.orderId,
+      menuItemId:
+          data.menuItemId.present ? data.menuItemId.value : this.menuItemId,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayOrderLine(')
+          ..write('id: $id, ')
+          ..write('orderId: $orderId, ')
+          ..write('menuItemId: $menuItemId, ')
+          ..write('quantity: $quantity')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, orderId, menuItemId, quantity);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TakeAwayOrderLine &&
+          other.id == this.id &&
+          other.orderId == this.orderId &&
+          other.menuItemId == this.menuItemId &&
+          other.quantity == this.quantity);
+}
+
+class TakeAwayOrderLinesCompanion extends UpdateCompanion<TakeAwayOrderLine> {
+  final Value<int> id;
+  final Value<int> orderId;
+  final Value<int> menuItemId;
+  final Value<int> quantity;
+  const TakeAwayOrderLinesCompanion({
+    this.id = const Value.absent(),
+    this.orderId = const Value.absent(),
+    this.menuItemId = const Value.absent(),
+    this.quantity = const Value.absent(),
+  });
+  TakeAwayOrderLinesCompanion.insert({
+    this.id = const Value.absent(),
+    required int orderId,
+    required int menuItemId,
+    this.quantity = const Value.absent(),
+  })  : orderId = Value(orderId),
+        menuItemId = Value(menuItemId);
+  static Insertable<TakeAwayOrderLine> custom({
+    Expression<int>? id,
+    Expression<int>? orderId,
+    Expression<int>? menuItemId,
+    Expression<int>? quantity,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (orderId != null) 'order_id': orderId,
+      if (menuItemId != null) 'menu_item_id': menuItemId,
+      if (quantity != null) 'quantity': quantity,
+    });
+  }
+
+  TakeAwayOrderLinesCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? orderId,
+      Value<int>? menuItemId,
+      Value<int>? quantity}) {
+    return TakeAwayOrderLinesCompanion(
+      id: id ?? this.id,
+      orderId: orderId ?? this.orderId,
+      menuItemId: menuItemId ?? this.menuItemId,
+      quantity: quantity ?? this.quantity,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (orderId.present) {
+      map['order_id'] = Variable<int>(orderId.value);
+    }
+    if (menuItemId.present) {
+      map['menu_item_id'] = Variable<int>(menuItemId.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeAwayOrderLinesCompanion(')
+          ..write('id: $id, ')
+          ..write('orderId: $orderId, ')
+          ..write('menuItemId: $menuItemId, ')
+          ..write('quantity: $quantity')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6220,6 +7922,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TodoItemsTable todoItems = $TodoItemsTable(this);
   late final $TodoCompletedArchiveTable todoCompletedArchive =
       $TodoCompletedArchiveTable(this);
+  late final $TakeAwayListsTable takeAwayLists = $TakeAwayListsTable(this);
+  late final $TakeAwayMenusTable takeAwayMenus = $TakeAwayMenusTable(this);
+  late final $TakeAwayMenuItemsTable takeAwayMenuItems =
+      $TakeAwayMenuItemsTable(this);
+  late final $TakeAwayOrdersTable takeAwayOrders = $TakeAwayOrdersTable(this);
+  late final $TakeAwayOrderLinesTable takeAwayOrderLines =
+      $TakeAwayOrderLinesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6242,7 +7951,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         mealTagAssignments,
         todoLists,
         todoItems,
-        todoCompletedArchive
+        todoCompletedArchive,
+        takeAwayLists,
+        takeAwayMenus,
+        takeAwayMenuItems,
+        takeAwayOrders,
+        takeAwayOrderLines
       ];
 }
 
@@ -9479,6 +11193,924 @@ typedef $$TodoCompletedArchiveTableProcessedTableManager
         ),
         TodoCompletedArchiveData,
         PrefetchHooks Function()>;
+typedef $$TakeAwayListsTableCreateCompanionBuilder = TakeAwayListsCompanion
+    Function({
+  Value<int> id,
+  required String name,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+});
+typedef $$TakeAwayListsTableUpdateCompanionBuilder = TakeAwayListsCompanion
+    Function({
+  Value<int> id,
+  Value<String> name,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+
+class $$TakeAwayListsTableFilterComposer
+    extends Composer<_$AppDatabase, $TakeAwayListsTable> {
+  $$TakeAwayListsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TakeAwayListsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TakeAwayListsTable> {
+  $$TakeAwayListsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TakeAwayListsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TakeAwayListsTable> {
+  $$TakeAwayListsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TakeAwayListsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TakeAwayListsTable,
+    TakeAwayList,
+    $$TakeAwayListsTableFilterComposer,
+    $$TakeAwayListsTableOrderingComposer,
+    $$TakeAwayListsTableAnnotationComposer,
+    $$TakeAwayListsTableCreateCompanionBuilder,
+    $$TakeAwayListsTableUpdateCompanionBuilder,
+    (
+      TakeAwayList,
+      BaseReferences<_$AppDatabase, $TakeAwayListsTable, TakeAwayList>
+    ),
+    TakeAwayList,
+    PrefetchHooks Function()> {
+  $$TakeAwayListsTableTableManager(_$AppDatabase db, $TakeAwayListsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TakeAwayListsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TakeAwayListsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TakeAwayListsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              TakeAwayListsCompanion(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+          }) =>
+              TakeAwayListsCompanion.insert(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TakeAwayListsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TakeAwayListsTable,
+    TakeAwayList,
+    $$TakeAwayListsTableFilterComposer,
+    $$TakeAwayListsTableOrderingComposer,
+    $$TakeAwayListsTableAnnotationComposer,
+    $$TakeAwayListsTableCreateCompanionBuilder,
+    $$TakeAwayListsTableUpdateCompanionBuilder,
+    (
+      TakeAwayList,
+      BaseReferences<_$AppDatabase, $TakeAwayListsTable, TakeAwayList>
+    ),
+    TakeAwayList,
+    PrefetchHooks Function()>;
+typedef $$TakeAwayMenusTableCreateCompanionBuilder = TakeAwayMenusCompanion
+    Function({
+  Value<int> id,
+  required int listId,
+  required String restaurantName,
+  Value<String?> location,
+  Value<String?> mapsUrl,
+  Value<String?> website,
+  Value<String?> phone,
+  Value<String?> menuUrl,
+  Value<String?> currency,
+  Value<bool> isFinalized,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+});
+typedef $$TakeAwayMenusTableUpdateCompanionBuilder = TakeAwayMenusCompanion
+    Function({
+  Value<int> id,
+  Value<int> listId,
+  Value<String> restaurantName,
+  Value<String?> location,
+  Value<String?> mapsUrl,
+  Value<String?> website,
+  Value<String?> phone,
+  Value<String?> menuUrl,
+  Value<String?> currency,
+  Value<bool> isFinalized,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+
+class $$TakeAwayMenusTableFilterComposer
+    extends Composer<_$AppDatabase, $TakeAwayMenusTable> {
+  $$TakeAwayMenusTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get restaurantName => $composableBuilder(
+      column: $table.restaurantName,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get location => $composableBuilder(
+      column: $table.location, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mapsUrl => $composableBuilder(
+      column: $table.mapsUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get website => $composableBuilder(
+      column: $table.website, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phone => $composableBuilder(
+      column: $table.phone, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get menuUrl => $composableBuilder(
+      column: $table.menuUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get currency => $composableBuilder(
+      column: $table.currency, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isFinalized => $composableBuilder(
+      column: $table.isFinalized, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TakeAwayMenusTableOrderingComposer
+    extends Composer<_$AppDatabase, $TakeAwayMenusTable> {
+  $$TakeAwayMenusTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get restaurantName => $composableBuilder(
+      column: $table.restaurantName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get location => $composableBuilder(
+      column: $table.location, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mapsUrl => $composableBuilder(
+      column: $table.mapsUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get website => $composableBuilder(
+      column: $table.website, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+      column: $table.phone, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get menuUrl => $composableBuilder(
+      column: $table.menuUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+      column: $table.currency, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isFinalized => $composableBuilder(
+      column: $table.isFinalized, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TakeAwayMenusTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TakeAwayMenusTable> {
+  $$TakeAwayMenusTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<String> get restaurantName => $composableBuilder(
+      column: $table.restaurantName, builder: (column) => column);
+
+  GeneratedColumn<String> get location =>
+      $composableBuilder(column: $table.location, builder: (column) => column);
+
+  GeneratedColumn<String> get mapsUrl =>
+      $composableBuilder(column: $table.mapsUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get website =>
+      $composableBuilder(column: $table.website, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get menuUrl =>
+      $composableBuilder(column: $table.menuUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFinalized => $composableBuilder(
+      column: $table.isFinalized, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TakeAwayMenusTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TakeAwayMenusTable,
+    TakeAwayMenu,
+    $$TakeAwayMenusTableFilterComposer,
+    $$TakeAwayMenusTableOrderingComposer,
+    $$TakeAwayMenusTableAnnotationComposer,
+    $$TakeAwayMenusTableCreateCompanionBuilder,
+    $$TakeAwayMenusTableUpdateCompanionBuilder,
+    (
+      TakeAwayMenu,
+      BaseReferences<_$AppDatabase, $TakeAwayMenusTable, TakeAwayMenu>
+    ),
+    TakeAwayMenu,
+    PrefetchHooks Function()> {
+  $$TakeAwayMenusTableTableManager(_$AppDatabase db, $TakeAwayMenusTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TakeAwayMenusTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TakeAwayMenusTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TakeAwayMenusTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> listId = const Value.absent(),
+            Value<String> restaurantName = const Value.absent(),
+            Value<String?> location = const Value.absent(),
+            Value<String?> mapsUrl = const Value.absent(),
+            Value<String?> website = const Value.absent(),
+            Value<String?> phone = const Value.absent(),
+            Value<String?> menuUrl = const Value.absent(),
+            Value<String?> currency = const Value.absent(),
+            Value<bool> isFinalized = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              TakeAwayMenusCompanion(
+            id: id,
+            listId: listId,
+            restaurantName: restaurantName,
+            location: location,
+            mapsUrl: mapsUrl,
+            website: website,
+            phone: phone,
+            menuUrl: menuUrl,
+            currency: currency,
+            isFinalized: isFinalized,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int listId,
+            required String restaurantName,
+            Value<String?> location = const Value.absent(),
+            Value<String?> mapsUrl = const Value.absent(),
+            Value<String?> website = const Value.absent(),
+            Value<String?> phone = const Value.absent(),
+            Value<String?> menuUrl = const Value.absent(),
+            Value<String?> currency = const Value.absent(),
+            Value<bool> isFinalized = const Value.absent(),
+            required DateTime createdAt,
+            required DateTime updatedAt,
+          }) =>
+              TakeAwayMenusCompanion.insert(
+            id: id,
+            listId: listId,
+            restaurantName: restaurantName,
+            location: location,
+            mapsUrl: mapsUrl,
+            website: website,
+            phone: phone,
+            menuUrl: menuUrl,
+            currency: currency,
+            isFinalized: isFinalized,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TakeAwayMenusTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TakeAwayMenusTable,
+    TakeAwayMenu,
+    $$TakeAwayMenusTableFilterComposer,
+    $$TakeAwayMenusTableOrderingComposer,
+    $$TakeAwayMenusTableAnnotationComposer,
+    $$TakeAwayMenusTableCreateCompanionBuilder,
+    $$TakeAwayMenusTableUpdateCompanionBuilder,
+    (
+      TakeAwayMenu,
+      BaseReferences<_$AppDatabase, $TakeAwayMenusTable, TakeAwayMenu>
+    ),
+    TakeAwayMenu,
+    PrefetchHooks Function()>;
+typedef $$TakeAwayMenuItemsTableCreateCompanionBuilder
+    = TakeAwayMenuItemsCompanion Function({
+  Value<int> id,
+  required int menuId,
+  Value<String?> itemNumber,
+  required String name,
+  required String priceDisplay,
+  Value<double?> priceAmount,
+  Value<int> sortOrder,
+});
+typedef $$TakeAwayMenuItemsTableUpdateCompanionBuilder
+    = TakeAwayMenuItemsCompanion Function({
+  Value<int> id,
+  Value<int> menuId,
+  Value<String?> itemNumber,
+  Value<String> name,
+  Value<String> priceDisplay,
+  Value<double?> priceAmount,
+  Value<int> sortOrder,
+});
+
+class $$TakeAwayMenuItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $TakeAwayMenuItemsTable> {
+  $$TakeAwayMenuItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get menuId => $composableBuilder(
+      column: $table.menuId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemNumber => $composableBuilder(
+      column: $table.itemNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get priceDisplay => $composableBuilder(
+      column: $table.priceDisplay, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get priceAmount => $composableBuilder(
+      column: $table.priceAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+}
+
+class $$TakeAwayMenuItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TakeAwayMenuItemsTable> {
+  $$TakeAwayMenuItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get menuId => $composableBuilder(
+      column: $table.menuId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemNumber => $composableBuilder(
+      column: $table.itemNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get priceDisplay => $composableBuilder(
+      column: $table.priceDisplay,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get priceAmount => $composableBuilder(
+      column: $table.priceAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TakeAwayMenuItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TakeAwayMenuItemsTable> {
+  $$TakeAwayMenuItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get menuId =>
+      $composableBuilder(column: $table.menuId, builder: (column) => column);
+
+  GeneratedColumn<String> get itemNumber => $composableBuilder(
+      column: $table.itemNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get priceDisplay => $composableBuilder(
+      column: $table.priceDisplay, builder: (column) => column);
+
+  GeneratedColumn<double> get priceAmount => $composableBuilder(
+      column: $table.priceAmount, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+}
+
+class $$TakeAwayMenuItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TakeAwayMenuItemsTable,
+    TakeAwayMenuItem,
+    $$TakeAwayMenuItemsTableFilterComposer,
+    $$TakeAwayMenuItemsTableOrderingComposer,
+    $$TakeAwayMenuItemsTableAnnotationComposer,
+    $$TakeAwayMenuItemsTableCreateCompanionBuilder,
+    $$TakeAwayMenuItemsTableUpdateCompanionBuilder,
+    (
+      TakeAwayMenuItem,
+      BaseReferences<_$AppDatabase, $TakeAwayMenuItemsTable, TakeAwayMenuItem>
+    ),
+    TakeAwayMenuItem,
+    PrefetchHooks Function()> {
+  $$TakeAwayMenuItemsTableTableManager(
+      _$AppDatabase db, $TakeAwayMenuItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TakeAwayMenuItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TakeAwayMenuItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TakeAwayMenuItemsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> menuId = const Value.absent(),
+            Value<String?> itemNumber = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> priceDisplay = const Value.absent(),
+            Value<double?> priceAmount = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+          }) =>
+              TakeAwayMenuItemsCompanion(
+            id: id,
+            menuId: menuId,
+            itemNumber: itemNumber,
+            name: name,
+            priceDisplay: priceDisplay,
+            priceAmount: priceAmount,
+            sortOrder: sortOrder,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int menuId,
+            Value<String?> itemNumber = const Value.absent(),
+            required String name,
+            required String priceDisplay,
+            Value<double?> priceAmount = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+          }) =>
+              TakeAwayMenuItemsCompanion.insert(
+            id: id,
+            menuId: menuId,
+            itemNumber: itemNumber,
+            name: name,
+            priceDisplay: priceDisplay,
+            priceAmount: priceAmount,
+            sortOrder: sortOrder,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TakeAwayMenuItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TakeAwayMenuItemsTable,
+    TakeAwayMenuItem,
+    $$TakeAwayMenuItemsTableFilterComposer,
+    $$TakeAwayMenuItemsTableOrderingComposer,
+    $$TakeAwayMenuItemsTableAnnotationComposer,
+    $$TakeAwayMenuItemsTableCreateCompanionBuilder,
+    $$TakeAwayMenuItemsTableUpdateCompanionBuilder,
+    (
+      TakeAwayMenuItem,
+      BaseReferences<_$AppDatabase, $TakeAwayMenuItemsTable, TakeAwayMenuItem>
+    ),
+    TakeAwayMenuItem,
+    PrefetchHooks Function()>;
+typedef $$TakeAwayOrdersTableCreateCompanionBuilder = TakeAwayOrdersCompanion
+    Function({
+  Value<int> id,
+  required int menuId,
+  required DateTime updatedAt,
+});
+typedef $$TakeAwayOrdersTableUpdateCompanionBuilder = TakeAwayOrdersCompanion
+    Function({
+  Value<int> id,
+  Value<int> menuId,
+  Value<DateTime> updatedAt,
+});
+
+class $$TakeAwayOrdersTableFilterComposer
+    extends Composer<_$AppDatabase, $TakeAwayOrdersTable> {
+  $$TakeAwayOrdersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get menuId => $composableBuilder(
+      column: $table.menuId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TakeAwayOrdersTableOrderingComposer
+    extends Composer<_$AppDatabase, $TakeAwayOrdersTable> {
+  $$TakeAwayOrdersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get menuId => $composableBuilder(
+      column: $table.menuId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TakeAwayOrdersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TakeAwayOrdersTable> {
+  $$TakeAwayOrdersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get menuId =>
+      $composableBuilder(column: $table.menuId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TakeAwayOrdersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TakeAwayOrdersTable,
+    TakeAwayOrder,
+    $$TakeAwayOrdersTableFilterComposer,
+    $$TakeAwayOrdersTableOrderingComposer,
+    $$TakeAwayOrdersTableAnnotationComposer,
+    $$TakeAwayOrdersTableCreateCompanionBuilder,
+    $$TakeAwayOrdersTableUpdateCompanionBuilder,
+    (
+      TakeAwayOrder,
+      BaseReferences<_$AppDatabase, $TakeAwayOrdersTable, TakeAwayOrder>
+    ),
+    TakeAwayOrder,
+    PrefetchHooks Function()> {
+  $$TakeAwayOrdersTableTableManager(
+      _$AppDatabase db, $TakeAwayOrdersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TakeAwayOrdersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TakeAwayOrdersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TakeAwayOrdersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> menuId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              TakeAwayOrdersCompanion(
+            id: id,
+            menuId: menuId,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int menuId,
+            required DateTime updatedAt,
+          }) =>
+              TakeAwayOrdersCompanion.insert(
+            id: id,
+            menuId: menuId,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TakeAwayOrdersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TakeAwayOrdersTable,
+    TakeAwayOrder,
+    $$TakeAwayOrdersTableFilterComposer,
+    $$TakeAwayOrdersTableOrderingComposer,
+    $$TakeAwayOrdersTableAnnotationComposer,
+    $$TakeAwayOrdersTableCreateCompanionBuilder,
+    $$TakeAwayOrdersTableUpdateCompanionBuilder,
+    (
+      TakeAwayOrder,
+      BaseReferences<_$AppDatabase, $TakeAwayOrdersTable, TakeAwayOrder>
+    ),
+    TakeAwayOrder,
+    PrefetchHooks Function()>;
+typedef $$TakeAwayOrderLinesTableCreateCompanionBuilder
+    = TakeAwayOrderLinesCompanion Function({
+  Value<int> id,
+  required int orderId,
+  required int menuItemId,
+  Value<int> quantity,
+});
+typedef $$TakeAwayOrderLinesTableUpdateCompanionBuilder
+    = TakeAwayOrderLinesCompanion Function({
+  Value<int> id,
+  Value<int> orderId,
+  Value<int> menuItemId,
+  Value<int> quantity,
+});
+
+class $$TakeAwayOrderLinesTableFilterComposer
+    extends Composer<_$AppDatabase, $TakeAwayOrderLinesTable> {
+  $$TakeAwayOrderLinesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get orderId => $composableBuilder(
+      column: $table.orderId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get menuItemId => $composableBuilder(
+      column: $table.menuItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+}
+
+class $$TakeAwayOrderLinesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TakeAwayOrderLinesTable> {
+  $$TakeAwayOrderLinesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get orderId => $composableBuilder(
+      column: $table.orderId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get menuItemId => $composableBuilder(
+      column: $table.menuItemId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TakeAwayOrderLinesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TakeAwayOrderLinesTable> {
+  $$TakeAwayOrderLinesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get orderId =>
+      $composableBuilder(column: $table.orderId, builder: (column) => column);
+
+  GeneratedColumn<int> get menuItemId => $composableBuilder(
+      column: $table.menuItemId, builder: (column) => column);
+
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+}
+
+class $$TakeAwayOrderLinesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TakeAwayOrderLinesTable,
+    TakeAwayOrderLine,
+    $$TakeAwayOrderLinesTableFilterComposer,
+    $$TakeAwayOrderLinesTableOrderingComposer,
+    $$TakeAwayOrderLinesTableAnnotationComposer,
+    $$TakeAwayOrderLinesTableCreateCompanionBuilder,
+    $$TakeAwayOrderLinesTableUpdateCompanionBuilder,
+    (
+      TakeAwayOrderLine,
+      BaseReferences<_$AppDatabase, $TakeAwayOrderLinesTable, TakeAwayOrderLine>
+    ),
+    TakeAwayOrderLine,
+    PrefetchHooks Function()> {
+  $$TakeAwayOrderLinesTableTableManager(
+      _$AppDatabase db, $TakeAwayOrderLinesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TakeAwayOrderLinesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TakeAwayOrderLinesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TakeAwayOrderLinesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> orderId = const Value.absent(),
+            Value<int> menuItemId = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
+          }) =>
+              TakeAwayOrderLinesCompanion(
+            id: id,
+            orderId: orderId,
+            menuItemId: menuItemId,
+            quantity: quantity,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int orderId,
+            required int menuItemId,
+            Value<int> quantity = const Value.absent(),
+          }) =>
+              TakeAwayOrderLinesCompanion.insert(
+            id: id,
+            orderId: orderId,
+            menuItemId: menuItemId,
+            quantity: quantity,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TakeAwayOrderLinesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TakeAwayOrderLinesTable,
+    TakeAwayOrderLine,
+    $$TakeAwayOrderLinesTableFilterComposer,
+    $$TakeAwayOrderLinesTableOrderingComposer,
+    $$TakeAwayOrderLinesTableAnnotationComposer,
+    $$TakeAwayOrderLinesTableCreateCompanionBuilder,
+    $$TakeAwayOrderLinesTableUpdateCompanionBuilder,
+    (
+      TakeAwayOrderLine,
+      BaseReferences<_$AppDatabase, $TakeAwayOrderLinesTable, TakeAwayOrderLine>
+    ),
+    TakeAwayOrderLine,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9519,4 +12151,14 @@ class $AppDatabaseManager {
       $$TodoItemsTableTableManager(_db, _db.todoItems);
   $$TodoCompletedArchiveTableTableManager get todoCompletedArchive =>
       $$TodoCompletedArchiveTableTableManager(_db, _db.todoCompletedArchive);
+  $$TakeAwayListsTableTableManager get takeAwayLists =>
+      $$TakeAwayListsTableTableManager(_db, _db.takeAwayLists);
+  $$TakeAwayMenusTableTableManager get takeAwayMenus =>
+      $$TakeAwayMenusTableTableManager(_db, _db.takeAwayMenus);
+  $$TakeAwayMenuItemsTableTableManager get takeAwayMenuItems =>
+      $$TakeAwayMenuItemsTableTableManager(_db, _db.takeAwayMenuItems);
+  $$TakeAwayOrdersTableTableManager get takeAwayOrders =>
+      $$TakeAwayOrdersTableTableManager(_db, _db.takeAwayOrders);
+  $$TakeAwayOrderLinesTableTableManager get takeAwayOrderLines =>
+      $$TakeAwayOrderLinesTableTableManager(_db, _db.takeAwayOrderLines);
 }

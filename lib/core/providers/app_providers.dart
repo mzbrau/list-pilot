@@ -14,10 +14,12 @@ import '../../data/repositories/list_repository.dart';
 import '../../data/repositories/meal_repository.dart';
 import '../../data/repositories/shop_stats_repository.dart';
 import '../../data/repositories/todo_repository.dart';
+import '../../data/repositories/take_away_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
 import '../../data/services/meal_export_service.dart';
 import '../../data/services/meal_import_service.dart';
+import '../../data/services/menu_import_service.dart';
 import '../../data/services/openai_models_service.dart';
 import '../../data/services/meal_photo_service.dart';
 import '../../data/services/recipe_page_import_service.dart';
@@ -58,6 +60,14 @@ final mealImportServiceProvider = Provider<MealImportService>((ref) {
 
 final recipePageImportServiceProvider = Provider<RecipePageImportService>((ref) {
   return RecipePageImportService();
+});
+
+final menuImportServiceProvider = Provider<MenuImportService>((ref) {
+  return MenuImportService(aiConfig: ref.watch(aiConfigProvider));
+});
+
+final takeAwayRepositoryProvider = Provider<TakeAwayRepository>((ref) {
+  return TakeAwayRepository(ref.watch(databaseProvider));
 });
 
 final learningRepositoryProvider = Provider<LearningRepository>((ref) {
@@ -152,12 +162,20 @@ final todoListsProvider = StreamProvider<List<TodoList>>((ref) {
   return ref.watch(todoRepositoryProvider).watchAllLists();
 });
 
+final takeAwayListsProvider = StreamProvider<List<TakeAwayList>>((ref) {
+  ref.watch(appInitProvider);
+  return ref.watch(takeAwayRepositoryProvider).watchAllLists();
+});
+
 final overviewListsProvider =
     Provider<AsyncValue<List<OverviewListEntry>>>((ref) {
   final shoppingAsync = ref.watch(shoppingListsProvider);
   final todosAsync = ref.watch(todoListsProvider);
+  final takeAwayAsync = ref.watch(takeAwayListsProvider);
 
-  if (shoppingAsync.isLoading || todosAsync.isLoading) {
+  if (shoppingAsync.isLoading ||
+      todosAsync.isLoading ||
+      takeAwayAsync.isLoading) {
     return const AsyncValue.loading();
   }
   if (shoppingAsync.hasError) {
@@ -166,10 +184,14 @@ final overviewListsProvider =
   if (todosAsync.hasError) {
     return AsyncValue.error(todosAsync.error!, todosAsync.stackTrace!);
   }
+  if (takeAwayAsync.hasError) {
+    return AsyncValue.error(takeAwayAsync.error!, takeAwayAsync.stackTrace!);
+  }
 
   final merged = <OverviewListEntry>[
     ...shoppingAsync.value!.map(ShoppingListEntry.new),
     ...todosAsync.value!.map(TodoListEntry.new),
+    ...takeAwayAsync.value!.map(TakeAwayListEntry.new),
   ]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
   return AsyncValue.data(merged);
@@ -285,6 +307,39 @@ final todoArchivedProvider =
     StreamProvider.family<List<TodoCompletedArchiveData>, int>((ref, listId) {
   ref.watch(appInitProvider);
   return ref.watch(todoRepositoryProvider).watchArchivedCompleted(listId);
+});
+
+final takeAwayListProvider =
+    StreamProvider.family<TakeAwayList?, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  final db = ref.watch(databaseProvider);
+  return (db.select(db.takeAwayLists)..where((t) => t.id.equals(listId)))
+      .watch()
+      .map((rows) => rows.isEmpty ? null : rows.first);
+});
+
+final takeAwayMenusProvider =
+    StreamProvider.family<List<TakeAwayMenu>, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  return ref.watch(takeAwayRepositoryProvider).watchMenusForList(listId);
+});
+
+final takeAwayMenuProvider =
+    StreamProvider.family<TakeAwayMenu?, int>((ref, menuId) {
+  ref.watch(appInitProvider);
+  return ref.watch(takeAwayRepositoryProvider).watchMenuById(menuId);
+});
+
+final takeAwayMenuItemsProvider =
+    StreamProvider.family<List<TakeAwayMenuItem>, int>((ref, menuId) {
+  ref.watch(appInitProvider);
+  return ref.watch(takeAwayRepositoryProvider).watchMenuItems(menuId);
+});
+
+final takeAwayOrderProvider =
+    StreamProvider.family<TakeAwayOrderWithLines?, int>((ref, menuId) {
+  ref.watch(appInitProvider);
+  return ref.watch(takeAwayRepositoryProvider).watchOrderWithLines(menuId);
 });
 
 final categoryRankStatsProvider =
@@ -525,6 +580,32 @@ class RecipeImportLanguageNotifier extends StateNotifier<RecipeImportLanguage> {
     state = language;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(AppConstants.recipeImportLanguageKey, language.code);
+  }
+}
+
+final menuImportLanguageProvider =
+    StateNotifierProvider<MenuImportLanguageNotifier, RecipeImportLanguage>(
+        (ref) {
+  return MenuImportLanguageNotifier();
+});
+
+class MenuImportLanguageNotifier extends StateNotifier<RecipeImportLanguage> {
+  MenuImportLanguageNotifier() : super(defaultMenuImportLanguage) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code =
+        prefs.getString(AppConstants.menuImportLanguageKey) ??
+            defaultMenuImportLanguageCode;
+    state = menuImportLanguageByCode(code);
+  }
+
+  Future<void> setLanguage(RecipeImportLanguage language) async {
+    state = language;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.menuImportLanguageKey, language.code);
   }
 }
 
