@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/providers/app_providers.dart';
+import 'recipe_page_fetcher.dart';
+import 'recipe_page_metadata.dart';
 
 typedef HttpGet = Future<http.Response> Function(Uri url, {Map<String, String>? headers});
 typedef HttpPost = Future<http.Response> Function(
@@ -96,16 +98,19 @@ Map<String, dynamic> buildChatCompletionsBody({
   required String model,
   required String pageUrl,
   required String pageContent,
+  String? knownImageUrl,
 }) {
+  var userContent =
+      'Extract the recipe from this webpage.\nURL: $pageUrl\n\nContent:\n$pageContent';
+  if (knownImageUrl != null && knownImageUrl.isNotEmpty) {
+    userContent += '\n\nKnown hero image: $knownImageUrl';
+  }
+
   return {
     'model': model,
     'messages': [
       {'role': 'system', 'content': buildImportSystemPrompt()},
-      {
-        'role': 'user',
-        'content':
-            'Extract the recipe from this webpage.\nURL: $pageUrl\n\nContent:\n$pageContent',
-      },
+      {'role': 'user', 'content': userContent},
     ],
     'response_format': {'type': 'json_object'},
   };
@@ -128,15 +133,30 @@ class MealImportService {
     required AiConfig aiConfig,
     HttpGet? httpGet,
     HttpPost? httpPost,
+    PageHtmlFetcher? pageHtmlFetcher,
   })  : _aiConfig = aiConfig,
         _httpGet = httpGet ?? MealImportHttpClient().get,
-        _httpPost = httpPost ?? MealImportHttpClient().post;
+        _httpPost = httpPost ?? MealImportHttpClient().post,
+        _pageHtmlFetcher = pageHtmlFetcher;
 
   final AiConfig _aiConfig;
   final HttpGet _httpGet;
   final HttpPost _httpPost;
+  final PageHtmlFetcher? _pageHtmlFetcher;
 
   bool get isConfigured => _aiConfig.isConfigured;
+
+  Future<String> _fetchPageHtml(Uri pageUri) async {
+    try {
+      final fetcher = _pageHtmlFetcher;
+      if (fetcher != null) {
+        return await fetcher(pageUri);
+      }
+      return await RecipePageFetcher(httpGet: _httpGet).fetchHtml(pageUri);
+    } on RecipePageFetchException catch (e) {
+      throw MealImportException(e.message);
+    }
+  }
 
   Future<MealImportResult> importFromUrl(String url) async {
     if (!_aiConfig.isConfigured) {
@@ -144,21 +164,9 @@ class MealImportService {
     }
 
     final pageUri = Uri.parse(url.trim());
-    final pageResponse = await _httpGet(
-      pageUri,
-      headers: const {
-        'User-Agent':
-            'Mozilla/5.0 (compatible; ListPilot/1.0; +https://listpilot.app)',
-      },
-    ).timeout(const Duration(seconds: 15));
-
-    if (pageResponse.statusCode != 200) {
-      throw MealImportException(
-        'Failed to fetch page (${pageResponse.statusCode})',
-      );
-    }
-
-    final stripped = stripHtmlForImport(pageResponse.body);
+    final pageHtml = await _fetchPageHtml(pageUri);
+    final extractedImageUrl = extractRecipeImageUrl(pageHtml, pageUri);
+    final stripped = stripHtmlForImport(pageHtml);
     final baseUri = _aiConfig.apiUri!.trim().replaceAll(RegExp(r'/+$'), '');
     final apiUri = Uri.parse('$baseUri/chat/completions');
 
@@ -166,6 +174,7 @@ class MealImportService {
       model: _aiConfig.modelName!.trim(),
       pageUrl: pageUri.toString(),
       pageContent: stripped,
+      knownImageUrl: extractedImageUrl,
     );
 
     http.Response aiResponse;
@@ -194,13 +203,17 @@ class MealImportService {
     }
 
     final result = parseImportResponseBody(aiResponse.body);
+    final imageUrl = (result.imageUrl != null && result.imageUrl!.isNotEmpty)
+        ? resolveUrl(result.imageUrl!, pageUri) ?? result.imageUrl
+        : extractedImageUrl;
+
     return MealImportResult(
       name: result.name,
       ingredients: result.ingredients,
       steps: result.steps,
       notes: result.notes,
       tags: result.tags,
-      imageUrl: result.imageUrl,
+      imageUrl: imageUrl,
       recipeUrl: result.recipeUrl ?? pageUri.toString(),
     );
   }

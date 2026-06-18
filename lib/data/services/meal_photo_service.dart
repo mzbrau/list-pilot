@@ -6,11 +6,18 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../repositories/meal_repository.dart';
+import 'recipe_page_fetcher.dart';
+
+typedef ImageHttpGet = Future<http.Response> Function(
+  Uri url, {
+  Map<String, String>? headers,
+});
 
 class MealPhotoService {
-  MealPhotoService(this._repo);
+  MealPhotoService(this._repo, {ImageHttpGet? httpGet}) : _httpGet = httpGet ?? http.get;
 
   final MealRepository _repo;
+  final ImageHttpGet _httpGet;
   final _picker = ImagePicker();
 
   Future<File?> resolvePhotoFile(String? relativePath) async {
@@ -49,14 +56,19 @@ class MealPhotoService {
     await _repo.updateMeal(id: mealId, clearPhoto: true);
   }
 
-  Future<File?> downloadAndSavePhoto(int mealId, String imageUrl) async {
+  Future<bool> downloadAndSavePhoto(
+    int mealId,
+    String imageUrl, {
+    String? referer,
+  }) async {
     final meal = await _repo.getMealById(mealId);
-    if (meal == null) return null;
+    if (meal == null) return false;
 
-    final response = await http
-        .get(Uri.parse(imageUrl))
-        .timeout(const Duration(seconds: 15));
-    if (response.statusCode != 200) return null;
+    final response = await _httpGet(
+      Uri.parse(imageUrl),
+      headers: recipeImageFetchHeaders(referer: referer),
+    ).timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) return false;
 
     if (meal.photoPath != null) {
       await _deletePhotoFile(meal.photoPath!);
@@ -70,7 +82,7 @@ class MealPhotoService {
 
     final relativePath = p.join('meal_photos', '$mealId.jpg');
     await _repo.updateMeal(id: mealId, photoPath: relativePath);
-    return File(destPath);
+    return true;
   }
 
   Future<String> _copyToAppStorage(int mealId, String sourcePath) async {

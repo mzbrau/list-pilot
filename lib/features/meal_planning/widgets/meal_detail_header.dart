@@ -10,6 +10,7 @@ class MealDetailHeader extends StatelessWidget {
     required this.displayName,
     required this.photoPath,
     this.photoFile,
+    this.imageUrl,
     this.lastEatenSummary,
     required this.isEditing,
     required this.nameController,
@@ -19,6 +20,7 @@ class MealDetailHeader extends StatelessWidget {
   final String displayName;
   final String? photoPath;
   final File? photoFile;
+  final String? imageUrl;
   final String? lastEatenSummary;
   final bool isEditing;
   final TextEditingController nameController;
@@ -34,6 +36,7 @@ class MealDetailHeader extends StatelessWidget {
         MealPhotoDisplay(
           photoPath: photoPath,
           photoFile: photoFile,
+          imageUrl: imageUrl,
           onTap: isEditing ? onPhotoTap : null,
         ),
         const SizedBox(height: 16),

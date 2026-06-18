@@ -99,9 +99,20 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
         );
 
     if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-      await ref
-          .read(mealPhotoServiceProvider)
-          .downloadAndSavePhoto(meal.id, _imageUrl!);
+      final saved = await ref.read(mealPhotoServiceProvider).downloadAndSavePhoto(
+            meal.id,
+            _imageUrl!,
+            referer: _recipeController.text.trim().isEmpty
+                ? null
+                : _recipeController.text.trim(),
+          );
+      if (!saved && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recipe saved, but the photo could not be downloaded.'),
+          ),
+        );
+      }
     }
 
     if (mounted) {
@@ -175,6 +186,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
               child: MealDetailHeader(
                 displayName: _nameController.text,
                 photoPath: null,
+                imageUrl: _imageUrl,
                 isEditing: true,
                 nameController: _nameController,
               ),

@@ -77,12 +77,14 @@ class MealPhotoDisplay extends ConsumerWidget {
     super.key,
     this.photoPath,
     this.photoFile,
+    this.imageUrl,
     this.onTap,
     this.height = 220,
   });
 
   final String? photoPath;
   final File? photoFile;
+  final String? imageUrl;
   final VoidCallback? onTap;
   final double height;
 
@@ -103,6 +105,14 @@ class MealPhotoDisplay extends ConsumerWidget {
           }
           return _placeholder(theme, height);
         },
+      );
+    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
+      image = Image.network(
+        imageUrl!,
+        width: double.infinity,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _placeholder(theme, height),
       );
     } else {
       image = _placeholder(theme, height);
