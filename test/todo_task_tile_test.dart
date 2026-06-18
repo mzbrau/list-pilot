@@ -23,16 +23,24 @@ void main() {
     );
   }
 
-  Future<void> pumpTile(WidgetTester tester, TodoItem task) async {
+  Future<void> pumpTile(
+    WidgetTester tester,
+    TodoItem task, {
+    bool isDragging = false,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           home: Scaffold(
-            body: TodoTaskTile(
-              listId: 1,
-              task: task,
-              onDragStarted: () {},
-              onDragEnded: () {},
+            body: SizedBox(
+              width: 400,
+              child: TodoTaskTile(
+                listId: 1,
+                task: task,
+                isDragging: isDragging,
+                onDragStarted: () {},
+                onDragEnded: () {},
+              ),
             ),
           ),
         ),
@@ -51,5 +59,13 @@ void main() {
     await pumpTile(tester, buildTask());
 
     expect(find.byIcon(Icons.notifications_outlined), findsNothing);
+  });
+
+  testWidgets('hides tile content while dragging', (tester) async {
+    await pumpTile(tester, buildTask(), isDragging: true);
+
+    final opacity = tester.widget<Opacity>(find.byType(Opacity));
+    expect(opacity.opacity, 0);
+    expect(find.text('Buy groceries'), findsOneWidget);
   });
 }

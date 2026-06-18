@@ -7,7 +7,7 @@ import '../../../data/services/todo_section_service.dart';
 import 'section_count_pill.dart';
 import 'todo_task_tile.dart';
 
-class SegmentedTodoList extends ConsumerWidget {
+class SegmentedTodoList extends ConsumerStatefulWidget {
   const SegmentedTodoList({
     super.key,
     required this.listId,
@@ -18,15 +18,23 @@ class SegmentedTodoList extends ConsumerWidget {
   final List<TodoItem> items;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SegmentedTodoList> createState() => _SegmentedTodoListState();
+}
+
+class _SegmentedTodoListState extends ConsumerState<SegmentedTodoList> {
+  int? _draggingTaskId;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final sections = TodoSectionService.buildSections(items);
+    final sections = TodoSectionService.buildSections(widget.items);
     final children = <Widget>[];
 
     for (final section in sections) {
       children.add(
         _SectionDropTarget(
-          onDrop: (task) => _handleDrop(ref, section, task, section.items.length),
+          onDrop: (task) =>
+              _handleDrop(ref, section, task, section.items.length),
           builder: (isHighlighted) => Container(
             margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -65,10 +73,11 @@ class SegmentedTodoList extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: TodoTaskTile(
-                listId: listId,
+                listId: widget.listId,
                 task: task,
-                onDragStarted: () {},
-                onDragEnded: () {},
+                isDragging: _draggingTaskId == task.id,
+                onDragStarted: () => setState(() => _draggingTaskId = task.id),
+                onDragEnded: () => setState(() => _draggingTaskId = null),
               ),
             ),
           ),
