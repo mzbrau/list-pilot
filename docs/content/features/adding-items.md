@@ -8,7 +8,7 @@ List Pilot makes adding groceries fast with catalog autocomplete and custom item
 
 ## Catalog autocomplete
 
-As you type in the **Add an item...** field, matching items from the built-in catalog of 370+ groceries appear in a dropdown. Each suggestion shows **From catalog** beneath the item name.
+As you type in the **Add an item...** field, matching items from the built-in catalog of 440+ groceries appear in a dropdown. Each suggestion shows **From catalog** beneath the item name.
 
 ![Catalog autocomplete while typing](/img/screenshot-catalog-search.png)
 

@@ -9,7 +9,7 @@ slug: /intro
 
 ## Key features
 
-- **Fast item entry** — autocomplete from a built-in catalog of 370+ groceries, plus custom items you teach the app
+- **Fast item entry** — autocomplete from a built-in catalog of 440+ groceries, plus custom items you teach the app
 - **Category grouping** — items organized under headers like Dairy, Fruit & Veg, Meat, Frozen, and more
 - **Multiple lists** — separate lists for different stores (supermarket, hardware store, etc.)
 - **Smart ordering** — learns your check-off sequence per list and reorders active items over time

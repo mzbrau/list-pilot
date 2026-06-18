@@ -110,7 +110,7 @@ export default function Home(): JSX.Element {
               <FeatureCard
                 icon="⚡"
                 title="Fast entry"
-                description="Predictive autocomplete and a built-in catalog of 370+ groceries make adding to your list instant."
+                description="Predictive autocomplete and a built-in catalog of 440+ groceries make adding to your list instant."
                 iconBg="rgba(0, 192, 149, 0.15)"
               />
             </div>
