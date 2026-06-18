@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="application/ld+json">
+{
+  "@context": "https://example-recipes.test/path",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "Fixture Recipes"
+    },
+    {
+      "@type": "Recipe",
+      "name": "Fixture Tomato Sauce",
+      "description": "Slow-cooked red sauce for pasta.",
+      "image": ["/images/sauce-hero.jpg", "/images/sauce-thumb.jpg"],
+      "recipeIngredient": [
+        {"@type": "PropertyValue", "name": "2 cans crushed tomatoes"},
+        {"@type": "PropertyValue", "name": "4 cloves garlic"}
+      ],
+      "recipeInstructions": {
+        "@type": "HowToSection",
+        "name": "Cooking",
+        "itemListElement": [
+          {"@type": "HowToStep", "text": "Saute garlic in olive oil."},
+          {"@type": "HowToStep", "text": "Add tomatoes and simmer for 2 hours."}
+        ]
+      },
+      "recipeCategory": "Sauce",
+      "recipeCuisine": "Italian"
+    }
+  ]
+}
+</script>
+</head>
+<body></body>
+</html>

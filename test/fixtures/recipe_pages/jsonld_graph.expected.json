@@ -1,0 +1,17 @@
+{
+  "name": "Fixture Tomato Sauce",
+  "ingredients": [
+    "2 cans crushed tomatoes",
+    "4 cloves garlic"
+  ],
+  "steps": [
+    "Saute garlic in olive oil.",
+    "Add tomatoes and simmer for 2 hours."
+  ],
+  "notes": "Slow-cooked red sauce for pasta.",
+  "tags": [
+    "Sauce",
+    "Italian"
+  ],
+  "imageUrl": "https://example-recipes.test/images/sauce-hero.jpg"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Fixture Vegetable Gratin",
+  "ingredients": [
+    "3 zucchini, sliced",
+    "1 cup cream",
+    "1 cup grated cheese"
+  ],
+  "steps": [
+    "Layer vegetables in a baking dish.",
+    "Pour over cream and top with cheese.",
+    "Bake at 190C for 35 minutes."
+  ],
+  "notes": "A creamy baked vegetable dish.",
+  "tags": [],
+  "imageUrl": "https://example-recipes.test/images/gratin.jpg"
+}

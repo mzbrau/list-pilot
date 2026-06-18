@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers/app_providers.dart';
+import '../../data/services/meal_import_service.dart';
+import '../../data/services/recipe_page_import_service.dart';
 import '../meal_planning/widgets/meal_detail_header.dart';
 import '../meal_planning/widgets/meal_detail_ingredients_tab.dart';
 import '../meal_planning/widgets/meal_detail_other_tab.dart';
 import '../meal_planning/widgets/meal_detail_steps_tab.dart';
 
+enum MealImportMode { ai, extract }
+
 class MealImportScreen extends ConsumerStatefulWidget {
-  const MealImportScreen({super.key});
+  const MealImportScreen({super.key, this.mode = MealImportMode.ai});
+
+  final MealImportMode mode;
 
   @override
   ConsumerState<MealImportScreen> createState() => _MealImportScreenState();
@@ -53,8 +59,14 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
 
     setState(() => _importing = true);
     try {
-      final result =
-          await ref.read(mealImportServiceProvider).importFromUrl(url);
+      final MealImportResult result;
+      if (widget.mode == MealImportMode.ai) {
+        result =
+            await ref.read(mealImportServiceProvider).importFromUrl(url);
+      } else {
+        result =
+            await ref.read(recipePageImportServiceProvider).importFromUrl(url);
+      }
       setState(() {
         _hasPreview = true;
         _nameController.text = result.name;
@@ -127,7 +139,11 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Import recipe'),
+        title: Text(
+          widget.mode == MealImportMode.ai
+              ? 'Import recipe (AI)'
+              : 'Import recipe',
+        ),
         actions: [
           if (_hasPreview)
             TextButton(

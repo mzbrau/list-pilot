@@ -58,6 +58,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'import',
             builder: (context, state) => const MealImportScreen(),
+            routes: [
+              GoRoute(
+                path: 'extract',
+                builder: (context, state) =>
+                    const MealImportScreen(mode: MealImportMode.extract),
+              ),
+            ],
           ),
           GoRoute(
             path: ':mealId',

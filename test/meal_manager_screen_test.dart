@@ -65,7 +65,7 @@ void main() {
     expect(find.text('Fruit Salad'), findsNothing);
   });
 
-  testWidgets('FAB sheet hides import when AI not configured', (tester) async {
+  testWidgets('FAB sheet shows code import without AI config', (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final mealRepo = MealRepository(db);
 
@@ -75,10 +75,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Create manually'), findsOneWidget);
-    expect(find.text('Import from webpage'), findsNothing);
+    expect(find.text('Import from webpage'), findsOneWidget);
+    expect(find.text('Import with AI'), findsNothing);
   });
 
-  testWidgets('FAB sheet shows import when AI configured', (tester) async {
+  testWidgets('FAB sheet shows AI import when configured', (tester) async {
     SharedPreferences.setMockInitialValues({
       'ai_api_uri': 'https://api.example.com/v1',
       'ai_api_key': 'key',
@@ -111,5 +112,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Import from webpage'), findsOneWidget);
+    expect(find.text('Import with AI'), findsOneWidget);
   });
 }

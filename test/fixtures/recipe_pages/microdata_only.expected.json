@@ -1,0 +1,16 @@
+{
+  "name": "Fixture Chicken Noodle Soup",
+  "ingredients": [
+    "2 chicken breasts",
+    "200g egg noodles",
+    "3 carrots, sliced"
+  ],
+  "steps": [
+    "Simmer chicken in broth until cooked through.",
+    "Shred chicken and return to pot with vegetables and noodles.",
+    "Cook until noodles are tender and serve."
+  ],
+  "notes": "Comforting soup with vegetables and noodles.",
+  "tags": [],
+  "imageUrl": "https://example-recipes.test/images/soup.jpg"
+}

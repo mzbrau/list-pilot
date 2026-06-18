@@ -38,10 +38,19 @@ class CreateMealSheet extends ConsumerWidget {
             }
           },
         ),
+        ListTile(
+          leading: const Icon(Icons.code_outlined),
+          title: const Text('Import from webpage'),
+          subtitle: const Text('Extract recipe from page data'),
+          onTap: () {
+            Navigator.pop(context);
+            context.push('/meal-manager/import/extract');
+          },
+        ),
         if (aiConfigured)
           ListTile(
-            leading: const Icon(Icons.language_outlined),
-            title: const Text('Import from webpage'),
+            leading: const Icon(Icons.auto_awesome_outlined),
+            title: const Text('Import with AI'),
             subtitle: const Text('Extract recipe using AI'),
             onTap: () {
               Navigator.pop(context);

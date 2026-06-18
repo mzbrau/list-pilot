@@ -1,0 +1,25 @@
+{
+  "name": "Fixture Basic Lasagna",
+  "ingredients": [
+    "12 lasagna noodles",
+    "500g beef mince",
+    "2 cups tomato sauce",
+    "2 cups ricotta cheese"
+  ],
+  "steps": [
+    "Cook noodles according to package directions.",
+    "Brown the beef and stir in tomato sauce.",
+    "Layer noodles, beef, and cheese in a baking dish.",
+    "Bake at 180C for 45 minutes."
+  ],
+  "notes": "A hearty layered pasta bake.",
+  "tags": [
+    "Dinner",
+    "Italian",
+    "pasta",
+    "beef",
+    "bake"
+  ],
+  "imageUrl": "https://example-recipes.test/images/lasagna.jpg",
+  "recipeUrl": "https://example-recipes.test/recipes/lasagna"
+}

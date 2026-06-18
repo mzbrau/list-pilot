@@ -1,0 +1,13 @@
+{
+  "name": "Fixture Beef Lasagne",
+  "ingredients": [
+    "500g beef mince",
+    "12 lasagne sheets",
+    "white sauce"
+  ],
+  "steps": [
+    "Layer and bake until golden."
+  ],
+  "tags": [],
+  "imageUrl": "https://example-recipes.test/images/beef-lasagne.jpg"
+}

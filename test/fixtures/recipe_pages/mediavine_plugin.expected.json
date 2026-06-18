@@ -1,0 +1,16 @@
+{
+  "name": "Fixture Sheet Pan Chicken",
+  "ingredients": [
+    "4 chicken thighs",
+    "2 cups broccoli florets",
+    "2 tbsp olive oil"
+  ],
+  "steps": [
+    "Preheat oven to 200C.",
+    "Toss chicken and vegetables with oil and seasoning.",
+    "Roast for 30 minutes until cooked through."
+  ],
+  "notes": "Easy weeknight dinner on one tray.",
+  "tags": [],
+  "imageUrl": "https://example-recipes.test/images/chicken.jpg"
+}

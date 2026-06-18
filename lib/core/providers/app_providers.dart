@@ -20,6 +20,7 @@ import '../../data/services/meal_export_service.dart';
 import '../../data/services/meal_import_service.dart';
 import '../../data/services/openai_models_service.dart';
 import '../../data/services/meal_photo_service.dart';
+import '../../data/services/recipe_page_import_service.dart';
 import '../../data/services/todo_maintenance_service.dart';
 import '../../data/services/todo_notification_service.dart';
 import '../../router/app_router.dart';
@@ -53,6 +54,10 @@ final mealExportServiceProvider = Provider<MealExportService>((ref) {
 
 final mealImportServiceProvider = Provider<MealImportService>((ref) {
   return MealImportService(aiConfig: ref.watch(aiConfigProvider));
+});
+
+final recipePageImportServiceProvider = Provider<RecipePageImportService>((ref) {
+  return RecipePageImportService();
 });
 
 final learningRepositoryProvider = Provider<LearningRepository>((ref) {

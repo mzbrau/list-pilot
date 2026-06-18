@@ -1,17 +1,6 @@
-import 'dart:convert';
+import 'recipe_json_ld.dart';
 
-String? resolveUrl(String raw, Uri base) {
-  final trimmed = raw.trim();
-  if (trimmed.isEmpty) return null;
-  if (trimmed.startsWith('//')) {
-    return '${base.scheme}:$trimmed';
-  }
-  final resolved = base.resolve(trimmed);
-  if (!resolved.hasScheme || !resolved.scheme.startsWith('http')) {
-    return null;
-  }
-  return resolved.toString();
-}
+export 'recipe_json_ld.dart' show resolveUrl;
 
 String? extractRecipeImageUrl(String html, Uri pageUri) {
   final fromMeta = _extractMetaImage(html, pageUri);
@@ -55,66 +44,13 @@ String? _extractMetaImage(String html, Uri pageUri) {
 }
 
 String? _extractJsonLdRecipeImage(String html, Uri pageUri) {
-  final pattern = RegExp(
-    "<script[^>]*type=['\"]application/ld\\+json['\"][^>]*>([\\s\\S]*?)</script>",
-    caseSensitive: false,
-  );
-
-  for (final match in pattern.allMatches(html)) {
-    final rawJson = match.group(1)?.trim();
-    if (rawJson == null || rawJson.isEmpty) continue;
-
-    try {
-      final decoded = jsonDecode(rawJson);
-      final image = _recipeImageFromJsonLd(decoded);
+  for (final decoded in decodeJsonLdBlocks(html)) {
+    for (final recipe in findRecipeNodes(decoded)) {
+      final image = imageUrlFromValue(recipe['image']);
       if (image != null) {
         return resolveUrl(image, pageUri);
       }
-    } catch (_) {
-      continue;
     }
-  }
-  return null;
-}
-
-String? _recipeImageFromJsonLd(dynamic node) {
-  if (node is List) {
-    for (final item in node) {
-      final image = _recipeImageFromJsonLd(item);
-      if (image != null) return image;
-    }
-    return null;
-  }
-
-  if (node is! Map) return null;
-
-  final type = node['@type'];
-  final isRecipe = type == 'Recipe' ||
-      (type is List && type.any((t) => t == 'Recipe'));
-
-  if (isRecipe) {
-    return _imageUrlFromValue(node['image']);
-  }
-
-  if (node.containsKey('@graph')) {
-    return _recipeImageFromJsonLd(node['@graph']);
-  }
-
-  for (final value in node.values) {
-    final image = _recipeImageFromJsonLd(value);
-    if (image != null) return image;
-  }
-  return null;
-}
-
-String? _imageUrlFromValue(dynamic value) {
-  if (value is String) return value;
-  if (value is List && value.isNotEmpty) {
-    return _imageUrlFromValue(value.first);
-  }
-  if (value is Map) {
-    final url = value['url'] ?? value['contentUrl'];
-    if (url is String) return url;
   }
   return null;
 }
