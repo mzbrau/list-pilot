@@ -45,7 +45,7 @@ class _TodoTaskDetailScreenState extends ConsumerState<TodoTaskDetailScreen> {
     _reminderAt = task.reminderAt;
   }
 
-  Future<void> _save(TodoItem task) async {
+  Future<void> _save(TodoItem task, {bool clearReminder = false}) async {
     final repo = ref.read(todoRepositoryProvider);
     final notifications = ref.read(todoNotificationServiceProvider);
 
@@ -56,7 +56,7 @@ class _TodoTaskDetailScreenState extends ConsumerState<TodoTaskDetailScreen> {
       clearNotes: _notesController.text.trim().isEmpty,
       scheduledDate: _scheduledDate,
       reminderAt: _reminderAt,
-      clearReminder: _reminderAt == null,
+      clearReminder: clearReminder,
     );
 
     if (_reminderAt != null && !task.isCompleted) {
@@ -114,7 +114,7 @@ class _TodoTaskDetailScreenState extends ConsumerState<TodoTaskDetailScreen> {
 
   Future<void> _clearReminder(TodoItem task) async {
     setState(() => _reminderAt = null);
-    await _save(task);
+    await _save(task, clearReminder: true);
   }
 
   Future<void> _deleteTask(BuildContext context, TodoItem task) async {

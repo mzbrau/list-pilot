@@ -101,34 +101,56 @@ class TodoTaskTile extends ConsumerWidget {
               : null,
         ),
         trailing: enabled
-            ? Draggable<TodoItem>(
-                data: task,
-                dragAnchorStrategy: pointerDragAnchorStrategy,
-                onDragStarted: onDragStarted,
-                onDragEnd: (_) => onDragEnded(),
-                feedback: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(8),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 280),
-                    child: ListTile(
-                      title: Text(task.displayName),
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (task.reminderAt != null)
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                  Draggable<TodoItem>(
+                    data: task,
+                    dragAnchorStrategy: pointerDragAnchorStrategy,
+                    onDragStarted: onDragStarted,
+                    onDragEnd: (_) => onDragEnded(),
+                    feedback: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(8),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 280),
+                        child: ListTile(
+                          title: Text(task.displayName),
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.4,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.grabbing,
+                        child: const Icon(Icons.drag_handle, size: 20),
+                      ),
+                    ),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: const Icon(Icons.drag_handle, size: 20),
                     ),
                   ),
-                ),
-                childWhenDragging: Opacity(
-                  opacity: 0.4,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.grabbing,
-                    child: const Icon(Icons.drag_handle, size: 20),
-                  ),
-                ),
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.grab,
-                  child: const Icon(Icons.drag_handle, size: 20),
-                ),
+                ],
               )
-            : const Icon(Icons.drag_handle, size: 20),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (task.reminderAt != null)
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                  const Icon(Icons.drag_handle, size: 20),
+                ],
+              ),
       ),
     );
   }

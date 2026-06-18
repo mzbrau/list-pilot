@@ -221,5 +221,53 @@ void main() {
       expect(archived, hasLength(1));
       expect(archived.first.displayName, 'Old done');
     });
+
+    test('updateTask persists reminderAt', () async {
+      final listId = await repo.createList('Tasks');
+      final taskId = await repo.addTask(
+        listId: listId,
+        displayName: 'Remind me',
+      );
+      final reminderAt = DateTime(2026, 6, 20, 9, 30);
+
+      await repo.updateTask(
+        id: taskId,
+        reminderAt: reminderAt,
+      );
+
+      final task = await repo.getTaskById(taskId);
+      expect(task?.reminderAt, reminderAt);
+    });
+
+    test('updateTask without clearReminder preserves existing reminder', () async {
+      final listId = await repo.createList('Tasks');
+      final taskId = await repo.addTask(
+        listId: listId,
+        displayName: 'Keep reminder',
+      );
+      final reminderAt = DateTime(2026, 6, 20, 9, 30);
+
+      await repo.updateTask(id: taskId, reminderAt: reminderAt);
+      await repo.updateTask(id: taskId, displayName: 'Renamed');
+
+      final task = await repo.getTaskById(taskId);
+      expect(task?.displayName, 'Renamed');
+      expect(task?.reminderAt, reminderAt);
+    });
+
+    test('updateTask with clearReminder removes reminder', () async {
+      final listId = await repo.createList('Tasks');
+      final taskId = await repo.addTask(
+        listId: listId,
+        displayName: 'Clear reminder',
+      );
+      final reminderAt = DateTime(2026, 6, 20, 9, 30);
+
+      await repo.updateTask(id: taskId, reminderAt: reminderAt);
+      await repo.updateTask(id: taskId, clearReminder: true);
+
+      final task = await repo.getTaskById(taskId);
+      expect(task?.reminderAt, isNull);
+    });
   });
 }

@@ -55,6 +55,8 @@ class TodoRepository {
 
   Future<TodoItem?> getTaskById(int id) => _db.getTodoItemById(id);
 
+  Stream<TodoItem?> watchTaskById(int id) => _db.watchTodoItemById(id);
+
   Future<List<TodoItem>> getTasksWithReminders() =>
       _db.getTodoItemsWithReminders();
 

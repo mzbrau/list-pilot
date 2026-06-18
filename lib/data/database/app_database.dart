@@ -409,6 +409,12 @@ class AppDatabase extends _$AppDatabase {
     return (select(todoItems)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
+  Stream<TodoItem?> watchTodoItemById(int id) {
+    return (select(todoItems)..where((t) => t.id.equals(id)))
+        .watch()
+        .map((rows) => rows.isEmpty ? null : rows.first);
+  }
+
   Future<List<TodoItem>> getTodoItemsWithReminders() {
     return (select(todoItems)
           ..where((t) => t.reminderAt.isNotNull() & t.isCompleted.equals(false)))

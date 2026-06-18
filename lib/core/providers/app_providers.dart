@@ -270,9 +270,9 @@ final todoItemsProvider =
 });
 
 final todoTaskProvider =
-    FutureProvider.family<TodoItem?, int>((ref, taskId) async {
+    StreamProvider.family<TodoItem?, int>((ref, taskId) {
   ref.watch(appInitProvider);
-  return ref.watch(todoRepositoryProvider).getTaskById(taskId);
+  return ref.watch(todoRepositoryProvider).watchTaskById(taskId);
 });
 
 final todoArchivedProvider =
