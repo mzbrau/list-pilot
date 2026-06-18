@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:list_pilot/core/constants/app_constants.dart';
 import 'package:list_pilot/core/providers/app_providers.dart';
 import 'package:list_pilot/data/database/app_database.dart';
 import 'package:list_pilot/data/repositories/catalog_repository.dart';
@@ -85,7 +86,12 @@ void main() {
     expect(find.text('Original: ×1.34 Chicken'), findsOneWidget);
 
     await tester.enterText(find.widgetWithText(TextField, 'Quantity'), '1');
-    await tester.enterText(find.widgetWithText(TextField, 'Unit'), 'kg');
+    await tester.tap(find.byType(DropdownButtonFormField<String?>));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text(QuantityUnits.label(QuantityUnits.kg)).last,
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextField, 'Ingredient name'),
       'Chicken Breast',

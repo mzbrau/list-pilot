@@ -38,8 +38,8 @@ class MealIngredientEditSheet extends ConsumerStatefulWidget {
 class _MealIngredientEditSheetState
     extends ConsumerState<MealIngredientEditSheet> {
   final _quantityController = TextEditingController();
-  final _unitController = TextEditingController();
   final _nameController = TextEditingController();
+  String? _selectedUnit;
   Timer? _debounce;
   List<CatalogItem> _suggestions = [];
   List<Category> _categories = [];
@@ -59,9 +59,7 @@ class _MealIngredientEditSheetState
           ? value.toInt().toString()
           : value.toString();
     }
-    if (ingredient.quantityUnit != null) {
-      _unitController.text = ingredient.quantityUnit!;
-    }
+    _selectedUnit = _canonicalUnit(ingredient.quantityUnit);
     _nameController.text = ingredient.displayName;
     _loadInitialData();
   }
@@ -86,7 +84,6 @@ class _MealIngredientEditSheetState
   void dispose() {
     _debounce?.cancel();
     _quantityController.dispose();
-    _unitController.dispose();
     _nameController.dispose();
     super.dispose();
   }
@@ -122,12 +119,14 @@ class _MealIngredientEditSheetState
     });
   }
 
-  String? _normalizeUnit(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return null;
+  String? _canonicalUnit(String? raw) {
+    if (raw == null) return null;
     const parser = IngredientParserService();
-    final parsed = parser.parse('1 $trimmed placeholder');
-    return parsed.quantityUnit ?? trimmed;
+    final parsed = parser.parse('1 $raw placeholder');
+    final normalized = parsed.quantityUnit ?? raw;
+    return QuantityUnits.all.contains(normalized)
+        ? normalized
+        : QuantityUnits.count;
   }
 
   double? _parseQuantity(String raw) {
@@ -143,9 +142,8 @@ class _MealIngredientEditSheetState
   Future<void> _save() async {
     final name = _nameController.text.trim();
     final qtyRaw = _quantityController.text.trim();
-    final unitRaw = _unitController.text.trim();
     final hasQty = qtyRaw.isNotEmpty;
-    final hasUnit = unitRaw.isNotEmpty;
+    final hasUnit = _selectedUnit != null;
 
     if (name.isEmpty) {
       setState(() => _errorText = 'Ingredient name is required');
@@ -162,13 +160,9 @@ class _MealIngredientEditSheetState
     String? quantityUnit;
     if (hasQty && hasUnit) {
       quantityValue = _parseQuantity(qtyRaw);
-      quantityUnit = _normalizeUnit(unitRaw);
+      quantityUnit = _selectedUnit;
       if (quantityValue == null) {
         setState(() => _errorText = 'Invalid quantity');
-        return;
-      }
-      if (quantityUnit == null || quantityUnit.isEmpty) {
-        setState(() => _errorText = 'Invalid unit');
         return;
       }
     }
@@ -280,15 +274,29 @@ class _MealIngredientEditSheetState
                           const SizedBox(width: 12),
                           Expanded(
                             flex: 3,
-                            child: TextField(
-                              controller: _unitController,
+                            child: DropdownButtonFormField<String?>(
+                              value: _selectedUnit,
                               decoration: const InputDecoration(
                                 labelText: 'Unit',
-                                hintText: 'g, kg, ml, cup…',
                               ),
-                              textCapitalization: TextCapitalization.none,
-                              onChanged: (_) =>
-                                  setState(() => _errorText = null),
+                              items: [
+                                const DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text('None'),
+                                ),
+                                ...QuantityUnits.all.map(
+                                  (u) => DropdownMenuItem<String?>(
+                                    value: u,
+                                    child: Text(QuantityUnits.label(u)),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedUnit = value;
+                                  _errorText = null;
+                                });
+                              },
                             ),
                           ),
                         ],
