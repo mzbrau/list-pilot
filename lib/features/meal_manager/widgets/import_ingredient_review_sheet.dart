@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/ingredient_catalog_matcher.dart';
+import '../../meal_planning/widgets/ingredient_catalog_name_field.dart';
 
 class ImportIngredientReviewSheet extends ConsumerStatefulWidget {
   const ImportIngredientReviewSheet({
@@ -241,67 +242,20 @@ class _UnmatchedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Original: ${draft.parsed.originalLine}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Ingredient name',
-              ),
-              onChanged: onNameChanged,
-            ),
-            if (suggestions.isNotEmpty)
-              Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(8),
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: suggestions.length,
-                  itemBuilder: (context, index) {
-                    final item = suggestions[index];
-                    return ListTile(
-                      dense: true,
-                      title: Text(item.displayName),
-                      onTap: () => onCatalogSelected(item),
-                    );
-                  },
-                ),
-              ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Add to catalog'),
-              value: draft.addToCatalog,
-              onChanged: onAddToCatalogChanged,
-            ),
-            if (draft.addToCatalog && categories.isNotEmpty)
-              DropdownButtonFormField<String>(
-                value: draft.categoryId,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: [
-                  for (final category in categories)
-                    DropdownMenuItem(
-                      value: category.id,
-                      child: Text(category.name),
-                    ),
-                ],
-                onChanged: onCategoryChanged,
-              ),
-          ],
+        child: IngredientCatalogNameField(
+          controller: controller,
+          categories: categories,
+          suggestions: suggestions,
+          addToCatalog: draft.addToCatalog,
+          categoryId: draft.categoryId,
+          originalLine: draft.parsed.originalLine,
+          onNameChanged: onNameChanged,
+          onCatalogSelected: onCatalogSelected,
+          onAddToCatalogChanged: onAddToCatalogChanged,
+          onCategoryChanged: onCategoryChanged,
         ),
       ),
     );

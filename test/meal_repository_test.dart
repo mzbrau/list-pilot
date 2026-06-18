@@ -74,6 +74,42 @@ void main() {
     expect(events, hasLength(1));
   });
 
+  test('updateIngredient updates structured fields and clears optional data',
+      () async {
+    final meal = await repo.getOrCreateMeal(displayName: 'Roast');
+    final ingredientId = await repo.addIngredient(
+      mealId: meal.id,
+      displayName: 'Chicken',
+      quantityValue: 1.34,
+      quantityUnit: 'count',
+    );
+
+    await repo.updateIngredient(
+      id: ingredientId,
+      displayName: 'Chicken Breast',
+      quantityValue: 1,
+      quantityUnit: 'kg',
+      catalogItemId: 42,
+    );
+
+    var ingredient = (await repo.getIngredientsForMeal(meal.id)).single;
+    expect(ingredient.displayName, 'Chicken Breast');
+    expect(ingredient.quantityValue, 1);
+    expect(ingredient.quantityUnit, 'kg');
+    expect(ingredient.catalogItemId, 42);
+
+    await repo.updateIngredient(
+      id: ingredientId,
+      clearQuantity: true,
+      clearCatalogItem: true,
+    );
+
+    ingredient = (await repo.getIngredientsForMeal(meal.id)).single;
+    expect(ingredient.quantityValue, isNull);
+    expect(ingredient.quantityUnit, isNull);
+    expect(ingredient.catalogItemId, isNull);
+  });
+
   test('ingredient CRUD and addToShoppingList flag', () async {
     final meal = await repo.getOrCreateMeal(displayName: 'Tacos');
     final ingredientId = await repo.addIngredient(

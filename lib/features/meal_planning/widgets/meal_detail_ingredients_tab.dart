@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/ingredient_parser_service.dart';
+import 'meal_ingredient_edit_sheet.dart';
 import 'meal_ingredient_line_text.dart';
 
 class MealDetailIngredientsTab extends ConsumerStatefulWidget {
@@ -104,6 +105,10 @@ class _MealDetailIngredientsTabState
 
   Future<void> _deleteIngredient(MealIngredient ingredient) async {
     await ref.read(mealRepositoryProvider).deleteIngredient(ingredient.id);
+  }
+
+  Future<void> _editIngredient(MealIngredient ingredient) async {
+    await MealIngredientEditSheet.show(context, ingredient: ingredient);
   }
 
   void _deleteDraftIngredient(int index) {
@@ -241,9 +246,16 @@ class _MealDetailIngredientsTabState
                   quantityValue: ingredient.quantityValue,
                   quantityUnit: ingredient.quantityUnit,
                 ),
+                subtitle: _IngredientSubtitle(ingredient: ingredient),
+                onTap: () => _editIngredient(ingredient),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit ingredient',
+                      onPressed: () => _editIngredient(ingredient),
+                    ),
                     Switch(
                       value: ingredient.addToShoppingList,
                       onChanged: (value) {
@@ -255,11 +267,11 @@ class _MealDetailIngredientsTabState
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
+                      tooltip: 'Delete ingredient',
                       onPressed: () => _deleteIngredient(ingredient),
                     ),
                   ],
                 ),
-                subtitle: const Text('Add to shopping list'),
               ),
             );
           }),
@@ -293,6 +305,32 @@ class _MealDetailIngredientsTabState
           );
         }),
       ],
+    );
+  }
+}
+
+class _IngredientSubtitle extends ConsumerWidget {
+  const _IngredientSubtitle({required this.ingredient});
+
+  final MealIngredient ingredient;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ingredient.catalogItemId == null) {
+      return const Text('Add to shopping list');
+    }
+
+    return FutureBuilder<CatalogItem?>(
+      future: ref
+          .read(catalogRepositoryProvider)
+          .getById(ingredient.catalogItemId!),
+      builder: (context, snapshot) {
+        final catalogName = snapshot.data?.displayName;
+        if (catalogName != null) {
+          return Text('Matched: $catalogName · Add to shopping list');
+        }
+        return const Text('Matched catalog item · Add to shopping list');
+      },
     );
   }
 }
