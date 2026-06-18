@@ -71,7 +71,7 @@
       "categoryId": "fruit_veg"
     },
     {
-      "name": "Aubergine",
+      "name": "Eggplant",
       "categoryId": "fruit_veg"
     },
     {
@@ -87,7 +87,7 @@
       "categoryId": "fruit_veg"
     },
     {
-      "name": "Bell peppers",
+      "name": "Capsicum",
       "categoryId": "fruit_veg"
     },
     {
@@ -127,7 +127,7 @@
       "categoryId": "fruit_veg"
     },
     {
-      "name": "Coleslaw mix",
+      "name": "Coleslaw",
       "categoryId": "fruit_veg"
     },
     {
@@ -159,7 +159,7 @@
       "categoryId": "fruit_veg"
     },
     {
-      "name": "Kiwi",
+      "name": "Kiwifruit",
       "categoryId": "fruit_veg"
     },
     {
@@ -411,7 +411,7 @@
       "categoryId": "meat"
     },
     {
-      "name": "Beef stewing steak",
+      "name": "Beef steak",
       "categoryId": "meat"
     },
     {
@@ -424,7 +424,7 @@
     },
     {
       "name": "Chicken nuggets",
-      "categoryId": "meat"
+      "categoryId": "frozen"
     },
     {
       "name": "Chicken thighs",
@@ -448,11 +448,7 @@
     },
     {
       "name": "Fish fingers",
-      "categoryId": "meat"
-    },
-    {
-      "name": "Haddock",
-      "categoryId": "meat"
+      "categoryId": "frozen"
     },
     {
       "name": "Ham",
@@ -655,10 +651,6 @@
       "categoryId": "dairy"
     },
     {
-      "name": "Pepper jack",
-      "categoryId": "dairy"
-    },
-    {
       "name": "Plant-based spread",
       "categoryId": "dairy"
     },
@@ -672,10 +664,6 @@
     },
     {
       "name": "Semi-skimmed milk",
-      "categoryId": "dairy"
-    },
-    {
-      "name": "Single cream",
       "categoryId": "dairy"
     },
     {
@@ -787,7 +775,7 @@
       "categoryId": "frozen"
     },
     {
-      "name": "Ice cream",
+      "name": "Ice-cream",
       "categoryId": "frozen"
     },
     {
