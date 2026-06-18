@@ -308,10 +308,13 @@ class AppDatabase extends _$AppDatabase {
       LEFT JOIN meal_tag_assignments mta ON mta.meal_id = m.id
       LEFT JOIN meal_tags mt ON mt.id = mta.tag_id
       WHERE m.name LIKE ? OR mt.name LIKE ?
-      ORDER BY m.display_name ASC
+      ORDER BY
+        CASE WHEN m.name LIKE ? THEN 0 ELSE 1 END,
+        m.display_name ASC
       ''',
       variables: [
-        Variable<String>('$normalized%'),
+        Variable<String>('%$normalized%'),
+        Variable<String>('%$normalized%'),
         Variable<String>('$normalized%'),
       ],
       readsFrom: {meals, mealTagAssignments, mealTags},

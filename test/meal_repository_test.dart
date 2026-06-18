@@ -165,6 +165,34 @@ void main() {
     expect(byName, hasLength(1));
   });
 
+  test('searchMealsWithTags matches substring in name', () async {
+    await repo.createMeal(displayName: 'Chicken Pie');
+
+    final results = await repo.searchMealsWithTags('pie');
+    expect(results, hasLength(1));
+    expect(results.first.displayName, 'Chicken Pie');
+  });
+
+  test('searchMealsWithTags ranks prefix name matches first', () async {
+    await repo.createMeal(displayName: 'Chicken Pie');
+    await repo.createMeal(displayName: 'Apple Chicken');
+
+    final results = await repo.searchMealsWithTags('chicken');
+    expect(results, hasLength(2));
+    expect(results.first.displayName, 'Chicken Pie');
+    expect(results.last.displayName, 'Apple Chicken');
+  });
+
+  test('searchMealsWithTags matches substring in tags', () async {
+    await repo.createMeal(
+      displayName: 'Roast Beef',
+      tags: ['Sunday Roast'],
+    );
+
+    final results = await repo.searchMealsWithTags('day');
+    expect(results.map((m) => m.displayName), contains('Roast Beef'));
+  });
+
   test('deleteMeal cascades steps and tags', () async {
     final meal = await repo.createMeal(
       displayName: 'Temp Meal',
