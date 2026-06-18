@@ -18,6 +18,7 @@ import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
 import '../../data/services/meal_export_service.dart';
 import '../../data/services/meal_import_service.dart';
+import '../../data/services/openai_models_service.dart';
 import '../../data/services/meal_photo_service.dart';
 import '../../data/services/todo_maintenance_service.dart';
 import '../../data/services/todo_notification_service.dart';
@@ -439,6 +440,19 @@ class AiConfig {
       apiKey!.trim().isNotEmpty &&
       modelName != null &&
       modelName!.trim().isNotEmpty;
+
+  static bool isOpenAiUri(String? uri) {
+    final host = Uri.tryParse(uri?.trim() ?? '')?.host.toLowerCase();
+    return host == 'api.openai.com';
+  }
+
+  bool get isOpenAiEndpoint => isOpenAiUri(apiUri);
+
+  String get maskedApiKey {
+    final len = apiKey?.trim().length ?? 0;
+    if (len == 0) return '';
+    return '*' * len.clamp(8, 24);
+  }
 }
 
 final aiConfigProvider =
@@ -479,6 +493,130 @@ class AiConfigNotifier extends StateNotifier<AiConfig> {
     }
     if (modelName != null) {
       await prefs.setString(AppConstants.aiModelNameKey, modelName);
+    }
+  }
+}
+
+class OpenAiModelsState {
+  const OpenAiModelsState({
+    this.models = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  final List<String> models;
+  final bool isLoading;
+  final String? error;
+
+  OpenAiModelsState copyWith({
+    List<String>? models,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+  }) {
+    return OpenAiModelsState(
+      models: models ?? this.models,
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
+    );
+  }
+}
+
+final openAiModelsServiceProvider = Provider<OpenAiModelsService>((ref) {
+  return OpenAiModelsService();
+});
+
+final openAiModelsProvider =
+    StateNotifierProvider<OpenAiModelsNotifier, OpenAiModelsState>((ref) {
+  return OpenAiModelsNotifier(ref.watch(openAiModelsServiceProvider));
+});
+
+class OpenAiModelsNotifier extends StateNotifier<OpenAiModelsState> {
+  OpenAiModelsNotifier(this._service) : super(const OpenAiModelsState()) {
+    loadCached();
+  }
+
+  final OpenAiModelsService _service;
+  bool _cacheLoaded = false;
+
+  Future<void> loadCached() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(AppConstants.openAiModelsCacheKey);
+    if (raw == null || raw.isEmpty) {
+      _cacheLoaded = true;
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        _cacheLoaded = true;
+        return;
+      }
+      final models = decoded
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (models.isNotEmpty) {
+        state = state.copyWith(models: models, clearError: true);
+      }
+    } catch (_) {
+      // Ignore invalid cache.
+    } finally {
+      _cacheLoaded = true;
+    }
+  }
+
+  Future<void> ensureLoaded({
+    required String apiUri,
+    required String apiKey,
+  }) async {
+    if (!_cacheLoaded) await loadCached();
+    if (state.models.isNotEmpty || state.isLoading) return;
+    await _fetch(apiUri: apiUri, apiKey: apiKey);
+  }
+
+  Future<void> refresh({
+    required String apiUri,
+    required String apiKey,
+  }) async {
+    if (!_cacheLoaded) await loadCached();
+    await _fetch(apiUri: apiUri, apiKey: apiKey, force: true);
+  }
+
+  Future<void> _fetch({
+    required String apiUri,
+    required String apiKey,
+    bool force = false,
+  }) async {
+    if (apiUri.trim().isEmpty || apiKey.trim().isEmpty) {
+      state = state.copyWith(
+        error: 'API URI and key are required to load models',
+      );
+      return;
+    }
+
+    if (!force && state.models.isNotEmpty) return;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final models = await _service.fetchModels(
+        apiUri: apiUri,
+        apiKey: apiKey,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        AppConstants.openAiModelsCacheKey,
+        jsonEncode(models),
+      );
+      state = OpenAiModelsState(models: models);
+    } on OpenAiModelsException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load models: $e',
+      );
     }
   }
 }

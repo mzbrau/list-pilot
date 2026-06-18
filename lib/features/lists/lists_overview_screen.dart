@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/models/overview_list_entry.dart';
 import '../../core/providers/app_providers.dart';
+import '../../data/services/openai_models_service.dart';
 
 class ListsOverviewScreen extends ConsumerWidget {
   const ListsOverviewScreen({super.key});
@@ -228,10 +229,12 @@ class _SettingsSheet extends ConsumerStatefulWidget {
 class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   bool _exportingCatalog = false;
   bool _exportingMeals = false;
+  bool _editingAi = false;
   late final TextEditingController _aiUriController;
   late final TextEditingController _aiKeyController;
   late final TextEditingController _aiModelController;
   bool _aiFieldsInitialized = false;
+  bool _openAiModelsLoadAttempted = false;
 
   @override
   void initState() {
@@ -239,10 +242,16 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
     _aiUriController = TextEditingController();
     _aiKeyController = TextEditingController();
     _aiModelController = TextEditingController();
+    _aiUriController.addListener(_onAiUriChanged);
+  }
+
+  void _onAiUriChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _aiUriController.removeListener(_onAiUriChanged);
     _aiUriController.dispose();
     _aiKeyController.dispose();
     _aiModelController.dispose();
@@ -252,22 +261,204 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   void _initAiFields(AiConfig config) {
     if (_aiFieldsInitialized) return;
     _aiFieldsInitialized = true;
+    _syncAiControllers(config);
+  }
+
+  void _syncAiControllers(AiConfig config) {
     _aiUriController.text = config.apiUri ?? '';
     _aiKeyController.text = config.apiKey ?? '';
     _aiModelController.text = config.modelName ?? '';
   }
 
+  void _startEditingAi(AiConfig config) {
+    _syncAiControllers(config);
+    setState(() {
+      _editingAi = true;
+      _openAiModelsLoadAttempted = false;
+    });
+  }
+
+  void _maybeLoadOpenAiModels() {
+    if (_openAiModelsLoadAttempted) return;
+    final apiKey = _aiKeyController.text.trim();
+    if (!AiConfig.isOpenAiUri(_aiUriController.text) || apiKey.isEmpty) {
+      return;
+    }
+    _openAiModelsLoadAttempted = true;
+    Future.microtask(() async {
+      await ref.read(openAiModelsProvider.notifier).ensureLoaded(
+            apiUri: _aiUriController.text.trim(),
+            apiKey: apiKey,
+          );
+      if (!mounted) return;
+      final error = ref.read(openAiModelsProvider).error;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    });
+  }
+
+  Future<void> _refreshOpenAiModels() async {
+    await ref.read(openAiModelsProvider.notifier).refresh(
+          apiUri: _aiUriController.text.trim(),
+          apiKey: _aiKeyController.text.trim(),
+        );
+    if (!mounted) return;
+    final error = ref.read(openAiModelsProvider).error;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+    }
+  }
+
   Future<void> _saveAiConfig() async {
+    var modelName = _aiModelController.text.trim();
+    if (modelName.isEmpty &&
+        AiConfig.isOpenAiUri(_aiUriController.text.trim())) {
+      final models = ref.read(openAiModelsProvider).models;
+      if (models.isNotEmpty) {
+        modelName = models.first;
+      }
+    }
     await ref.read(aiConfigProvider.notifier).update(
           apiUri: _aiUriController.text.trim(),
           apiKey: _aiKeyController.text.trim(),
-          modelName: _aiModelController.text.trim(),
+          modelName: modelName,
         );
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI settings saved')),
+    if (!mounted) return;
+    final saved = ref.read(aiConfigProvider);
+    setState(() => _editingAi = !saved.isConfigured);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI settings saved')),
+    );
+  }
+
+  Widget _buildAiSummary(AiConfig config, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AiSummaryRow(label: 'API URI', value: config.apiUri!),
+              const SizedBox(height: 12),
+              _AiSummaryRow(label: 'API Key', value: config.maskedApiKey),
+              const SizedBox(height: 12),
+              _AiSummaryRow(label: 'Model', value: config.modelName!),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiModelField() {
+    final isOpenAi = AiConfig.isOpenAiUri(_aiUriController.text);
+    if (!isOpenAi) {
+      return TextField(
+        controller: _aiModelController,
+        decoration: const InputDecoration(
+          labelText: 'Model name',
+          hintText: 'gpt-4o-mini',
+        ),
       );
     }
+
+    _maybeLoadOpenAiModels();
+    final modelsState = ref.watch(openAiModelsProvider);
+    final model = _aiModelController.text.trim();
+    final options = mergeModelOptions(modelsState.models, model);
+    final apiKey = _aiKeyController.text.trim();
+    final canRefresh = apiKey.isNotEmpty && !modelsState.isLoading;
+    final selectedModel = options.isEmpty
+        ? null
+        : (model.isNotEmpty && options.contains(model) ? model : options.first);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: selectedModel,
+            decoration: InputDecoration(
+              labelText: 'Model',
+              hintText: modelsState.isLoading
+                  ? 'Loading models...'
+                  : (options.isEmpty ? 'Load models' : null),
+            ),
+            items: [
+              for (final name in options)
+                DropdownMenuItem(value: name, child: Text(name)),
+            ],
+            onChanged: options.isEmpty || modelsState.isLoading
+                ? null
+                : (value) {
+                    if (value == null) return;
+                    _aiModelController.text = value;
+                  },
+          ),
+        ),
+        const SizedBox(width: 4),
+        IconButton(
+          tooltip: 'Refresh models',
+          onPressed: canRefresh ? _refreshOpenAiModels : null,
+          icon: modelsState.isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAiForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _aiUriController,
+            decoration: const InputDecoration(
+              labelText: 'API URI',
+              hintText: 'https://api.openai.com/v1',
+            ),
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _aiKeyController,
+            decoration: const InputDecoration(labelText: 'API Key'),
+            obscureText: true,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _buildAiModelField(),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _saveAiConfig,
+              child: const Text('Save AI settings'),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _handleExportCatalog() async {
@@ -397,45 +588,20 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
-                controller: _aiUriController,
-                decoration: const InputDecoration(
-                  labelText: 'API URI',
-                  hintText: 'https://api.openai.com/v1',
-                ),
-                keyboardType: TextInputType.url,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
-                controller: _aiKeyController,
-                decoration: const InputDecoration(labelText: 'API Key'),
-                obscureText: true,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
-                controller: _aiModelController,
-                decoration: const InputDecoration(
-                  labelText: 'Model name',
-                  hintText: 'gpt-4o-mini',
+            if (aiConfig.isConfigured && !_editingAi) ...[
+              _buildAiSummary(aiConfig, theme),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => _startEditingAi(aiConfig),
+                    child: const Text('Edit AI settings'),
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _saveAiConfig,
-                  child: const Text('Save AI settings'),
-                ),
-              ),
-            ),
+            ] else
+              _buildAiForm(),
           ],
           if (mealPlanningEnabled) ...[
           Padding(
@@ -819,6 +985,34 @@ class _ListCard extends ConsumerWidget {
         }
       }
     }
+  }
+}
+
+class _AiSummaryRow extends StatelessWidget {
+  const _AiSummaryRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.bodyLarge,
+        ),
+      ],
+    );
   }
 }
 
