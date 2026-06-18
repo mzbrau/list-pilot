@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:list_pilot/data/database/app_database.dart';
 import 'package:list_pilot/data/repositories/meal_repository.dart';
+import 'package:list_pilot/data/services/ingredient_catalog_matcher.dart';
 
 void main() {
   late AppDatabase db;
@@ -207,13 +208,45 @@ void main() {
     expect(tags, isEmpty);
   });
 
+  test('updatePlanItemScale persists scale factor', () async {
+    final meal = await repo.getOrCreateMeal(displayName: 'Stew');
+    final planItemId = await repo.addMealToPlan(meal.id);
+
+    await repo.updatePlanItemScale(planItemId, 1.5);
+
+    final items = await repo.watchPlanItems().first;
+    expect(items.first.planItem.scaleFactor, 1.5);
+  });
+
+  test('createMeal with structured ingredients', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Structured Recipe',
+      ingredients: [
+        const MealIngredientInput(
+          displayName: 'Potatoes',
+          quantityValue: 750,
+          quantityUnit: 'g',
+        ),
+      ],
+    );
+
+    final ingredients = await repo.getIngredientsForMeal(meal.id);
+    expect(ingredients, hasLength(1));
+    expect(ingredients.first.displayName, 'Potatoes');
+    expect(ingredients.first.quantityValue, 750);
+    expect(ingredients.first.quantityUnit, 'g');
+  });
+
   test('createMeal with full data', () async {
     final meal = await repo.createMeal(
       displayName: 'Full Recipe',
       notes: 'Tasty',
       portions: 2,
       recipeLink: 'https://example.com',
-      ingredients: ['Flour', 'Eggs'],
+      ingredients: [
+        const MealIngredientInput(displayName: 'Flour'),
+        const MealIngredientInput(displayName: 'Eggs'),
+      ],
       steps: ['Bake'],
       tags: ['Dessert'],
     );

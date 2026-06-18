@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import 'tables.dart';
+import '../services/ingredient_parser_service.dart';
 
 part 'app_database.g.dart';
 
@@ -38,7 +39,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -75,6 +76,12 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(takeAwayMenuItems);
             await m.createTable(takeAwayOrders);
             await m.createTable(takeAwayOrderLines);
+          }
+          if (from < 7) {
+            await m.addColumn(mealIngredients, mealIngredients.quantityValue);
+            await m.addColumn(mealIngredients, mealIngredients.quantityUnit);
+            await m.addColumn(mealPlanItems, mealPlanItems.scaleFactor);
+            await _backfillMealIngredientQuantities(m.database);
           }
         },
         beforeOpen: (details) async {
@@ -119,6 +126,13 @@ class AppDatabase extends _$AppDatabase {
 
   Future<CatalogItem?> findCatalogByName(String name) {
     final normalized = name.trim().toLowerCase();
+    return (select(catalogItems)..where((t) => t.name.equals(normalized)))
+        .getSingleOrNull();
+  }
+
+  Future<CatalogItem?> findCatalogByToken(String token) {
+    final normalized = token.trim().toLowerCase();
+    if (normalized.isEmpty) return Future.value(null);
     return (select(catalogItems)..where((t) => t.name.equals(normalized)))
         .getSingleOrNull();
   }
@@ -568,6 +582,32 @@ class AppDatabase extends _$AppDatabase {
       readsFrom: {takeAwayOrderLines},
     ).getSingle();
     return count.read<int>('c');
+  }
+}
+
+Future<void> _backfillMealIngredientQuantities(GeneratedDatabase db) async {
+  const parser = IngredientParserService();
+  final rows = await db.customSelect(
+    'SELECT id, display_name FROM meal_ingredients',
+  ).get();
+
+  for (final row in rows) {
+    final id = row.read<int>('id');
+    final displayName = row.read<String>('display_name');
+    final parsed = parser.parse(displayName);
+    if (parsed.itemName.isEmpty) continue;
+
+    final hasQty = parsed.quantityValue != null && parsed.quantityUnit != null;
+    await db.customUpdate(
+      'UPDATE meal_ingredients SET display_name = ?, quantity_value = ?, quantity_unit = ? WHERE id = ?',
+      variables: [
+        Variable<String>(parsed.itemName),
+        hasQty ? Variable<double>(parsed.quantityValue!) : const Variable(null),
+        hasQty ? Variable<String>(parsed.quantityUnit!) : const Variable(null),
+        Variable<int>(id),
+      ],
+      updates: {},
+    );
   }
 }
 

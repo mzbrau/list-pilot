@@ -11,6 +11,7 @@ class CompletedMealsSection extends StatefulWidget {
     required this.onClear,
     required this.onTapItem,
     required this.onAddIngredients,
+    required this.onScaleChanged,
   });
 
   final List<MealPlanItemWithMeal> items;
@@ -18,6 +19,7 @@ class CompletedMealsSection extends StatefulWidget {
   final Future<void> Function(int count) onClear;
   final void Function(MealPlanItemWithMeal entry) onTapItem;
   final void Function(MealPlanItemWithMeal entry) onAddIngredients;
+  final void Function(MealPlanItemWithMeal entry, double scaleFactor) onScaleChanged;
 
   @override
   State<CompletedMealsSection> createState() => _CompletedMealsSectionState();
@@ -86,6 +88,7 @@ class _CompletedMealsSectionState extends State<CompletedMealsSection> {
                   onToggle: (value) => widget.onToggle(entry, value),
                   onTap: () => widget.onTapItem(entry),
                   onAddIngredients: () => widget.onAddIngredients(entry),
+                  onScaleChanged: (scale) => widget.onScaleChanged(entry, scale),
                 );
               },
               childCount: widget.items.length,

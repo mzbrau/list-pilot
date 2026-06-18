@@ -40,10 +40,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'calendar',
+            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) => const MealCalendarScreen(),
           ),
           GoRoute(
             path: ':mealId',
+            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final mealId = int.parse(state.pathParameters['mealId']!);
               final initialEditMode = state.extra == true;
@@ -61,10 +63,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'import',
+            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) => const MealImportScreen(),
             routes: [
               GoRoute(
                 path: 'extract',
+                parentNavigatorKey: rootNavigatorKey,
                 builder: (context, state) =>
                     const MealImportScreen(mode: MealImportMode.extract),
               ),
@@ -72,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: ':mealId',
+            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final mealId = int.parse(state.pathParameters['mealId']!);
               final initialEditMode = state.extra == true;
@@ -92,6 +97,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'item/:itemId',
+            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
               final listId = int.parse(state.pathParameters['id']!);
               final itemId = int.parse(state.pathParameters['itemId']!);

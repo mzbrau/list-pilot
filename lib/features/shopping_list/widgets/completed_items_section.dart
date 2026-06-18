@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
+import '../../../data/services/ingredient_parser_service.dart';
 import 'list_item_tile.dart';
 
 class CompletedItemsSection extends StatefulWidget {
@@ -96,16 +97,8 @@ class _CompletedItemsSectionState extends State<CompletedItemsSection> {
 
 String formatQuantity(ListItem item) {
   if (item.quantityValue == null) return '';
-  final value = item.quantityValue!;
-  final unit = item.quantityUnit ?? QuantityUnits.count;
-  if (unit == QuantityUnits.count) {
-    if (value == value.roundToDouble()) {
-      return '×${value.toInt()}';
-    }
-    return '×$value';
-  }
-  if (value == value.roundToDouble()) {
-    return '${value.toInt()} $unit';
-  }
-  return '$value $unit';
+  return formatQuantityValue(
+    item.quantityValue!,
+    item.quantityUnit ?? QuantityUnits.count,
+  );
 }

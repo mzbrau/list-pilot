@@ -39,6 +39,9 @@ Map<String, dynamic> buildMealExportPayload(MealExportData data) {
                   (i) => {
                     'displayName': i.displayName,
                     'addToShoppingList': i.addToShoppingList,
+                    if (i.quantityValue != null) 'quantityValue': i.quantityValue,
+                    if (i.quantityUnit != null) 'quantityUnit': i.quantityUnit,
+                    if (i.catalogItemId != null) 'catalogItemId': i.catalogItemId,
                   },
                 )
                 .toList(),

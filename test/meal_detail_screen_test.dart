@@ -7,6 +7,7 @@ import 'package:list_pilot/core/providers/app_providers.dart';
 import 'package:list_pilot/data/database/app_database.dart';
 import 'package:list_pilot/data/repositories/catalog_repository.dart';
 import 'package:list_pilot/data/repositories/meal_repository.dart';
+import 'package:list_pilot/data/services/ingredient_catalog_matcher.dart';
 import 'package:list_pilot/data/services/meal_photo_service.dart';
 import 'package:list_pilot/features/meal_planning/meal_detail_screen.dart';
 import 'package:list_pilot/features/meal_planning/widgets/meal_detail_other_tab.dart';
@@ -45,7 +46,7 @@ void main() {
 
     final meal = await mealRepo.createMeal(
       displayName: 'Test Meal',
-      ingredients: ['Salt'],
+      ingredients: [const MealIngredientInput(displayName: 'Salt')],
       steps: ['Cook it'],
       tags: ['Dinner'],
       notes: 'Yummy',

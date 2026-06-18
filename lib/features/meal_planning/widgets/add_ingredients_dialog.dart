@@ -6,16 +6,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
+import '../../../data/services/ingredient_parser_service.dart';
+import 'meal_ingredient_line_text.dart';
 
 class AddIngredientsDialog extends ConsumerStatefulWidget {
-  const AddIngredientsDialog({super.key, required this.mealId});
+  const AddIngredientsDialog({
+    super.key,
+    required this.mealId,
+    this.scaleFactor = 1.0,
+  });
 
   final int mealId;
+  final double scaleFactor;
 
-  static Future<void> show(BuildContext context, {required int mealId}) {
+  static Future<void> show(
+    BuildContext context, {
+    required int mealId,
+    double scaleFactor = 1.0,
+  }) {
     return showDialog<void>(
       context: context,
-      builder: (context) => AddIngredientsDialog(mealId: mealId),
+      builder: (context) => AddIngredientsDialog(
+        mealId: mealId,
+        scaleFactor: scaleFactor,
+      ),
     );
   }
 
@@ -28,11 +42,15 @@ class _DialogIngredient {
   _DialogIngredient({
     required this.displayName,
     this.catalogItemId,
+    this.quantityValue,
+    this.quantityUnit,
     required this.selected,
   });
 
   final String displayName;
   final int? catalogItemId;
+  final double? quantityValue;
+  final String? quantityUnit;
   bool selected;
 }
 
@@ -45,6 +63,7 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
   List<_DialogIngredient> _ingredients = [];
   bool _loading = true;
   bool _submitting = false;
+  int? _selectedListId;
 
   @override
   void initState() {
@@ -72,6 +91,8 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
             (i) => _DialogIngredient(
               displayName: i.displayName,
               catalogItemId: i.catalogItemId,
+              quantityValue: i.quantityValue,
+              quantityUnit: i.quantityUnit,
               selected: i.addToShoppingList,
             ),
           )
@@ -126,15 +147,30 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
   }
 
   Future<void> _confirm() async {
-    final listId = ref.read(defaultShoppingListIdProvider);
+    final lists = ref.read(shoppingListsProvider).valueOrNull ?? [];
+    final listId = _selectedListId ?? ref.read(effectiveDefaultShoppingListIdProvider);
+
     if (listId == null) {
       if (mounted) {
-        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              lists.isEmpty
+                  ? 'Create a shopping list first.'
+                  : 'Select a shopping list below or set a default in Settings.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    final listExists = lists.any((list) => list.id == listId);
+    if (!listExists) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Set a default shopping list in Settings first.',
-            ),
+            content: Text('That shopping list no longer exists.'),
           ),
         );
       }
@@ -157,12 +193,20 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
     final catalogRepo = ref.read(catalogRepositoryProvider);
 
     for (final ingredient in selected) {
+      final scaledQty = scaleQuantity(
+        ingredient.quantityValue,
+        widget.scaleFactor,
+      );
+
       if (ingredient.catalogItemId != null) {
-        final catalogItem = await catalogRepo.findByName(ingredient.displayName);
+        final catalogItem =
+            await catalogRepo.getById(ingredient.catalogItemId!);
         if (catalogItem != null) {
           await listRepo.addItemFromCatalog(
             listId: listId,
             catalogItem: catalogItem,
+            quantityValue: scaledQty,
+            quantityUnit: ingredient.quantityUnit,
           );
           continue;
         }
@@ -170,6 +214,8 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
       await listRepo.addItem(
         listId: listId,
         displayName: ingredient.displayName,
+        quantityValue: scaledQty,
+        quantityUnit: ingredient.quantityUnit,
       );
     }
 
@@ -191,6 +237,20 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final showScale = widget.scaleFactor != 1.0;
+    final lists = ref.watch(shoppingListsProvider).valueOrNull ?? [];
+    final effectiveListId = ref.watch(effectiveDefaultShoppingListIdProvider);
+    final selectedListId = _selectedListId ?? effectiveListId;
+    ShoppingList? selectedList;
+    if (selectedListId != null) {
+      for (final list in lists) {
+        if (list.id == selectedListId) {
+          selectedList = list;
+          break;
+        }
+      }
+    }
+    final needsListPicker = lists.length > 1 && effectiveListId == null;
 
     return AlertDialog(
       title: const Text('Add ingredients to list'),
@@ -205,6 +265,53 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (lists.isEmpty)
+                    Text(
+                      'Create a shopping list first.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    )
+                  else if (needsListPicker)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: DropdownButtonFormField<int>(
+                        value: selectedListId,
+                        decoration: const InputDecoration(
+                          labelText: 'Shopping list',
+                        ),
+                        items: [
+                          for (final list in lists)
+                            DropdownMenuItem(
+                              value: list.id,
+                              child: Text(list.name),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          setState(() => _selectedListId = value);
+                        },
+                      ),
+                    )
+                  else if (selectedList != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Adding to ${selectedList.name}',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  if (showScale)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Quantities scaled to ×${widget.scaleFactor == widget.scaleFactor.roundToDouble() ? widget.scaleFactor.toInt() : widget.scaleFactor}',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   if (_ingredients.isEmpty)
                     Text(
                       'No ingredients yet. Add some below.',
@@ -222,7 +329,15 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
                           final item = _ingredients[index];
                           return CheckboxListTile(
                             value: item.selected,
-                            title: Text(item.displayName),
+                            title: MealIngredientLineText(
+                              displayName: item.displayName,
+                              quantityValue: item.quantityValue,
+                              quantityUnit: item.quantityUnit,
+                              scaledQuantityValue: scaleQuantity(
+                                item.quantityValue,
+                                widget.scaleFactor,
+                              ),
+                            ),
                             controlAffinity: ListTileControlAffinity.leading,
                             onChanged: (value) {
                               setState(() => item.selected = value ?? false);
@@ -282,7 +397,7 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: _submitting ? null : _confirm,
+          onPressed: _submitting || lists.isEmpty ? null : _confirm,
           child: _submitting
               ? const SizedBox(
                   width: 18,

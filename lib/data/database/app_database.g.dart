@@ -3520,9 +3520,17 @@ class $MealPlanItemsTable extends MealPlanItems
   late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
       'added_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _scaleFactorMeta =
+      const VerificationMeta('scaleFactor');
+  @override
+  late final GeneratedColumn<double> scaleFactor = GeneratedColumn<double>(
+      'scale_factor', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1.0));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, mealId, isCompleted, completedAt, addedAt];
+      [id, mealId, isCompleted, completedAt, addedAt, scaleFactor];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3560,6 +3568,12 @@ class $MealPlanItemsTable extends MealPlanItems
     } else if (isInserting) {
       context.missing(_addedAtMeta);
     }
+    if (data.containsKey('scale_factor')) {
+      context.handle(
+          _scaleFactorMeta,
+          scaleFactor.isAcceptableOrUnknown(
+              data['scale_factor']!, _scaleFactorMeta));
+    }
     return context;
   }
 
@@ -3579,6 +3593,8 @@ class $MealPlanItemsTable extends MealPlanItems
           .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
       addedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}added_at'])!,
+      scaleFactor: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}scale_factor'])!,
     );
   }
 
@@ -3594,12 +3610,14 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
   final bool isCompleted;
   final DateTime? completedAt;
   final DateTime addedAt;
+  final double scaleFactor;
   const MealPlanItem(
       {required this.id,
       required this.mealId,
       required this.isCompleted,
       this.completedAt,
-      required this.addedAt});
+      required this.addedAt,
+      required this.scaleFactor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3610,6 +3628,7 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
       map['completed_at'] = Variable<DateTime>(completedAt);
     }
     map['added_at'] = Variable<DateTime>(addedAt);
+    map['scale_factor'] = Variable<double>(scaleFactor);
     return map;
   }
 
@@ -3622,6 +3641,7 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
           ? const Value.absent()
           : Value(completedAt),
       addedAt: Value(addedAt),
+      scaleFactor: Value(scaleFactor),
     );
   }
 
@@ -3634,6 +3654,7 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+      scaleFactor: serializer.fromJson<double>(json['scaleFactor']),
     );
   }
   @override
@@ -3645,6 +3666,7 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
       'isCompleted': serializer.toJson<bool>(isCompleted),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'addedAt': serializer.toJson<DateTime>(addedAt),
+      'scaleFactor': serializer.toJson<double>(scaleFactor),
     };
   }
 
@@ -3653,13 +3675,15 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
           int? mealId,
           bool? isCompleted,
           Value<DateTime?> completedAt = const Value.absent(),
-          DateTime? addedAt}) =>
+          DateTime? addedAt,
+          double? scaleFactor}) =>
       MealPlanItem(
         id: id ?? this.id,
         mealId: mealId ?? this.mealId,
         isCompleted: isCompleted ?? this.isCompleted,
         completedAt: completedAt.present ? completedAt.value : this.completedAt,
         addedAt: addedAt ?? this.addedAt,
+        scaleFactor: scaleFactor ?? this.scaleFactor,
       );
   MealPlanItem copyWithCompanion(MealPlanItemsCompanion data) {
     return MealPlanItem(
@@ -3670,6 +3694,8 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
       completedAt:
           data.completedAt.present ? data.completedAt.value : this.completedAt,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      scaleFactor:
+          data.scaleFactor.present ? data.scaleFactor.value : this.scaleFactor,
     );
   }
 
@@ -3680,14 +3706,15 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
           ..write('mealId: $mealId, ')
           ..write('isCompleted: $isCompleted, ')
           ..write('completedAt: $completedAt, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('scaleFactor: $scaleFactor')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, mealId, isCompleted, completedAt, addedAt);
+      Object.hash(id, mealId, isCompleted, completedAt, addedAt, scaleFactor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3696,7 +3723,8 @@ class MealPlanItem extends DataClass implements Insertable<MealPlanItem> {
           other.mealId == this.mealId &&
           other.isCompleted == this.isCompleted &&
           other.completedAt == this.completedAt &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.scaleFactor == this.scaleFactor);
 }
 
 class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
@@ -3705,12 +3733,14 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
   final Value<bool> isCompleted;
   final Value<DateTime?> completedAt;
   final Value<DateTime> addedAt;
+  final Value<double> scaleFactor;
   const MealPlanItemsCompanion({
     this.id = const Value.absent(),
     this.mealId = const Value.absent(),
     this.isCompleted = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.scaleFactor = const Value.absent(),
   });
   MealPlanItemsCompanion.insert({
     this.id = const Value.absent(),
@@ -3718,6 +3748,7 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
     this.isCompleted = const Value.absent(),
     this.completedAt = const Value.absent(),
     required DateTime addedAt,
+    this.scaleFactor = const Value.absent(),
   })  : mealId = Value(mealId),
         addedAt = Value(addedAt);
   static Insertable<MealPlanItem> custom({
@@ -3726,6 +3757,7 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
     Expression<bool>? isCompleted,
     Expression<DateTime>? completedAt,
     Expression<DateTime>? addedAt,
+    Expression<double>? scaleFactor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3733,6 +3765,7 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
       if (isCompleted != null) 'is_completed': isCompleted,
       if (completedAt != null) 'completed_at': completedAt,
       if (addedAt != null) 'added_at': addedAt,
+      if (scaleFactor != null) 'scale_factor': scaleFactor,
     });
   }
 
@@ -3741,13 +3774,15 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
       Value<int>? mealId,
       Value<bool>? isCompleted,
       Value<DateTime?>? completedAt,
-      Value<DateTime>? addedAt}) {
+      Value<DateTime>? addedAt,
+      Value<double>? scaleFactor}) {
     return MealPlanItemsCompanion(
       id: id ?? this.id,
       mealId: mealId ?? this.mealId,
       isCompleted: isCompleted ?? this.isCompleted,
       completedAt: completedAt ?? this.completedAt,
       addedAt: addedAt ?? this.addedAt,
+      scaleFactor: scaleFactor ?? this.scaleFactor,
     );
   }
 
@@ -3769,6 +3804,9 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
     if (addedAt.present) {
       map['added_at'] = Variable<DateTime>(addedAt.value);
     }
+    if (scaleFactor.present) {
+      map['scale_factor'] = Variable<double>(scaleFactor.value);
+    }
     return map;
   }
 
@@ -3779,7 +3817,8 @@ class MealPlanItemsCompanion extends UpdateCompanion<MealPlanItem> {
           ..write('mealId: $mealId, ')
           ..write('isCompleted: $isCompleted, ')
           ..write('completedAt: $completedAt, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('scaleFactor: $scaleFactor')
           ..write(')'))
         .toString();
   }
@@ -3817,6 +3856,18 @@ class $MealIngredientsTable extends MealIngredients
   late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
       'display_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityValueMeta =
+      const VerificationMeta('quantityValue');
+  @override
+  late final GeneratedColumn<double> quantityValue = GeneratedColumn<double>(
+      'quantity_value', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _quantityUnitMeta =
+      const VerificationMeta('quantityUnit');
+  @override
+  late final GeneratedColumn<String> quantityUnit = GeneratedColumn<String>(
+      'quantity_unit', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _addToShoppingListMeta =
       const VerificationMeta('addToShoppingList');
   @override
@@ -3828,8 +3879,15 @@ class $MealIngredientsTable extends MealIngredients
           'CHECK ("add_to_shopping_list" IN (0, 1))'),
       defaultValue: const Constant(true));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, mealId, catalogItemId, displayName, addToShoppingList];
+  List<GeneratedColumn> get $columns => [
+        id,
+        mealId,
+        catalogItemId,
+        displayName,
+        quantityValue,
+        quantityUnit,
+        addToShoppingList
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3863,6 +3921,18 @@ class $MealIngredientsTable extends MealIngredients
     } else if (isInserting) {
       context.missing(_displayNameMeta);
     }
+    if (data.containsKey('quantity_value')) {
+      context.handle(
+          _quantityValueMeta,
+          quantityValue.isAcceptableOrUnknown(
+              data['quantity_value']!, _quantityValueMeta));
+    }
+    if (data.containsKey('quantity_unit')) {
+      context.handle(
+          _quantityUnitMeta,
+          quantityUnit.isAcceptableOrUnknown(
+              data['quantity_unit']!, _quantityUnitMeta));
+    }
     if (data.containsKey('add_to_shopping_list')) {
       context.handle(
           _addToShoppingListMeta,
@@ -3886,6 +3956,10 @@ class $MealIngredientsTable extends MealIngredients
           .read(DriftSqlType.int, data['${effectivePrefix}catalog_item_id']),
       displayName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      quantityValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity_value']),
+      quantityUnit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}quantity_unit']),
       addToShoppingList: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}add_to_shopping_list'])!,
     );
@@ -3902,12 +3976,16 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
   final int mealId;
   final int? catalogItemId;
   final String displayName;
+  final double? quantityValue;
+  final String? quantityUnit;
   final bool addToShoppingList;
   const MealIngredient(
       {required this.id,
       required this.mealId,
       this.catalogItemId,
       required this.displayName,
+      this.quantityValue,
+      this.quantityUnit,
       required this.addToShoppingList});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3918,6 +3996,12 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
       map['catalog_item_id'] = Variable<int>(catalogItemId);
     }
     map['display_name'] = Variable<String>(displayName);
+    if (!nullToAbsent || quantityValue != null) {
+      map['quantity_value'] = Variable<double>(quantityValue);
+    }
+    if (!nullToAbsent || quantityUnit != null) {
+      map['quantity_unit'] = Variable<String>(quantityUnit);
+    }
     map['add_to_shopping_list'] = Variable<bool>(addToShoppingList);
     return map;
   }
@@ -3930,6 +4014,12 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
           ? const Value.absent()
           : Value(catalogItemId),
       displayName: Value(displayName),
+      quantityValue: quantityValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantityValue),
+      quantityUnit: quantityUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantityUnit),
       addToShoppingList: Value(addToShoppingList),
     );
   }
@@ -3942,6 +4032,8 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
       mealId: serializer.fromJson<int>(json['mealId']),
       catalogItemId: serializer.fromJson<int?>(json['catalogItemId']),
       displayName: serializer.fromJson<String>(json['displayName']),
+      quantityValue: serializer.fromJson<double?>(json['quantityValue']),
+      quantityUnit: serializer.fromJson<String?>(json['quantityUnit']),
       addToShoppingList: serializer.fromJson<bool>(json['addToShoppingList']),
     );
   }
@@ -3953,6 +4045,8 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
       'mealId': serializer.toJson<int>(mealId),
       'catalogItemId': serializer.toJson<int?>(catalogItemId),
       'displayName': serializer.toJson<String>(displayName),
+      'quantityValue': serializer.toJson<double?>(quantityValue),
+      'quantityUnit': serializer.toJson<String?>(quantityUnit),
       'addToShoppingList': serializer.toJson<bool>(addToShoppingList),
     };
   }
@@ -3962,6 +4056,8 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
           int? mealId,
           Value<int?> catalogItemId = const Value.absent(),
           String? displayName,
+          Value<double?> quantityValue = const Value.absent(),
+          Value<String?> quantityUnit = const Value.absent(),
           bool? addToShoppingList}) =>
       MealIngredient(
         id: id ?? this.id,
@@ -3969,6 +4065,10 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
         catalogItemId:
             catalogItemId.present ? catalogItemId.value : this.catalogItemId,
         displayName: displayName ?? this.displayName,
+        quantityValue:
+            quantityValue.present ? quantityValue.value : this.quantityValue,
+        quantityUnit:
+            quantityUnit.present ? quantityUnit.value : this.quantityUnit,
         addToShoppingList: addToShoppingList ?? this.addToShoppingList,
       );
   MealIngredient copyWithCompanion(MealIngredientsCompanion data) {
@@ -3980,6 +4080,12 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
           : this.catalogItemId,
       displayName:
           data.displayName.present ? data.displayName.value : this.displayName,
+      quantityValue: data.quantityValue.present
+          ? data.quantityValue.value
+          : this.quantityValue,
+      quantityUnit: data.quantityUnit.present
+          ? data.quantityUnit.value
+          : this.quantityUnit,
       addToShoppingList: data.addToShoppingList.present
           ? data.addToShoppingList.value
           : this.addToShoppingList,
@@ -3993,14 +4099,16 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
           ..write('mealId: $mealId, ')
           ..write('catalogItemId: $catalogItemId, ')
           ..write('displayName: $displayName, ')
+          ..write('quantityValue: $quantityValue, ')
+          ..write('quantityUnit: $quantityUnit, ')
           ..write('addToShoppingList: $addToShoppingList')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, mealId, catalogItemId, displayName, addToShoppingList);
+  int get hashCode => Object.hash(id, mealId, catalogItemId, displayName,
+      quantityValue, quantityUnit, addToShoppingList);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4009,6 +4117,8 @@ class MealIngredient extends DataClass implements Insertable<MealIngredient> {
           other.mealId == this.mealId &&
           other.catalogItemId == this.catalogItemId &&
           other.displayName == this.displayName &&
+          other.quantityValue == this.quantityValue &&
+          other.quantityUnit == this.quantityUnit &&
           other.addToShoppingList == this.addToShoppingList);
 }
 
@@ -4017,12 +4127,16 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
   final Value<int> mealId;
   final Value<int?> catalogItemId;
   final Value<String> displayName;
+  final Value<double?> quantityValue;
+  final Value<String?> quantityUnit;
   final Value<bool> addToShoppingList;
   const MealIngredientsCompanion({
     this.id = const Value.absent(),
     this.mealId = const Value.absent(),
     this.catalogItemId = const Value.absent(),
     this.displayName = const Value.absent(),
+    this.quantityValue = const Value.absent(),
+    this.quantityUnit = const Value.absent(),
     this.addToShoppingList = const Value.absent(),
   });
   MealIngredientsCompanion.insert({
@@ -4030,6 +4144,8 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
     required int mealId,
     this.catalogItemId = const Value.absent(),
     required String displayName,
+    this.quantityValue = const Value.absent(),
+    this.quantityUnit = const Value.absent(),
     this.addToShoppingList = const Value.absent(),
   })  : mealId = Value(mealId),
         displayName = Value(displayName);
@@ -4038,6 +4154,8 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
     Expression<int>? mealId,
     Expression<int>? catalogItemId,
     Expression<String>? displayName,
+    Expression<double>? quantityValue,
+    Expression<String>? quantityUnit,
     Expression<bool>? addToShoppingList,
   }) {
     return RawValuesInsertable({
@@ -4045,6 +4163,8 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
       if (mealId != null) 'meal_id': mealId,
       if (catalogItemId != null) 'catalog_item_id': catalogItemId,
       if (displayName != null) 'display_name': displayName,
+      if (quantityValue != null) 'quantity_value': quantityValue,
+      if (quantityUnit != null) 'quantity_unit': quantityUnit,
       if (addToShoppingList != null) 'add_to_shopping_list': addToShoppingList,
     });
   }
@@ -4054,12 +4174,16 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
       Value<int>? mealId,
       Value<int?>? catalogItemId,
       Value<String>? displayName,
+      Value<double?>? quantityValue,
+      Value<String?>? quantityUnit,
       Value<bool>? addToShoppingList}) {
     return MealIngredientsCompanion(
       id: id ?? this.id,
       mealId: mealId ?? this.mealId,
       catalogItemId: catalogItemId ?? this.catalogItemId,
       displayName: displayName ?? this.displayName,
+      quantityValue: quantityValue ?? this.quantityValue,
+      quantityUnit: quantityUnit ?? this.quantityUnit,
       addToShoppingList: addToShoppingList ?? this.addToShoppingList,
     );
   }
@@ -4079,6 +4203,12 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
     if (displayName.present) {
       map['display_name'] = Variable<String>(displayName.value);
     }
+    if (quantityValue.present) {
+      map['quantity_value'] = Variable<double>(quantityValue.value);
+    }
+    if (quantityUnit.present) {
+      map['quantity_unit'] = Variable<String>(quantityUnit.value);
+    }
     if (addToShoppingList.present) {
       map['add_to_shopping_list'] = Variable<bool>(addToShoppingList.value);
     }
@@ -4092,6 +4222,8 @@ class MealIngredientsCompanion extends UpdateCompanion<MealIngredient> {
           ..write('mealId: $mealId, ')
           ..write('catalogItemId: $catalogItemId, ')
           ..write('displayName: $displayName, ')
+          ..write('quantityValue: $quantityValue, ')
+          ..write('quantityUnit: $quantityUnit, ')
           ..write('addToShoppingList: $addToShoppingList')
           ..write(')'))
         .toString();
@@ -9720,6 +9852,7 @@ typedef $$MealPlanItemsTableCreateCompanionBuilder = MealPlanItemsCompanion
   Value<bool> isCompleted,
   Value<DateTime?> completedAt,
   required DateTime addedAt,
+  Value<double> scaleFactor,
 });
 typedef $$MealPlanItemsTableUpdateCompanionBuilder = MealPlanItemsCompanion
     Function({
@@ -9728,6 +9861,7 @@ typedef $$MealPlanItemsTableUpdateCompanionBuilder = MealPlanItemsCompanion
   Value<bool> isCompleted,
   Value<DateTime?> completedAt,
   Value<DateTime> addedAt,
+  Value<double> scaleFactor,
 });
 
 class $$MealPlanItemsTableFilterComposer
@@ -9753,6 +9887,9 @@ class $$MealPlanItemsTableFilterComposer
 
   ColumnFilters<DateTime> get addedAt => $composableBuilder(
       column: $table.addedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get scaleFactor => $composableBuilder(
+      column: $table.scaleFactor, builder: (column) => ColumnFilters(column));
 }
 
 class $$MealPlanItemsTableOrderingComposer
@@ -9778,6 +9915,9 @@ class $$MealPlanItemsTableOrderingComposer
 
   ColumnOrderings<DateTime> get addedAt => $composableBuilder(
       column: $table.addedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get scaleFactor => $composableBuilder(
+      column: $table.scaleFactor, builder: (column) => ColumnOrderings(column));
 }
 
 class $$MealPlanItemsTableAnnotationComposer
@@ -9803,6 +9943,9 @@ class $$MealPlanItemsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<double> get scaleFactor => $composableBuilder(
+      column: $table.scaleFactor, builder: (column) => column);
 }
 
 class $$MealPlanItemsTableTableManager extends RootTableManager<
@@ -9836,6 +9979,7 @@ class $$MealPlanItemsTableTableManager extends RootTableManager<
             Value<bool> isCompleted = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
             Value<DateTime> addedAt = const Value.absent(),
+            Value<double> scaleFactor = const Value.absent(),
           }) =>
               MealPlanItemsCompanion(
             id: id,
@@ -9843,6 +9987,7 @@ class $$MealPlanItemsTableTableManager extends RootTableManager<
             isCompleted: isCompleted,
             completedAt: completedAt,
             addedAt: addedAt,
+            scaleFactor: scaleFactor,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -9850,6 +9995,7 @@ class $$MealPlanItemsTableTableManager extends RootTableManager<
             Value<bool> isCompleted = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
             required DateTime addedAt,
+            Value<double> scaleFactor = const Value.absent(),
           }) =>
               MealPlanItemsCompanion.insert(
             id: id,
@@ -9857,6 +10003,7 @@ class $$MealPlanItemsTableTableManager extends RootTableManager<
             isCompleted: isCompleted,
             completedAt: completedAt,
             addedAt: addedAt,
+            scaleFactor: scaleFactor,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -9886,6 +10033,8 @@ typedef $$MealIngredientsTableCreateCompanionBuilder = MealIngredientsCompanion
   required int mealId,
   Value<int?> catalogItemId,
   required String displayName,
+  Value<double?> quantityValue,
+  Value<String?> quantityUnit,
   Value<bool> addToShoppingList,
 });
 typedef $$MealIngredientsTableUpdateCompanionBuilder = MealIngredientsCompanion
@@ -9894,6 +10043,8 @@ typedef $$MealIngredientsTableUpdateCompanionBuilder = MealIngredientsCompanion
   Value<int> mealId,
   Value<int?> catalogItemId,
   Value<String> displayName,
+  Value<double?> quantityValue,
+  Value<String?> quantityUnit,
   Value<bool> addToShoppingList,
 });
 
@@ -9917,6 +10068,12 @@ class $$MealIngredientsTableFilterComposer
 
   ColumnFilters<String> get displayName => $composableBuilder(
       column: $table.displayName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get quantityValue => $composableBuilder(
+      column: $table.quantityValue, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get quantityUnit => $composableBuilder(
+      column: $table.quantityUnit, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get addToShoppingList => $composableBuilder(
       column: $table.addToShoppingList,
@@ -9945,6 +10102,14 @@ class $$MealIngredientsTableOrderingComposer
   ColumnOrderings<String> get displayName => $composableBuilder(
       column: $table.displayName, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get quantityValue => $composableBuilder(
+      column: $table.quantityValue,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get quantityUnit => $composableBuilder(
+      column: $table.quantityUnit,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get addToShoppingList => $composableBuilder(
       column: $table.addToShoppingList,
       builder: (column) => ColumnOrderings(column));
@@ -9970,6 +10135,12 @@ class $$MealIngredientsTableAnnotationComposer
 
   GeneratedColumn<String> get displayName => $composableBuilder(
       column: $table.displayName, builder: (column) => column);
+
+  GeneratedColumn<double> get quantityValue => $composableBuilder(
+      column: $table.quantityValue, builder: (column) => column);
+
+  GeneratedColumn<String> get quantityUnit => $composableBuilder(
+      column: $table.quantityUnit, builder: (column) => column);
 
   GeneratedColumn<bool> get addToShoppingList => $composableBuilder(
       column: $table.addToShoppingList, builder: (column) => column);
@@ -10006,6 +10177,8 @@ class $$MealIngredientsTableTableManager extends RootTableManager<
             Value<int> mealId = const Value.absent(),
             Value<int?> catalogItemId = const Value.absent(),
             Value<String> displayName = const Value.absent(),
+            Value<double?> quantityValue = const Value.absent(),
+            Value<String?> quantityUnit = const Value.absent(),
             Value<bool> addToShoppingList = const Value.absent(),
           }) =>
               MealIngredientsCompanion(
@@ -10013,6 +10186,8 @@ class $$MealIngredientsTableTableManager extends RootTableManager<
             mealId: mealId,
             catalogItemId: catalogItemId,
             displayName: displayName,
+            quantityValue: quantityValue,
+            quantityUnit: quantityUnit,
             addToShoppingList: addToShoppingList,
           ),
           createCompanionCallback: ({
@@ -10020,6 +10195,8 @@ class $$MealIngredientsTableTableManager extends RootTableManager<
             required int mealId,
             Value<int?> catalogItemId = const Value.absent(),
             required String displayName,
+            Value<double?> quantityValue = const Value.absent(),
+            Value<String?> quantityUnit = const Value.absent(),
             Value<bool> addToShoppingList = const Value.absent(),
           }) =>
               MealIngredientsCompanion.insert(
@@ -10027,6 +10204,8 @@ class $$MealIngredientsTableTableManager extends RootTableManager<
             mealId: mealId,
             catalogItemId: catalogItemId,
             displayName: displayName,
+            quantityValue: quantityValue,
+            quantityUnit: quantityUnit,
             addToShoppingList: addToShoppingList,
           ),
           withReferenceMapper: (p0) => p0

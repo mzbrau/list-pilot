@@ -1,0 +1,12 @@
+{
+  "receiptTrips": 11,
+  "rawItemCount": 303,
+  "mappedItemCount": 303,
+  "unmapped": [],
+  "newCatalogItems": [
+    {
+      "name": "Gift card",
+      "categoryId": "household"
+    }
+  ]
+}

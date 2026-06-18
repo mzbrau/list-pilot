@@ -85,6 +85,12 @@ class MealPlanScreen extends ConsumerWidget {
                                       AddIngredientsDialog.show(
                                     context,
                                     mealId: entry.meal.id,
+                                    scaleFactor: entry.planItem.scaleFactor,
+                                  ),
+                                  onScaleChanged: (scale) => _updateScale(
+                                    ref,
+                                    entry,
+                                    scale,
                                   ),
                                 );
                               },
@@ -103,7 +109,10 @@ class MealPlanScreen extends ConsumerWidget {
                                 AddIngredientsDialog.show(
                               context,
                               mealId: entry.meal.id,
+                              scaleFactor: entry.planItem.scaleFactor,
                             ),
+                            onScaleChanged: (entry, scale) =>
+                                _updateScale(ref, entry, scale),
                           ),
                           const SliverToBoxAdapter(child: SizedBox(height: 16)),
                         ],
@@ -125,6 +134,17 @@ class MealPlanScreen extends ConsumerWidget {
     await ref.read(mealRepositoryProvider).setPlanItemCompleted(
           entry.planItem.id,
           completed,
+        );
+  }
+
+  Future<void> _updateScale(
+    WidgetRef ref,
+    MealPlanItemWithMeal entry,
+    double scaleFactor,
+  ) async {
+    await ref.read(mealRepositoryProvider).updatePlanItemScale(
+          entry.planItem.id,
+          scaleFactor,
         );
   }
 

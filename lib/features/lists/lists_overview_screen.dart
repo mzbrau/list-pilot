@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/models/overview_list_entry.dart';
 import '../../core/providers/app_providers.dart';
+import '../../data/database/app_database.dart';
 import '../../data/services/openai_models_service.dart';
 
 class ListsOverviewScreen extends ConsumerWidget {
@@ -12,6 +13,16 @@ class ListsOverviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AsyncValue<List<ShoppingList>>>(shoppingListsProvider, (_, next) {
+      final lists = next.valueOrNull;
+      final defaultId = ref.read(defaultShoppingListIdProvider);
+      if (lists != null &&
+          defaultId != null &&
+          !lists.any((list) => list.id == defaultId)) {
+        ref.read(defaultShoppingListIdProvider.notifier).setListId(null);
+      }
+    });
+
     final listsAsync = ref.watch(overviewListsProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
     final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);

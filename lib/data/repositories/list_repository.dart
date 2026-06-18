@@ -66,6 +66,8 @@ class ListRepository {
     required String displayName,
     String? categoryId,
     int? catalogItemId,
+    double? quantityValue,
+    String? quantityUnit,
   }) async {
     final now = DateTime.now();
     String resolvedCategoryId = categoryId ?? 'other';
@@ -87,6 +89,12 @@ class ListRepository {
             catalogItemId: Value(resolvedCatalogId),
             displayName: displayName.trim(),
             categoryId: resolvedCategoryId,
+            quantityValue: quantityValue != null
+                ? Value(quantityValue)
+                : const Value.absent(),
+            quantityUnit: quantityUnit != null
+                ? Value(quantityUnit)
+                : const Value.absent(),
             addedAt: now,
           ),
         );
@@ -100,12 +108,16 @@ class ListRepository {
   Future<void> addItemFromCatalog({
     required int listId,
     required CatalogItem catalogItem,
+    double? quantityValue,
+    String? quantityUnit,
   }) {
     return addItem(
       listId: listId,
       displayName: catalogItem.displayName,
       categoryId: catalogItem.categoryId,
       catalogItemId: catalogItem.id,
+      quantityValue: quantityValue,
+      quantityUnit: quantityUnit,
     );
   }
 

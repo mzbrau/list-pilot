@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
+import '../../../data/services/ingredient_parser_service.dart';
+import 'meal_ingredient_line_text.dart';
 
 class MealDetailIngredientsTab extends ConsumerStatefulWidget {
   const MealDetailIngredientsTab({
@@ -73,20 +75,23 @@ class _MealDetailIngredientsTabState
   }
 
   Future<void> _addIngredient({CatalogItem? catalogItem}) async {
-    final displayName =
+    final rawText =
         catalogItem?.displayName ?? _ingredientController.text.trim();
-    if (displayName.isEmpty) return;
+    if (rawText.isEmpty) return;
 
     if (widget.mealId == null) {
       widget.onDraftIngredientsChanged?.call([
         ...?widget.draftIngredients,
-        displayName,
+        rawText,
       ]);
     } else {
+      final parsed = const IngredientParserService().parse(rawText);
       await ref.read(mealRepositoryProvider).addIngredient(
             mealId: widget.mealId!,
-            displayName: displayName,
+            displayName: catalogItem?.displayName ?? parsed.itemName,
             catalogItemId: catalogItem?.id,
+            quantityValue: parsed.quantityValue,
+            quantityUnit: parsed.quantityUnit,
           );
     }
 
@@ -218,9 +223,10 @@ class _MealDetailIngredientsTabState
                   children: [
                     Text('• ', style: theme.textTheme.bodyLarge),
                     Expanded(
-                      child: Text(
-                        ingredient.displayName,
-                        style: theme.textTheme.bodyLarge,
+                      child: MealIngredientLineText(
+                        displayName: ingredient.displayName,
+                        quantityValue: ingredient.quantityValue,
+                        quantityUnit: ingredient.quantityUnit,
                       ),
                     ),
                   ],
@@ -230,7 +236,11 @@ class _MealDetailIngredientsTabState
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                title: Text(ingredient.displayName),
+                title: MealIngredientLineText(
+                  displayName: ingredient.displayName,
+                  quantityValue: ingredient.quantityValue,
+                  quantityUnit: ingredient.quantityUnit,
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -266,10 +276,15 @@ class _MealDetailIngredientsTabState
         _buildAddIngredientField(theme),
         const SizedBox(height: 8),
         ...ingredients.asMap().entries.map((entry) {
+          final parsed = const IngredientParserService().parse(entry.value);
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              title: Text(entry.value),
+              title: MealIngredientLineText(
+                displayName: parsed.itemName,
+                quantityValue: parsed.quantityValue,
+                quantityUnit: parsed.quantityUnit,
+              ),
               trailing: IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () => _deleteDraftIngredient(entry.key),

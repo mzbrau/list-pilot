@@ -17,6 +17,8 @@ import '../../data/repositories/todo_repository.dart';
 import '../../data/repositories/take_away_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
+import '../../data/services/ingredient_catalog_matcher.dart';
+import '../../data/services/ingredient_parser_service.dart';
 import '../../data/services/meal_export_service.dart';
 import '../../data/services/meal_import_service.dart';
 import '../../data/services/menu_import_service.dart';
@@ -60,6 +62,13 @@ final mealImportServiceProvider = Provider<MealImportService>((ref) {
 
 final recipePageImportServiceProvider = Provider<RecipePageImportService>((ref) {
   return RecipePageImportService();
+});
+
+final ingredientCatalogMatcherProvider = Provider<IngredientCatalogMatcher>((ref) {
+  return IngredientCatalogMatcher(
+    ref.watch(catalogRepositoryProvider),
+    const IngredientParserService(),
+  );
 });
 
 final menuImportServiceProvider = Provider<MenuImportService>((ref) {
@@ -387,6 +396,25 @@ final shopStatsAverageMsPerItemProvider =
 final defaultShoppingListIdProvider =
     StateNotifierProvider<DefaultShoppingListIdNotifier, int?>((ref) {
   return DefaultShoppingListIdNotifier();
+});
+
+/// Resolves which shopping list meal ingredients should be added to.
+/// Uses the configured default when valid, otherwise the only list if there is
+/// just one.
+final effectiveDefaultShoppingListIdProvider = Provider<int?>((ref) {
+  final configuredId = ref.watch(defaultShoppingListIdProvider);
+  final lists = ref.watch(shoppingListsProvider).valueOrNull;
+  if (lists == null || lists.isEmpty) return null;
+
+  if (configuredId != null && lists.any((list) => list.id == configuredId)) {
+    return configuredId;
+  }
+
+  if (lists.length == 1) {
+    return lists.first.id;
+  }
+
+  return null;
 });
 
 class DefaultShoppingListIdNotifier extends StateNotifier<int?> {

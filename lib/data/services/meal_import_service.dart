@@ -128,6 +128,7 @@ String buildImportSystemPrompt({required String languageLabel}) {
   return '''
 You extract recipe information from webpage content. Respond with JSON only, no markdown.
 Write all user-facing text fields (name, ingredients, steps, notes, tags) in $languageLabel. If the source page is in another language, translate into $languageLabel. Keep units and measurements sensible for the target language.
+Put one ingredient per line with the quantity and unit first (e.g. "750 g potatoes", "2 cups flour").
 Use this exact schema:
 {
   "name": "recipe title",

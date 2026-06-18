@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import '../services/ingredient_catalog_matcher.dart';
 
 class MealExportData {
   const MealExportData({
@@ -36,10 +37,16 @@ class MealExportIngredient {
   const MealExportIngredient({
     required this.displayName,
     required this.addToShoppingList,
+    this.quantityValue,
+    this.quantityUnit,
+    this.catalogItemId,
   });
 
   final String displayName;
   final bool addToShoppingList;
+  final double? quantityValue;
+  final String? quantityUnit;
+  final int? catalogItemId;
 }
 
 class MealExportCheckOff {
@@ -125,6 +132,15 @@ class MealRepository {
         ),
       );
     }
+  }
+
+  Future<void> updatePlanItemScale(int planItemId, double scaleFactor) async {
+    final clamped = scaleFactor.clamp(0.25, 10.0);
+    await (_db.update(_db.mealPlanItems)
+          ..where((t) => t.id.equals(planItemId)))
+        .write(
+      MealPlanItemsCompanion(scaleFactor: Value(clamped)),
+    );
   }
 
   Future<void> recordCheckOff({
@@ -222,7 +238,7 @@ class MealRepository {
     String? notes,
     int portions = 4,
     String? recipeLink,
-    List<String> ingredients = const [],
+    List<MealIngredientInput> ingredients = const [],
     List<String> steps = const [],
     List<String> tags = const [],
     bool isUserAdded = true,
@@ -240,9 +256,16 @@ class MealRepository {
         );
 
     for (final ingredient in ingredients) {
-      final trimmed = ingredient.trim();
+      final trimmed = ingredient.displayName.trim();
       if (trimmed.isEmpty) continue;
-      await addIngredient(mealId: id, displayName: trimmed);
+      await addIngredient(
+        mealId: id,
+        displayName: trimmed,
+        catalogItemId: ingredient.catalogItemId,
+        quantityValue: ingredient.quantityValue,
+        quantityUnit: ingredient.quantityUnit,
+        addToShoppingList: ingredient.addToShoppingList,
+      );
     }
 
     await replaceSteps(id, steps);
@@ -394,6 +417,8 @@ class MealRepository {
     required int mealId,
     required String displayName,
     int? catalogItemId,
+    double? quantityValue,
+    String? quantityUnit,
     bool addToShoppingList = true,
   }) async {
     return _db.into(_db.mealIngredients).insert(
@@ -401,6 +426,12 @@ class MealRepository {
             mealId: mealId,
             catalogItemId: Value(catalogItemId),
             displayName: displayName.trim(),
+            quantityValue: quantityValue != null
+                ? Value(quantityValue)
+                : const Value.absent(),
+            quantityUnit: quantityUnit != null
+                ? Value(quantityUnit)
+                : const Value.absent(),
             addToShoppingList: Value(addToShoppingList),
           ),
         );
@@ -408,10 +439,34 @@ class MealRepository {
 
   Future<void> updateIngredient({
     required int id,
+    String? displayName,
+    int? catalogItemId,
+    bool clearCatalogItem = false,
+    double? quantityValue,
+    String? quantityUnit,
+    bool clearQuantity = false,
     bool? addToShoppingList,
   }) async {
     await (_db.update(_db.mealIngredients)..where((t) => t.id.equals(id))).write(
       MealIngredientsCompanion(
+        displayName: displayName != null
+            ? Value(displayName.trim())
+            : const Value.absent(),
+        catalogItemId: clearCatalogItem
+            ? const Value(null)
+            : catalogItemId != null
+                ? Value(catalogItemId)
+                : const Value.absent(),
+        quantityValue: clearQuantity
+            ? const Value(null)
+            : quantityValue != null
+                ? Value(quantityValue)
+                : const Value.absent(),
+        quantityUnit: clearQuantity
+            ? const Value(null)
+            : quantityUnit != null
+                ? Value(quantityUnit)
+                : const Value.absent(),
         addToShoppingList: addToShoppingList != null
             ? Value(addToShoppingList)
             : const Value.absent(),
@@ -456,6 +511,9 @@ class MealRepository {
                 (i) => MealExportIngredient(
                   displayName: i.displayName,
                   addToShoppingList: i.addToShoppingList,
+                  quantityValue: i.quantityValue,
+                  quantityUnit: i.quantityUnit,
+                  catalogItemId: i.catalogItemId,
                 ),
               )
               .toList(),

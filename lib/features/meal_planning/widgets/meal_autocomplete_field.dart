@@ -25,7 +25,6 @@ class _MealAutocompleteFieldState extends ConsumerState<MealAutocompleteField> {
   @override
   void initState() {
     super.initState();
-    _focusNode.requestFocus();
     _controller.addListener(_onTextChanged);
   }
 

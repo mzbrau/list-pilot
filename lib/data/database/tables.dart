@@ -109,6 +109,8 @@ class MealPlanItems extends Table {
       boolean().withDefault(const Constant(false))();
   DateTimeColumn get completedAt => dateTime().nullable()();
   DateTimeColumn get addedAt => dateTime()();
+  RealColumn get scaleFactor =>
+      real().withDefault(const Constant(1.0))();
 }
 
 class MealIngredients extends Table {
@@ -117,6 +119,8 @@ class MealIngredients extends Table {
   IntColumn get catalogItemId =>
       integer().nullable().references(CatalogItems, #id)();
   TextColumn get displayName => text()();
+  RealColumn get quantityValue => real().nullable()();
+  TextColumn get quantityUnit => text().nullable()();
   BoolColumn get addToShoppingList =>
       boolean().withDefault(const Constant(true))();
 }
