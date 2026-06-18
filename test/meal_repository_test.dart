@@ -140,6 +140,24 @@ void main() {
     expect(results.first.displayName, 'Chicken Curry');
   });
 
+  test('searchMeals matches substring in name', () async {
+    await repo.getOrCreateMeal(displayName: 'Creamy Chicken Pasta');
+
+    final results = await repo.searchMeals('pas');
+    expect(results, hasLength(1));
+    expect(results.first.displayName, 'Creamy Chicken Pasta');
+  });
+
+  test('searchMeals ranks prefix name matches first', () async {
+    await repo.getOrCreateMeal(displayName: 'Chicken Pie');
+    await repo.getOrCreateMeal(displayName: 'Apple Chicken');
+
+    final results = await repo.searchMeals('chicken');
+    expect(results, hasLength(2));
+    expect(results.first.displayName, 'Chicken Pie');
+    expect(results.last.displayName, 'Apple Chicken');
+  });
+
   test('getAllMealsForExport includes meals and history', () async {
     final meal = await repo.getOrCreateMeal(displayName: 'Risotto');
     await repo.addIngredient(

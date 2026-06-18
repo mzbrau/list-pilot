@@ -216,7 +216,7 @@ class AppDatabase extends _$AppDatabase {
     await (delete(itemRankStats)..where((t) => t.listId.equals(listId))).go();
   }
 
-  Future<List<Meal>> searchMeals(String query, {int limit = 8}) {
+  Future<List<Meal>> searchMeals(String query, {int limit = 8}) async {
     final normalized = query.trim().toLowerCase();
     if (normalized.isEmpty) {
       return (select(meals)
@@ -224,11 +224,16 @@ class AppDatabase extends _$AppDatabase {
             ..limit(limit))
           .get();
     }
-    return (select(meals)
-          ..where((t) => t.name.like('$normalized%'))
-          ..orderBy([(t) => OrderingTerm.asc(t.displayName)])
-          ..limit(limit))
+    final results = await (select(meals)
+          ..where((t) => t.name.like('%$normalized%')))
         .get();
+    results.sort((a, b) {
+      final aPrefix = a.name.startsWith(normalized);
+      final bPrefix = b.name.startsWith(normalized);
+      if (aPrefix != bPrefix) return aPrefix ? -1 : 1;
+      return a.displayName.compareTo(b.displayName);
+    });
+    return results.take(limit).toList();
   }
 
   Future<Meal?> findMealByName(String name) {
