@@ -6,6 +6,52 @@ import '../../core/providers/app_providers.dart';
 import 'recipe_page_fetcher.dart';
 import 'recipe_page_metadata.dart';
 
+class RecipeImportLanguage {
+  const RecipeImportLanguage({required this.code, required this.label});
+
+  final String code;
+  final String label;
+}
+
+const defaultRecipeImportLanguageCode = 'en';
+
+const defaultRecipeImportLanguage =
+    RecipeImportLanguage(code: 'en', label: 'English');
+
+const recipeImportLanguages = [
+  defaultRecipeImportLanguage,
+  RecipeImportLanguage(code: 'es', label: 'Spanish'),
+  RecipeImportLanguage(code: 'fr', label: 'French'),
+  RecipeImportLanguage(code: 'de', label: 'German'),
+  RecipeImportLanguage(code: 'it', label: 'Italian'),
+  RecipeImportLanguage(code: 'pt', label: 'Portuguese'),
+  RecipeImportLanguage(code: 'nl', label: 'Dutch'),
+  RecipeImportLanguage(code: 'pl', label: 'Polish'),
+  RecipeImportLanguage(code: 'sv', label: 'Swedish'),
+  RecipeImportLanguage(code: 'no', label: 'Norwegian'),
+  RecipeImportLanguage(code: 'da', label: 'Danish'),
+  RecipeImportLanguage(code: 'fi', label: 'Finnish'),
+  RecipeImportLanguage(code: 'ja', label: 'Japanese'),
+  RecipeImportLanguage(code: 'zh', label: 'Chinese (Simplified)'),
+  RecipeImportLanguage(code: 'ko', label: 'Korean'),
+  RecipeImportLanguage(code: 'tr', label: 'Turkish'),
+  RecipeImportLanguage(code: 'cs', label: 'Czech'),
+  RecipeImportLanguage(code: 'hu', label: 'Hungarian'),
+  RecipeImportLanguage(code: 'el', label: 'Greek'),
+  RecipeImportLanguage(code: 'ro', label: 'Romanian'),
+  RecipeImportLanguage(code: 'uk', label: 'Ukrainian'),
+  RecipeImportLanguage(code: 'ru', label: 'Russian'),
+  RecipeImportLanguage(code: 'ar', label: 'Arabic'),
+  RecipeImportLanguage(code: 'hi', label: 'Hindi'),
+];
+
+RecipeImportLanguage recipeImportLanguageByCode(String code) {
+  return recipeImportLanguages.firstWhere(
+    (language) => language.code == code,
+    orElse: () => defaultRecipeImportLanguage,
+  );
+}
+
 typedef HttpGet = Future<http.Response> Function(Uri url, {Map<String, String>? headers});
 typedef HttpPost = Future<http.Response> Function(
   Uri url, {
@@ -78,9 +124,10 @@ String stripHtmlForImport(String html) {
   return text;
 }
 
-String buildImportSystemPrompt() {
+String buildImportSystemPrompt({required String languageLabel}) {
   return '''
 You extract recipe information from webpage content. Respond with JSON only, no markdown.
+Write all user-facing text fields (name, ingredients, steps, notes, tags) in $languageLabel. If the source page is in another language, translate into $languageLabel. Keep units and measurements sensible for the target language.
 Use this exact schema:
 {
   "name": "recipe title",
@@ -98,10 +145,11 @@ Map<String, dynamic> buildChatCompletionsBody({
   required String model,
   required String pageUrl,
   required String pageContent,
+  required String languageLabel,
   String? knownImageUrl,
 }) {
   var userContent =
-      'Extract the recipe from this webpage.\nURL: $pageUrl\n\nContent:\n$pageContent';
+      'Extract the recipe from this webpage and write it in $languageLabel.\nURL: $pageUrl\n\nContent:\n$pageContent';
   if (knownImageUrl != null && knownImageUrl.isNotEmpty) {
     userContent += '\n\nKnown hero image: $knownImageUrl';
   }
@@ -109,7 +157,7 @@ Map<String, dynamic> buildChatCompletionsBody({
   return {
     'model': model,
     'messages': [
-      {'role': 'system', 'content': buildImportSystemPrompt()},
+      {'role': 'system', 'content': buildImportSystemPrompt(languageLabel: languageLabel)},
       {'role': 'user', 'content': userContent},
     ],
     'response_format': {'type': 'json_object'},
@@ -158,7 +206,10 @@ class MealImportService {
     }
   }
 
-  Future<MealImportResult> importFromUrl(String url) async {
+  Future<MealImportResult> importFromUrl(
+    String url, {
+    RecipeImportLanguage language = defaultRecipeImportLanguage,
+  }) async {
     if (!_aiConfig.isConfigured) {
       throw StateError('AI configuration is incomplete');
     }
@@ -174,6 +225,7 @@ class MealImportService {
       model: _aiConfig.modelName!.trim(),
       pageUrl: pageUri.toString(),
       pageContent: stripped,
+      languageLabel: language.label,
       knownImageUrl: extractedImageUrl,
     );
 

@@ -30,6 +30,7 @@ class AppConstants {
   static const String aiApiUriKey = 'ai_api_uri';
   static const String aiApiKeyKey = 'ai_api_key';
   static const String aiModelNameKey = 'ai_model_name';
+  static const String recipeImportLanguageKey = 'recipe_import_language';
   static const String openAiModelsCacheKey = 'openai_models_cache';
   static const String mealManagerLayoutModeKey = 'meal_manager_layout_mode';
 }

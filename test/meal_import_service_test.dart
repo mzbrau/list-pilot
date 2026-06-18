@@ -202,14 +202,85 @@ void main() {
     expect(html, contains('fallback'));
   });
 
+  test('buildImportSystemPrompt includes target language', () {
+    final prompt = buildImportSystemPrompt(languageLabel: 'French');
+    expect(prompt, contains('in French'));
+    expect(prompt, contains('translate into French'));
+  });
+
+  test('buildChatCompletionsBody includes language in system and user messages', () {
+    final body = buildChatCompletionsBody(
+      model: 'test',
+      pageUrl: 'https://example.com',
+      pageContent: 'content',
+      languageLabel: 'German',
+      knownImageUrl: 'https://example.com/hero.jpg',
+    );
+    final messages = body['messages'] as List;
+    final systemMessage = messages.first as Map<String, dynamic>;
+    final userMessage = messages.last as Map<String, dynamic>;
+    expect(systemMessage['content'], contains('in German'));
+    expect(userMessage['content'], contains('write it in German'));
+    expect(userMessage['content'], contains('Known hero image: https://example.com/hero.jpg'));
+  });
+
   test('buildChatCompletionsBody includes known hero image hint', () {
     final body = buildChatCompletionsBody(
       model: 'test',
       pageUrl: 'https://example.com',
       pageContent: 'content',
+      languageLabel: 'English',
       knownImageUrl: 'https://example.com/hero.jpg',
     );
     final userMessage = (body['messages'] as List).last as Map<String, dynamic>;
     expect(userMessage['content'], contains('Known hero image: https://example.com/hero.jpg'));
+  });
+
+  test('importFromUrl passes selected language to AI request', () async {
+    const pageHtml = '<html><body><h1>Test Recipe</h1></body></html>';
+    final recipeJson = jsonEncode({
+      'name': 'Test Recipe',
+      'ingredients': ['A'],
+      'steps': ['Do it'],
+      'tags': ['Lunch'],
+      'imageUrl': null,
+      'recipeUrl': 'https://example.com/recipe',
+    });
+
+    final service = MealImportService(
+      aiConfig: const AiConfig(
+        apiUri: 'https://api.example.com/v1',
+        apiKey: 'test-key',
+        modelName: 'test-model',
+      ),
+      pageHtmlFetcher: (url) async => pageHtml,
+      httpPost: (url, {headers, body}) async {
+        final decoded = jsonDecode(body as String) as Map<String, dynamic>;
+        final messages = decoded['messages'] as List;
+        final systemMessage = messages.first as Map<String, dynamic>;
+        final userMessage = messages.last as Map<String, dynamic>;
+        expect(systemMessage['content'], contains('in Spanish'));
+        expect(userMessage['content'], contains('write it in Spanish'));
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {'message': {'content': recipeJson}},
+            ],
+          }),
+          200,
+        );
+      },
+    );
+
+    final result = await service.importFromUrl(
+      'https://example.com/recipe',
+      language: const RecipeImportLanguage(code: 'es', label: 'Spanish'),
+    );
+    expect(result.name, 'Test Recipe');
+  });
+
+  test('recipeImportLanguageByCode falls back to English for unknown code', () {
+    expect(recipeImportLanguageByCode('xx').code, 'en');
+    expect(recipeImportLanguageByCode('fr').label, 'French');
   });
 }

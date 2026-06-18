@@ -61,8 +61,11 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     try {
       final MealImportResult result;
       if (widget.mode == MealImportMode.ai) {
-        result =
-            await ref.read(mealImportServiceProvider).importFromUrl(url);
+        final language = ref.read(recipeImportLanguageProvider);
+        result = await ref.read(mealImportServiceProvider).importFromUrl(
+              url,
+              language: language,
+            );
       } else {
         result =
             await ref.read(recipePageImportServiceProvider).importFromUrl(url);
@@ -136,6 +139,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final importLanguage = ref.watch(recipeImportLanguageProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -156,31 +160,60 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'Recipe URL',
-                      hintText: 'https://…',
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _urlController,
+                        decoration: const InputDecoration(
+                          labelText: 'Recipe URL',
+                          hintText: 'https://…',
+                        ),
+                        keyboardType: TextInputType.url,
+                        enabled: !_importing,
+                      ),
                     ),
-                    keyboardType: TextInputType.url,
-                    enabled: !_importing,
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _importing ? null : _import,
+                      child: _importing
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Import'),
+                    ),
+                  ],
+                ),
+                if (widget.mode == MealImportMode.ai) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: importLanguage.code,
+                    decoration: const InputDecoration(
+                      labelText: 'Import language',
+                    ),
+                    items: [
+                      for (final language in recipeImportLanguages)
+                        DropdownMenuItem(
+                          value: language.code,
+                          child: Text(language.label),
+                        ),
+                    ],
+                    onChanged: _importing
+                        ? null
+                        : (code) {
+                            if (code == null) return;
+                            ref
+                                .read(recipeImportLanguageProvider.notifier)
+                                .setLanguage(recipeImportLanguageByCode(code));
+                          },
                   ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _importing ? null : _import,
-                  child: _importing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Import'),
-                ),
+                ],
               ],
             ),
           ),

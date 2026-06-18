@@ -502,6 +502,32 @@ class AiConfigNotifier extends StateNotifier<AiConfig> {
   }
 }
 
+final recipeImportLanguageProvider =
+    StateNotifierProvider<RecipeImportLanguageNotifier, RecipeImportLanguage>(
+        (ref) {
+  return RecipeImportLanguageNotifier();
+});
+
+class RecipeImportLanguageNotifier extends StateNotifier<RecipeImportLanguage> {
+  RecipeImportLanguageNotifier() : super(defaultRecipeImportLanguage) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code =
+        prefs.getString(AppConstants.recipeImportLanguageKey) ??
+            defaultRecipeImportLanguageCode;
+    state = recipeImportLanguageByCode(code);
+  }
+
+  Future<void> setLanguage(RecipeImportLanguage language) async {
+    state = language;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.recipeImportLanguageKey, language.code);
+  }
+}
+
 class OpenAiModelsState {
   const OpenAiModelsState({
     this.models = const [],
