@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +13,7 @@ import '../meal_planning/widgets/meal_detail_steps_tab.dart';
 import '../meal_planning/widgets/meal_ingredient_line_text.dart';
 import 'widgets/import_ingredient_review_sheet.dart';
 
-enum MealImportMode { ai, extract }
+enum MealImportMode { ai, extract, photo }
 
 class MealImportScreen extends ConsumerStatefulWidget {
   const MealImportScreen({super.key, this.mode = MealImportMode.ai});
@@ -37,6 +39,9 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
   List<String> _steps = [];
   List<String> _tags = [];
   String? _imageUrl;
+  File? _pickedPhotoFile;
+
+  bool get _isPhotoMode => widget.mode == MealImportMode.photo;
 
   @override
   void initState() {
@@ -57,6 +62,29 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
   }
 
   Future<void> _import() async {
+    if (_isPhotoMode) {
+      final photoPath = _pickedPhotoFile?.path;
+      if (photoPath == null) return;
+      setState(() => _importing = true);
+      try {
+        final language = ref.read(recipeImportLanguageProvider);
+        final result = await ref.read(mealImportServiceProvider).importFromPhoto(
+              photoPath,
+              language: language,
+            );
+        await _applyImportResult(result);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Import failed: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _importing = false);
+      }
+      return;
+    }
+
     final url = _urlController.text.trim();
     if (url.isEmpty) return;
 
@@ -73,20 +101,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
         result =
             await ref.read(recipePageImportServiceProvider).importFromUrl(url);
       }
-      final drafts = await ref
-          .read(ingredientCatalogMatcherProvider)
-          .matchAll(result.ingredients);
-      setState(() {
-        _hasPreview = true;
-        _nameController.text = result.name;
-        _notesController.text = result.notes ?? '';
-        _recipeController.text = result.recipeUrl ?? url;
-        _portionsController.text = '4';
-        _ingredientDrafts = drafts;
-        _steps = List.of(result.steps);
-        _tags = List.of(result.tags);
-        _imageUrl = result.imageUrl;
-      });
+      await _applyImportResult(result, recipeUrl: result.recipeUrl ?? url);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +111,35 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     } finally {
       if (mounted) setState(() => _importing = false);
     }
+  }
+
+  Future<void> _applyImportResult(
+    MealImportResult result, {
+    String? recipeUrl,
+  }) async {
+    final drafts = await ref
+        .read(ingredientCatalogMatcherProvider)
+        .matchAll(result.ingredients);
+    setState(() {
+      _hasPreview = true;
+      _nameController.text = result.name;
+      _notesController.text = result.notes ?? '';
+      _recipeController.text = recipeUrl ?? result.recipeUrl ?? '';
+      _portionsController.text = '4';
+      _ingredientDrafts = drafts;
+      _steps = List.of(result.steps);
+      _tags = List.of(result.tags);
+      _imageUrl = _isPhotoMode ? null : result.imageUrl;
+    });
+  }
+
+  Future<void> _pickPhoto() async {
+    final file = await ref.read(mealPhotoServiceProvider).pickImageForImport();
+    if (!mounted || file == null) return;
+    setState(() {
+      _pickedPhotoFile = file;
+      _hasPreview = false;
+    });
   }
 
   Future<void> _addIngredientLine() async {
@@ -167,6 +211,18 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
           ),
         );
       }
+    } else if (_pickedPhotoFile != null) {
+      final saved = await ref.read(mealPhotoServiceProvider).savePhotoFromPath(
+            meal.id,
+            _pickedPhotoFile!.path,
+          );
+      if (!saved && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recipe saved, but the photo could not be saved.'),
+          ),
+        );
+      }
     }
 
     if (mounted) {
@@ -235,9 +291,11 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.mode == MealImportMode.ai
-              ? 'Import recipe (AI)'
-              : 'Import recipe',
+          switch (widget.mode) {
+            MealImportMode.ai => 'Import recipe (AI)',
+            MealImportMode.extract => 'Import recipe',
+            MealImportMode.photo => 'Import recipe (photo)',
+          },
         ),
         actions: [
           if (_hasPreview)
@@ -254,34 +312,48 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _urlController,
-                        decoration: const InputDecoration(
-                          labelText: 'Recipe URL',
-                          hintText: 'https://…',
-                        ),
-                        keyboardType: TextInputType.url,
-                        enabled: !_importing,
+                if (_isPhotoMode) ...[
+                  if (_pickedPhotoFile != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _pickedPhotoFile!,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
                       ),
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: _importing ? null : _pickPhoto,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Choose photo'),
                     ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: _importing ? null : _import,
-                      child: _importing
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Import'),
-                    ),
-                  ],
-                ),
-                if (widget.mode == MealImportMode.ai) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (_pickedPhotoFile != null)
+                        TextButton.icon(
+                          onPressed: _importing ? null : _pickPhoto,
+                          icon: const Icon(Icons.photo_library_outlined),
+                          label: const Text('Change photo'),
+                        ),
+                      const Spacer(),
+                      FilledButton(
+                        onPressed: _importing || _pickedPhotoFile == null
+                            ? null
+                            : _import,
+                        child: _importing
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Import'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: importLanguage.code,
@@ -304,6 +376,60 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
                                 .setLanguage(recipeImportLanguageByCode(code));
                           },
                   ),
+                ] else ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _urlController,
+                          decoration: const InputDecoration(
+                            labelText: 'Recipe URL',
+                            hintText: 'https://…',
+                          ),
+                          keyboardType: TextInputType.url,
+                          enabled: !_importing,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _importing ? null : _import,
+                        child: _importing
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Import'),
+                      ),
+                    ],
+                  ),
+                  if (widget.mode == MealImportMode.ai) ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: importLanguage.code,
+                      decoration: const InputDecoration(
+                        labelText: 'Import language',
+                      ),
+                      items: [
+                        for (final language in recipeImportLanguages)
+                          DropdownMenuItem(
+                            value: language.code,
+                            child: Text(language.label),
+                          ),
+                      ],
+                      onChanged: _importing
+                          ? null
+                          : (code) {
+                              if (code == null) return;
+                              ref
+                                  .read(recipeImportLanguageProvider.notifier)
+                                  .setLanguage(
+                                    recipeImportLanguageByCode(code),
+                                  );
+                            },
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -314,7 +440,9 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
             Expanded(
               child: Center(
                 child: Text(
-                  'Enter a recipe URL and tap Import',
+                  _isPhotoMode
+                      ? 'Choose a recipe photo and tap Import'
+                      : 'Enter a recipe URL and tap Import',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -327,6 +455,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
               child: MealDetailHeader(
                 displayName: _nameController.text,
                 photoPath: null,
+                photoFile: _pickedPhotoFile,
                 imageUrl: _imageUrl,
                 isEditing: true,
                 nameController: _nameController,

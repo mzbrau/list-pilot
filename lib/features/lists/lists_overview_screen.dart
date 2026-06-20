@@ -253,6 +253,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   late final TextEditingController _aiUriController;
   late final TextEditingController _aiKeyController;
   late final TextEditingController _aiModelController;
+  late final TextEditingController _aiPhotoModelController;
   bool _aiFieldsInitialized = false;
   bool _openAiModelsLoadAttempted = false;
 
@@ -262,6 +263,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
     _aiUriController = TextEditingController();
     _aiKeyController = TextEditingController();
     _aiModelController = TextEditingController();
+    _aiPhotoModelController = TextEditingController();
     _aiUriController.addListener(_onAiUriChanged);
   }
 
@@ -275,6 +277,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
     _aiUriController.dispose();
     _aiKeyController.dispose();
     _aiModelController.dispose();
+    _aiPhotoModelController.dispose();
     super.dispose();
   }
 
@@ -288,6 +291,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
     _aiUriController.text = config.apiUri ?? '';
     _aiKeyController.text = config.apiKey ?? '';
     _aiModelController.text = config.modelName ?? '';
+    _aiPhotoModelController.text = config.photoImportModelName ?? '';
   }
 
   void _startEditingAi(AiConfig config) {
@@ -347,6 +351,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
           apiUri: _aiUriController.text.trim(),
           apiKey: _aiKeyController.text.trim(),
           modelName: modelName,
+          photoImportModelName: _aiPhotoModelController.text.trim(),
         );
     if (!mounted) return;
     final saved = ref.read(aiConfigProvider);
@@ -371,6 +376,20 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               _AiSummaryRow(label: 'API Key', value: config.maskedApiKey),
               const SizedBox(height: 12),
               _AiSummaryRow(label: 'Model', value: config.modelName!),
+              if (config.photoImportModelName != null &&
+                  config.photoImportModelName!.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _AiSummaryRow(
+                  label: 'Photo import model',
+                  value: config.photoImportModelName!,
+                ),
+              ] else if (config.effectivePhotoImportModel != null) ...[
+                const SizedBox(height: 12),
+                _AiSummaryRow(
+                  label: 'Photo import model',
+                  value: '${config.effectivePhotoImportModel!} (default)',
+                ),
+              ],
             ],
           ),
         ),
@@ -440,6 +459,76 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
     );
   }
 
+  Widget _buildAiPhotoModelField() {
+    final isOpenAi = AiConfig.isOpenAiUri(_aiUriController.text);
+    if (!isOpenAi) {
+      return TextField(
+        controller: _aiPhotoModelController,
+        decoration: const InputDecoration(
+          labelText: 'Photo import model',
+          hintText: 'gpt-4o-mini (optional, uses main model if empty)',
+        ),
+      );
+    }
+
+    _maybeLoadOpenAiModels();
+    final modelsState = ref.watch(openAiModelsProvider);
+    final model = _aiPhotoModelController.text.trim();
+    final options = mergeModelOptions(
+      filterVisionModels(modelsState.models),
+      model,
+    );
+    final apiKey = _aiKeyController.text.trim();
+    final canRefresh = apiKey.isNotEmpty && !modelsState.isLoading;
+    final selectedModel = options.isEmpty
+        ? null
+        : (model.isNotEmpty && options.contains(model) ? model : null);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: selectedModel,
+            decoration: InputDecoration(
+              labelText: 'Photo import model',
+              hintText: modelsState.isLoading
+                  ? 'Loading models...'
+                  : (options.isEmpty
+                      ? 'Uses main model if empty'
+                      : 'Optional, uses main model if empty'),
+            ),
+            items: [
+              const DropdownMenuItem<String>(
+                value: null,
+                child: Text('Use main model'),
+              ),
+              for (final name in options)
+                DropdownMenuItem(value: name, child: Text(name)),
+            ],
+            onChanged: options.isEmpty || modelsState.isLoading
+                ? null
+                : (value) {
+                    _aiPhotoModelController.text = value ?? '';
+                  },
+          ),
+        ),
+        const SizedBox(width: 4),
+        IconButton(
+          tooltip: 'Refresh models',
+          onPressed: canRefresh ? _refreshOpenAiModels : null,
+          icon: modelsState.isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAiForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -466,6 +555,10 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: _buildAiModelField(),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _buildAiPhotoModelField(),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
@@ -602,7 +695,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'OpenAI-compatible API for importing recipes from webpages '
-                '(uses /chat/completions).',
+                'and photos (uses /chat/completions).',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

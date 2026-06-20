@@ -83,6 +83,29 @@ void main() {
     );
   });
 
+  test('AiConfig effectivePhotoImportModel falls back to main model', () {
+    const config = AiConfig(
+      modelName: 'gpt-4o-mini',
+      photoImportModelName: 'gpt-4o',
+    );
+    expect(config.effectivePhotoImportModel, 'gpt-4o');
+
+    const fallback = AiConfig(modelName: 'gpt-4o-mini');
+    expect(fallback.effectivePhotoImportModel, 'gpt-4o-mini');
+  });
+
+  test('filterVisionModels keeps vision-capable chat models', () {
+    final models = filterVisionModels([
+      'gpt-4o',
+      'gpt-4o-mini',
+      'gpt-4-turbo',
+      'gpt-3.5-turbo',
+      'text-embedding-3-small',
+      'dall-e-3',
+    ]);
+    expect(models, ['gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini']);
+  });
+
   testWidgets('configured AI settings show summary with masked key',
       (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -138,8 +161,8 @@ void main() {
     await tester.tap(find.text('Edit AI settings'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
-    expect(find.text('gpt-4o-mini'), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
+    expect(find.text('gpt-4o-mini'), findsWidgets);
     expect(find.byTooltip('Refresh models'), findsOneWidget);
     expect(find.text('Save AI settings'), findsOneWidget);
   });
@@ -189,7 +212,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(fetchCount, 1);
-    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
   });
 
   testWidgets('non-OpenAI endpoint uses free-text model field', (tester) async {
@@ -212,6 +235,7 @@ void main() {
 
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
     expect(find.widgetWithText(TextField, 'Model name'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Photo import model'), findsOneWidget);
     expect(find.byTooltip('Refresh models'), findsNothing);
   });
 }

@@ -56,6 +56,29 @@ class MealPhotoService {
     await _repo.updateMeal(id: mealId, clearPhoto: true);
   }
 
+  Future<File?> pickImageForImport() async {
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
+    if (picked == null) return null;
+    return File(picked.path);
+  }
+
+  Future<bool> savePhotoFromPath(int mealId, String sourcePath) async {
+    final meal = await _repo.getMealById(mealId);
+    if (meal == null) return false;
+
+    if (meal.photoPath != null) {
+      await _deletePhotoFile(meal.photoPath!);
+    }
+
+    final relativePath = await _copyToAppStorage(mealId, sourcePath);
+    await _repo.updateMeal(id: mealId, photoPath: relativePath);
+    return true;
+  }
+
   Future<bool> downloadAndSavePhoto(
     int mealId,
     String imageUrl, {
