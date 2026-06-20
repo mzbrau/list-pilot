@@ -7,6 +7,25 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
 
+/// Positions the drag preview so the grab handle stays under the pointer and
+/// the rest of the tile extends to the left.
+Offset _todoHandleDragAnchorStrategy(
+  Draggable<Object> draggable,
+  BuildContext context,
+  Offset position,
+) {
+  final handleBox = context.findRenderObject()! as RenderBox;
+  final touchOnHandle = handleBox.globalToLocal(position);
+  final feedbackSize = draggable.getFeedbackSize(context);
+
+  final anchorX =
+      feedbackSize.width - handleBox.size.width + touchOnHandle.dx;
+  final anchorY =
+      (feedbackSize.height - handleBox.size.height) / 2 + touchOnHandle.dy;
+
+  return Offset(anchorX, anchorY);
+}
+
 class TodoTaskTile extends ConsumerWidget {
   const TodoTaskTile({
     super.key,
@@ -169,7 +188,7 @@ class TodoTaskTile extends ConsumerWidget {
         if (enabled && !forFeedback)
           Draggable<TodoItem>(
             data: task,
-            dragAnchorStrategy: pointerDragAnchorStrategy,
+            dragAnchorStrategy: _todoHandleDragAnchorStrategy,
             onDragStarted: () {
               HapticFeedback.lightImpact();
               onDragStarted();
