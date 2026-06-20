@@ -136,6 +136,33 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
     if (mounted) setState(() => _photoFile = null);
   }
 
+  Future<void> _addMealToPlan(Meal meal) async {
+    final mealPlanningEnabled = ref.read(mealPlanningEnabledProvider);
+    if (!mealPlanningEnabled) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Enable Meal Planning in settings to add meals to your plan',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await ref.read(mealRepositoryProvider).addMealToPlan(meal.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added "${meal.displayName}" to meal plan'),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () => context.push('/meals'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _deleteMeal(Meal meal) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -229,11 +256,20 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
               data: (d) => formatLastEatenSummary(d),
               orElse: () => null,
             );
+            final fromMealManager =
+                GoRouterState.of(context).uri.path.startsWith('/meal-manager');
+            final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
 
             return Scaffold(
               appBar: AppBar(
                 title: Text(_isEditing ? 'Edit meal' : meal.displayName),
                 actions: [
+                  if (fromMealManager && mealPlanningEnabled && !_isEditing)
+                    IconButton(
+                      icon: const Icon(Icons.playlist_add_outlined),
+                      tooltip: 'Add to meal plan',
+                      onPressed: () => _addMealToPlan(meal),
+                    ),
                   if (_isEditing) ...[
                     TextButton(
                       onPressed: () => _cancelEditing(meal, tags),

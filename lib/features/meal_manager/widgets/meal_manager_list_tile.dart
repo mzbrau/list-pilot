@@ -10,10 +10,12 @@ class MealManagerListTile extends ConsumerWidget {
     super.key,
     required this.meal,
     required this.onTap,
+    this.onAddToPlan,
   });
 
   final Meal meal;
   final VoidCallback onTap;
+  final VoidCallback? onAddToPlan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78,6 +80,12 @@ class MealManagerListTile extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (onAddToPlan != null)
+                IconButton(
+                  icon: const Icon(Icons.playlist_add_outlined),
+                  tooltip: 'Add to meal plan',
+                  onPressed: onAddToPlan,
+                ),
               Icon(
                 Icons.chevron_right,
                 color: theme.colorScheme.onSurfaceVariant,
