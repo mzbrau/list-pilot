@@ -9,10 +9,12 @@ class MealManagerGridTile extends ConsumerWidget {
     super.key,
     required this.meal,
     required this.onTap,
+    this.onAddToPlan,
   });
 
   final Meal meal;
   final VoidCallback onTap;
+  final VoidCallback? onAddToPlan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,12 +28,33 @@ class MealManagerGridTile extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: MealPhotoThumbnail(
-                meal: meal,
-                width: double.infinity,
-                height: double.infinity,
-                borderRadius: 0,
-                iconSize: 40,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MealPhotoThumbnail(
+                    meal: meal,
+                    width: double.infinity,
+                    height: double.infinity,
+                    borderRadius: 0,
+                    iconSize: 40,
+                  ),
+                  if (onAddToPlan != null)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Material(
+                        color: theme.colorScheme.surface.withValues(alpha: 0.92),
+                        shape: const CircleBorder(),
+                        clipBehavior: Clip.antiAlias,
+                        child: IconButton(
+                          icon: const Icon(Icons.playlist_add_outlined),
+                          tooltip: 'Add to meal plan',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: onAddToPlan,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             Padding(

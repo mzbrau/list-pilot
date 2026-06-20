@@ -74,10 +74,36 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
     return _filteredMeals ?? [];
   }
 
+  Future<void> _addMealToPlan(BuildContext context, Meal meal) async {
+    final mealPlanningEnabled = ref.read(mealPlanningEnabledProvider);
+    if (!mealPlanningEnabled) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enable Meal Planning in settings to add meals to your plan'),
+        ),
+      );
+      return;
+    }
+
+    await ref.read(mealRepositoryProvider).addMealToPlan(meal.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added "${meal.displayName}" to meal plan'),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () => context.push('/meals'),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final mealsAsync = ref.watch(mealManagerMealsProvider);
     final layoutMode = ref.watch(mealManagerLayoutModeProvider);
+    final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
     final theme = Theme.of(context);
 
     return popOrGoHomeScope(
@@ -191,6 +217,9 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
                         meal: meal,
                         onTap: () =>
                             context.push('/meal-manager/${meal.id}'),
+                        onAddToPlan: mealPlanningEnabled
+                            ? () => _addMealToPlan(context, meal)
+                            : null,
                       );
                     },
                   );
@@ -204,6 +233,9 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
                     return MealManagerListTile(
                       meal: meal,
                       onTap: () => context.push('/meal-manager/${meal.id}'),
+                      onAddToPlan: mealPlanningEnabled
+                          ? () => _addMealToPlan(context, meal)
+                          : null,
                     );
                   },
                 );

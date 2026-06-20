@@ -197,6 +197,14 @@ class _MealIngredientEditSheetState
     Navigator.pop(context, true);
   }
 
+  void _clearQuantity() {
+    setState(() {
+      _quantityController.clear();
+      _selectedUnit = null;
+      _errorText = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -255,8 +263,15 @@ class _MealIngredientEditSheetState
                             flex: 2,
                             child: TextField(
                               controller: _quantityController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Quantity',
+                                suffixIcon: _quantityController.text.isNotEmpty
+                                    ? IconButton(
+                                        tooltip: 'Clear quantity',
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: _clearQuantity,
+                                      )
+                                    : null,
                               ),
                               keyboardType:
                                   const TextInputType.numberWithOptions(

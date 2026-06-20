@@ -108,12 +108,9 @@ class ListsOverviewScreen extends ConsumerWidget {
             itemCount: lists.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _MealFeatureCards(
-                    mealManagerEnabled: mealManagerEnabled,
-                    mealPlanningEnabled: mealPlanningEnabled,
-                  ),
+                return _MealFeatureCards(
+                  mealManagerEnabled: mealManagerEnabled,
+                  mealPlanningEnabled: mealPlanningEnabled,
                 );
               }
               final list = lists[index - 1];
@@ -851,37 +848,75 @@ class _MealFeatureCards extends StatelessWidget {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (mealManagerEnabled) ...[
-          const _MealManagerCard(),
-          if (mealPlanningEnabled) const SizedBox(height: 12),
-        ],
-        if (mealPlanningEnabled) const _MealPlanningCard(),
+        if (mealManagerEnabled)
+          _OverviewListCard(
+            icon: Icons.menu_book_outlined,
+            avatarBackgroundColor:
+                Theme.of(context).colorScheme.tertiaryContainer,
+            avatarForegroundColor:
+                Theme.of(context).colorScheme.onTertiaryContainer,
+            title: 'Meal Manager',
+            subtitle: 'Create and browse your recipes',
+            onTap: () => context.push('/meal-manager'),
+          ),
+        if (mealPlanningEnabled)
+          _OverviewListCard(
+            icon: Icons.restaurant_menu_outlined,
+            avatarBackgroundColor:
+                Theme.of(context).colorScheme.secondaryContainer,
+            avatarForegroundColor:
+                Theme.of(context).colorScheme.onSecondaryContainer,
+            title: 'Meal Planning',
+            subtitle: 'Plan your week and fill your shopping list',
+            onTap: () => context.push('/meals'),
+          ),
       ],
     );
   }
 }
 
-class _MealManagerCard extends StatelessWidget {
-  const _MealManagerCard();
+class _OverviewListCard extends StatelessWidget {
+  const _OverviewListCard({
+    required this.icon,
+    required this.avatarBackgroundColor,
+    required this.avatarForegroundColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.onLongPress,
+  });
+
+  final IconData icon;
+  final Color avatarBackgroundColor;
+  final Color avatarForegroundColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/meal-manager'),
+        onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: theme.colorScheme.tertiaryContainer,
+                radius: 24,
+                backgroundColor: avatarBackgroundColor,
                 child: Icon(
-                  Icons.menu_book_outlined,
-                  color: theme.colorScheme.onTertiaryContainer,
+                  icon,
+                  color: avatarForegroundColor,
                 ),
               ),
               const SizedBox(width: 16),
@@ -890,69 +925,14 @@ class _MealManagerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Meal Manager',
+                      title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Create and browse your recipes',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MealPlanningCard extends StatelessWidget {
-  const _MealPlanningCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/meals'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: theme.colorScheme.secondaryContainer,
-                child: Icon(
-                  Icons.restaurant_menu_outlined,
-                  color: theme.colorScheme.onSecondaryContainer,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Meal Planning',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Plan your week and fill your shopping list',
+                      subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -979,7 +959,6 @@ class _ListCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final dateFormat = DateFormat.MMMd().add_jm();
     final isShopping = entry is ShoppingListEntry;
     final isTakeAway = entry is TakeAwayListEntry;
@@ -993,53 +972,16 @@ class _ListCard extends ConsumerWidget {
         : isTakeAway
             ? Icons.restaurant_outlined
             : Icons.checklist_outlined;
+    final theme = Theme.of(context);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push(route),
-        onLongPress: () => _showListOptions(context, ref),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(
-                  icon,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Updated ${dateFormat.format(entry.updatedAt)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _OverviewListCard(
+      icon: icon,
+      avatarBackgroundColor: theme.colorScheme.primaryContainer,
+      avatarForegroundColor: theme.colorScheme.onPrimaryContainer,
+      title: entry.name,
+      subtitle: 'Updated ${dateFormat.format(entry.updatedAt)}',
+      onTap: () => context.push(route),
+      onLongPress: () => _showListOptions(context, ref),
     );
   }
 

@@ -110,4 +110,76 @@ void main() {
     expect(updated.quantityUnit, 'kg');
     expect(updated.catalogItemId, chickenBreast.id);
   });
+
+  testWidgets('MealIngredientEditSheet clears quantity and unit with one tap',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    final mealRepo = MealRepository(db);
+    final meal = await mealRepo.createMeal(
+      displayName: 'Seasoned Potatoes',
+      ingredients: [
+        const MealIngredientInput(
+          displayName: 'Salt',
+          quantityValue: 1,
+          quantityUnit: 'count',
+        ),
+      ],
+    );
+    final ingredient = (await mealRepo.getIngredientsForMeal(meal.id)).single;
+
+    final container = ProviderContainer(
+      overrides: [
+        appInitProvider.overrideWith((ref) async {}),
+        databaseProvider.overrideWithValue(db),
+        mealRepositoryProvider.overrideWithValue(mealRepo),
+        catalogRepositoryProvider.overrideWithValue(CatalogRepository(db)),
+        ingredientCatalogMatcherProvider.overrideWithValue(
+          IngredientCatalogMatcher(
+            CatalogRepository(db),
+            const IngredientParserService(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return FilledButton(
+                  onPressed: () {
+                    MealIngredientEditSheet.show(
+                      context,
+                      ingredient: ingredient,
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, 'Quantity'), findsOneWidget);
+    await tester.tap(find.byTooltip('Clear quantity'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final updated = (await mealRepo.getIngredientsForMeal(meal.id)).single;
+    expect(updated.quantityValue, isNull);
+    expect(updated.quantityUnit, isNull);
+  });
 }
