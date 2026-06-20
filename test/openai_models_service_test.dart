@@ -35,6 +35,18 @@ void main() {
     expect(models, ['gpt-4o', 'gpt-4o-mini', 'o3-mini']);
   });
 
+  test('filterVisionModels keeps vision-capable models only', () {
+    final models = filterVisionModels([
+      'gpt-4o',
+      'gpt-4o-mini',
+      'gpt-4-turbo',
+      'o3-mini',
+      'gpt-3.5-turbo',
+      'text-embedding-3-small',
+    ]);
+    expect(models, ['gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'o3-mini']);
+  });
+
   test('mergeModelOptions includes current model when missing', () {
     expect(
       mergeModelOptions(['gpt-4o'], 'custom-model'),

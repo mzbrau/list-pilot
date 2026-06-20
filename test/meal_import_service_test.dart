@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -282,5 +283,117 @@ void main() {
   test('recipeImportLanguageByCode falls back to English for unknown code', () {
     expect(recipeImportLanguageByCode('xx').code, 'en');
     expect(recipeImportLanguageByCode('fr').label, 'French');
+  });
+
+  test('buildPhotoImportChatCompletionsBody includes vision content', () {
+    final body = buildPhotoImportChatCompletionsBody(
+      model: 'gpt-4o-mini',
+      imageBase64: 'abc123',
+      mimeType: 'image/jpeg',
+      languageLabel: 'French',
+    );
+
+    expect(body['model'], 'gpt-4o-mini');
+    final messages = body['messages'] as List;
+    final systemMessage = messages.first as Map<String, dynamic>;
+    final userMessage = messages.last as Map<String, dynamic>;
+    expect(systemMessage['content'], contains('in French'));
+    final content = userMessage['content'] as List;
+    expect(content, hasLength(2));
+    expect(content.first['type'], 'text');
+    expect(content.last['type'], 'image_url');
+    expect(
+      content.last['image_url']['url'],
+      'data:image/jpeg;base64,abc123',
+    );
+  });
+
+  test('mimeTypeForImagePath detects common formats', () {
+    expect(mimeTypeForImagePath('/tmp/photo.jpg'), 'image/jpeg');
+    expect(mimeTypeForImagePath('/tmp/photo.PNG'), 'image/png');
+    expect(mimeTypeForImagePath('/tmp/photo.webp'), 'image/webp');
+    expect(mimeTypeForImagePath('/tmp/photo.gif'), isNull);
+  });
+
+  test('importFromPhoto uses photo import model and sends image', () async {
+    final tempDir = Directory.systemTemp.createTempSync('meal_import_test');
+    final imageFile = File('${tempDir.path}/recipe.jpg');
+    await imageFile.writeAsBytes([0xFF, 0xD8, 0xFF, 0x00]);
+
+    final recipeJson = jsonEncode({
+      'name': 'Photo Recipe',
+      'ingredients': ['Flour'],
+      'steps': ['Mix'],
+      'tags': ['Baking'],
+    });
+
+    final service = MealImportService(
+      aiConfig: const AiConfig(
+        apiUri: 'https://api.example.com/v1',
+        apiKey: 'test-key',
+        modelName: 'text-model',
+        photoImportModelName: 'vision-model',
+      ),
+      httpPost: (url, {headers, body}) async {
+        final decoded = jsonDecode(body as String) as Map<String, dynamic>;
+        expect(decoded['model'], 'vision-model');
+        final messages = decoded['messages'] as List;
+        final userMessage = messages.last as Map<String, dynamic>;
+        final content = userMessage['content'] as List;
+        expect(content.last['type'], 'image_url');
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {'message': {'content': recipeJson}},
+            ],
+          }),
+          200,
+        );
+      },
+    );
+
+    final result = await service.importFromPhoto(imageFile.path);
+    expect(result.name, 'Photo Recipe');
+    expect(result.ingredients, ['Flour']);
+    await tempDir.delete(recursive: true);
+  });
+
+  test('importFromPhoto falls back to main model when photo model unset', () async {
+    final tempDir = Directory.systemTemp.createTempSync('meal_import_test');
+    final imageFile = File('${tempDir.path}/recipe.jpg');
+    await imageFile.writeAsBytes([0xFF, 0xD8, 0xFF, 0x00]);
+
+    final service = MealImportService(
+      aiConfig: const AiConfig(
+        apiUri: 'https://api.example.com/v1',
+        apiKey: 'test-key',
+        modelName: 'shared-model',
+      ),
+      httpPost: (url, {headers, body}) async {
+        final decoded = jsonDecode(body as String) as Map<String, dynamic>;
+        expect(decoded['model'], 'shared-model');
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {
+                'message': {
+                  'content': jsonEncode({
+                    'name': 'Fallback',
+                    'ingredients': [],
+                    'steps': [],
+                    'tags': [],
+                  }),
+                },
+              },
+            ],
+          }),
+          200,
+        );
+      },
+    );
+
+    final result = await service.importFromPhoto(imageFile.path);
+    expect(result.name, 'Fallback');
+    await tempDir.delete(recursive: true);
   });
 }

@@ -515,11 +515,17 @@ class MealPlanningEnabledNotifier extends StateNotifier<bool> {
 }
 
 class AiConfig {
-  const AiConfig({this.apiUri, this.apiKey, this.modelName});
+  const AiConfig({
+    this.apiUri,
+    this.apiKey,
+    this.modelName,
+    this.photoImportModelName,
+  });
 
   final String? apiUri;
   final String? apiKey;
   final String? modelName;
+  final String? photoImportModelName;
 
   bool get isConfigured =>
       apiUri != null &&
@@ -528,6 +534,16 @@ class AiConfig {
       apiKey!.trim().isNotEmpty &&
       modelName != null &&
       modelName!.trim().isNotEmpty;
+
+  String? get effectivePhotoImportModel {
+    final photoModel = photoImportModelName?.trim();
+    if (photoModel != null && photoModel.isNotEmpty) {
+      return photoModel;
+    }
+    final model = modelName?.trim();
+    if (model == null || model.isEmpty) return null;
+    return model;
+  }
 
   static bool isOpenAiUri(String? uri) {
     final host = Uri.tryParse(uri?.trim() ?? '')?.host.toLowerCase();
@@ -559,6 +575,8 @@ class AiConfigNotifier extends StateNotifier<AiConfig> {
       apiUri: prefs.getString(AppConstants.aiApiUriKey),
       apiKey: prefs.getString(AppConstants.aiApiKeyKey),
       modelName: prefs.getString(AppConstants.aiModelNameKey),
+      photoImportModelName:
+          prefs.getString(AppConstants.aiPhotoImportModelNameKey),
     );
   }
 
@@ -566,11 +584,16 @@ class AiConfigNotifier extends StateNotifier<AiConfig> {
     String? apiUri,
     String? apiKey,
     String? modelName,
+    String? photoImportModelName,
+    bool clearPhotoImportModelName = false,
   }) async {
     state = AiConfig(
       apiUri: apiUri ?? state.apiUri,
       apiKey: apiKey ?? state.apiKey,
       modelName: modelName ?? state.modelName,
+      photoImportModelName: clearPhotoImportModelName
+          ? null
+          : (photoImportModelName ?? state.photoImportModelName),
     );
     final prefs = await SharedPreferences.getInstance();
     if (apiUri != null) {
@@ -581,6 +604,19 @@ class AiConfigNotifier extends StateNotifier<AiConfig> {
     }
     if (modelName != null) {
       await prefs.setString(AppConstants.aiModelNameKey, modelName);
+    }
+    if (clearPhotoImportModelName) {
+      await prefs.remove(AppConstants.aiPhotoImportModelNameKey);
+    } else if (photoImportModelName != null) {
+      final trimmed = photoImportModelName.trim();
+      if (trimmed.isEmpty) {
+        await prefs.remove(AppConstants.aiPhotoImportModelNameKey);
+      } else {
+        await prefs.setString(
+          AppConstants.aiPhotoImportModelNameKey,
+          trimmed,
+        );
+      }
     }
   }
 }

@@ -47,7 +47,7 @@ class CreateMealSheet extends ConsumerWidget {
             context.push('/meal-manager/import/extract');
           },
         ),
-        if (aiConfigured)
+        if (aiConfigured) ...[
           ListTile(
             leading: const Icon(Icons.auto_awesome_outlined),
             title: const Text('Import with AI'),
@@ -57,6 +57,16 @@ class CreateMealSheet extends ConsumerWidget {
               context.push('/meal-manager/import');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: const Text('Import from photo'),
+            subtitle: const Text('Extract recipe from a photo using AI'),
+            onTap: () {
+              Navigator.pop(context);
+              context.push('/meal-manager/import/photo');
+            },
+          ),
+        ],
       ],
     );
   }

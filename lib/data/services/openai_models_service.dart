@@ -40,6 +40,24 @@ List<String> filterChatModels(List<String> ids) {
   return filtered;
 }
 
+List<String> filterVisionModels(List<String> ids) {
+  final filtered = ids.where(_isVisionCapableModel).toSet().toList()..sort();
+  return filtered;
+}
+
+bool _isVisionCapableModel(String id) {
+  if (!_isChatCapableModel(id)) return false;
+
+  final lower = id.toLowerCase();
+  if (lower.startsWith('gpt-4o')) return true;
+  if (lower.startsWith('gpt-4.1')) return true;
+  if (lower.startsWith('gpt-4-turbo')) return true;
+  if (lower.contains('vision')) return true;
+  if (RegExp(r'^o\d').hasMatch(lower)) return true;
+
+  return false;
+}
+
 List<String> mergeModelOptions(List<String> models, String? currentModel) {
   final model = currentModel?.trim();
   if (model == null || model.isEmpty || models.contains(model)) {

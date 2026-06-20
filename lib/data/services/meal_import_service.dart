@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -142,6 +143,22 @@ Use this exact schema:
 ''';
 }
 
+String buildPhotoImportSystemPrompt({required String languageLabel}) {
+  return '''
+You extract recipe information from a photo of a recipe (cookbook page, screenshot, handwritten card, etc.). Respond with JSON only, no markdown.
+Write all user-facing text fields (name, ingredients, steps, notes, tags) in $languageLabel. If the source text is in another language, translate into $languageLabel. Keep units and measurements sensible for the target language.
+Put one ingredient per line with the quantity and unit first (e.g. "750 g potatoes", "2 cups flour").
+Use this exact schema:
+{
+  "name": "recipe title",
+  "ingredients": ["ingredient 1", "ingredient 2"],
+  "steps": ["step 1", "step 2"],
+  "notes": "optional tips or description",
+  "tags": ["Dinner", "Chicken"]
+}
+''';
+}
+
 Map<String, dynamic> buildChatCompletionsBody({
   required String model,
   required String pageUrl,
@@ -163,6 +180,46 @@ Map<String, dynamic> buildChatCompletionsBody({
     ],
     'response_format': {'type': 'json_object'},
   };
+}
+
+Map<String, dynamic> buildPhotoImportChatCompletionsBody({
+  required String model,
+  required String imageBase64,
+  required String mimeType,
+  required String languageLabel,
+}) {
+  return {
+    'model': model,
+    'messages': [
+      {
+        'role': 'system',
+        'content': buildPhotoImportSystemPrompt(languageLabel: languageLabel),
+      },
+      {
+        'role': 'user',
+        'content': [
+          {
+            'type': 'text',
+            'text':
+                'Extract the recipe from this photo and write it in $languageLabel.',
+          },
+          {
+            'type': 'image_url',
+            'image_url': {'url': 'data:$mimeType;base64,$imageBase64'},
+          },
+        ],
+      },
+    ],
+    'response_format': {'type': 'json_object'},
+  };
+}
+
+String? mimeTypeForImagePath(String path) {
+  final lower = path.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  return null;
 }
 
 MealImportResult parseImportResponseBody(String responseBody) {
@@ -269,6 +326,70 @@ class MealImportService {
       imageUrl: imageUrl,
       recipeUrl: result.recipeUrl ?? pageUri.toString(),
     );
+  }
+
+  Future<MealImportResult> importFromPhoto(
+    String imagePath, {
+    RecipeImportLanguage language = defaultRecipeImportLanguage,
+  }) async {
+    if (!_aiConfig.isConfigured) {
+      throw StateError('AI configuration is incomplete');
+    }
+
+    final photoModel = _aiConfig.effectivePhotoImportModel;
+    if (photoModel == null || photoModel.isEmpty) {
+      throw StateError('Photo import model is not configured');
+    }
+
+    final file = File(imagePath);
+    if (!await file.exists()) {
+      throw MealImportException('Image file not found');
+    }
+
+    final mimeType = mimeTypeForImagePath(imagePath);
+    if (mimeType == null) {
+      throw MealImportException('Unsupported image format');
+    }
+
+    final imageBytes = await file.readAsBytes();
+    if (imageBytes.isEmpty) {
+      throw MealImportException('Image file is empty');
+    }
+
+    final baseUri = _aiConfig.apiUri!.trim().replaceAll(RegExp(r'/+$'), '');
+    final apiUri = Uri.parse('$baseUri/chat/completions');
+    final body = buildPhotoImportChatCompletionsBody(
+      model: photoModel,
+      imageBase64: base64Encode(imageBytes),
+      mimeType: mimeType,
+      languageLabel: language.label,
+    );
+
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${_aiConfig.apiKey!.trim()}',
+    };
+
+    http.Response aiResponse = await _httpPost(
+      apiUri,
+      headers: headers,
+      body: jsonEncode(body),
+    ).timeout(const Duration(seconds: 90));
+
+    if (aiResponse.statusCode != 200) {
+      body.remove('response_format');
+      aiResponse = await _httpPost(
+        apiUri,
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 90));
+    }
+
+    if (aiResponse.statusCode != 200) {
+      throw MealImportException('AI request failed (${aiResponse.statusCode})');
+    }
+
+    return parseImportResponseBody(aiResponse.body);
   }
 }
 
