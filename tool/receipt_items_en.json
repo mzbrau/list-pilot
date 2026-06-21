@@ -5,8 +5,24 @@
   "unmapped": [],
   "newCatalogItems": [
     {
-      "name": "Gift card",
-      "categoryId": "household"
+      "name": "Bell peppers",
+      "categoryId": "fruit_veg"
+    },
+    {
+      "name": "Coleslaw mix",
+      "categoryId": "fruit_veg"
+    },
+    {
+      "name": "Ice cream",
+      "categoryId": "frozen"
+    },
+    {
+      "name": "Kiwi",
+      "categoryId": "fruit_veg"
+    },
+    {
+      "name": "Pepper jack",
+      "categoryId": "dairy"
     }
   ]
 }

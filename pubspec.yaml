@@ -35,7 +35,7 @@ dependencies:
   receive_sharing_intent: ^1.8.1
   file_picker: ^8.1.7
   open_filex: ^4.6.0
-  syncfusion_flutter_pdf: ^28.2.12
+  pdfrx: ^1.1.26
 
 dev_dependencies:
   flutter_test:
@@ -44,6 +44,7 @@ dev_dependencies:
   drift_dev: ^2.22.1
   build_runner: ^2.4.13
   flutter_launcher_icons: ^0.14.4
+  archive: ^4.0.2
 
 flutter_launcher_icons:
   android: true

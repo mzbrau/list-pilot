@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class ReceiptPdfService {
   Future<String> extractTextFromFile(String filePath) async {
@@ -9,13 +9,12 @@ class ReceiptPdfService {
     return extractTextFromBytes(bytes);
   }
 
-  String extractTextFromBytes(Uint8List bytes) {
-    final document = PdfDocument(inputBytes: bytes);
+  Future<String> extractTextFromBytes(Uint8List bytes) async {
+    final document = await PdfDocument.openData(bytes);
     try {
-      final extractor = PdfTextExtractor(document);
       final buffer = StringBuffer();
-      for (var i = 0; i < document.pages.count; i++) {
-        final pageText = extractor.extractText(startPageIndex: i, endPageIndex: i);
+      for (final page in document.pages) {
+        final pageText = (await page.loadText()).fullText.trim();
         if (pageText.isNotEmpty) {
           if (buffer.isNotEmpty) {
             buffer.writeln();
@@ -25,7 +24,7 @@ class ReceiptPdfService {
       }
       return buffer.toString();
     } finally {
-      document.dispose();
+      await document.dispose();
     }
   }
 }
