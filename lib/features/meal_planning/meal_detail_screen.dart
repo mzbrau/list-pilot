@@ -17,10 +17,12 @@ class MealDetailScreen extends ConsumerStatefulWidget {
     super.key,
     required this.mealId,
     this.initialEditMode = false,
+    this.fromMealManager = false,
   });
 
   final int mealId;
   final bool initialEditMode;
+  final bool fromMealManager;
 
   @override
   ConsumerState<MealDetailScreen> createState() => _MealDetailScreenState();
@@ -256,15 +258,15 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
               data: (d) => formatLastEatenSummary(d),
               orElse: () => null,
             );
-            final fromMealManager =
-                GoRouterState.of(context).uri.path.startsWith('/meal-manager');
             final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
 
             return Scaffold(
               appBar: AppBar(
                 title: Text(_isEditing ? 'Edit meal' : meal.displayName),
                 actions: [
-                  if (fromMealManager && mealPlanningEnabled && !_isEditing)
+                  if (widget.fromMealManager &&
+                      mealPlanningEnabled &&
+                      !_isEditing)
                     IconButton(
                       icon: const Icon(Icons.playlist_add_outlined),
                       tooltip: 'Add to meal plan',
