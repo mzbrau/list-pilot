@@ -6,6 +6,22 @@ import 'package:list_pilot/router/navigation_history.dart';
 import 'package:list_pilot/router/tablet_layout.dart';
 
 void main() {
+  group('normalizeLocation', () {
+    test('normalizes root paths', () {
+      expect(normalizeLocation('/'), '/');
+      expect(normalizeLocation(''), '/');
+    });
+
+    test('adds leading slash and strips trailing slash', () {
+      expect(normalizeLocation('list/1'), '/list/1');
+      expect(normalizeLocation('/list/1/'), '/list/1');
+    });
+
+    test('strips query strings via path extraction', () {
+      expect(normalizeLocation('/list/1?x=1'), '/list/1');
+    });
+  });
+
   group('NavigationHistoryNotifier', () {
     late ProviderContainer container;
 
@@ -53,6 +69,59 @@ void main() {
       final state = container.read(navigationHistoryProvider);
       expect(state.stack, hasLength(1));
       expect(state.stack.first.location, '/');
+    });
+
+    test('treats equivalent paths as the same location', () {
+      final notifier = container.read(navigationHistoryProvider.notifier);
+      notifier.onLocationChange('/list/1/', null);
+      notifier.onLocationChange('/list/1?tab=1', null);
+
+      final state = container.read(navigationHistoryProvider);
+      expect(state.stack, hasLength(2));
+      expect(state.stack.last.location, '/list/1');
+    });
+  });
+
+  group('isTabletLayoutFromSizes', () {
+    test('returns true when window shortest side is at least 600', () {
+      expect(
+        isTabletLayoutFromSizes(windowSize: const Size(800, 600)),
+        isTrue,
+      );
+    });
+
+    test('returns false for phone window sizes', () {
+      expect(
+        isTabletLayoutFromSizes(windowSize: const Size(390, 844)),
+        isFalse,
+      );
+    });
+
+    test('returns false for phone landscape without tablet display', () {
+      expect(
+        isTabletLayoutFromSizes(windowSize: const Size(915, 412)),
+        isFalse,
+      );
+    });
+
+    test('returns true for letterboxed tablet window with tablet display', () {
+      expect(
+        isTabletLayoutFromSizes(
+          windowSize: const Size(520, 900),
+          displayLogicalSize: const Size(800, 1280),
+        ),
+        isTrue,
+      );
+    });
+
+    test('returns false for narrow multi-window even with tablet display', () {
+      expect(
+        isTabletLayoutFromSizes(
+          windowSize: const Size(400, 900),
+          displayLogicalSize: const Size(800, 1280),
+        ),
+        isFalse,
+      );
     });
   });
 

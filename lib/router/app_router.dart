@@ -194,15 +194,19 @@ final routerProvider = Provider<GoRouter>((ref) {
   void syncHistory() {
     final config = router.routerDelegate.currentConfiguration;
     ref.read(navigationHistoryProvider.notifier).onLocationChange(
-          config.uri.toString(),
+          normalizeLocation(config.uri.toString()),
           config.extra,
         );
   }
 
   router.routerDelegate.addListener(syncHistory);
+  router.routeInformationProvider.addListener(syncHistory);
+
+  Future.microtask(syncHistory);
 
   ref.onDispose(() {
     router.routerDelegate.removeListener(syncHistory);
+    router.routeInformationProvider.removeListener(syncHistory);
   });
 
   return router;

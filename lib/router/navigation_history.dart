@@ -1,5 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+String normalizeLocation(String location) {
+  final path = Uri.parse(location).path;
+  if (path.isEmpty || path == '/') {
+    return '/';
+  }
+
+  var normalized = path.startsWith('/') ? path : '/$path';
+  if (normalized.endsWith('/') && normalized.length > 1) {
+    normalized = normalized.substring(0, normalized.length - 1);
+  }
+  return normalized;
+}
+
 class NavigationEntry {
   const NavigationEntry({required this.location, this.extra});
 
@@ -39,6 +52,7 @@ class NavigationHistoryNotifier extends Notifier<NavigationHistoryState> {
   }
 
   void onLocationChange(String newLocation, Object? extra) {
+    newLocation = normalizeLocation(newLocation);
     final newEntry = NavigationEntry(location: newLocation, extra: extra);
     final stack = List<NavigationEntry>.from(state.stack);
 
