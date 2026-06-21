@@ -9,10 +9,18 @@ import '../../core/providers/app_providers.dart';
 import '../../core/widgets/drag_handle_utils.dart';
 import '../../data/database/app_database.dart';
 import '../../data/services/openai_models_service.dart';
+import '../../router/route_utils.dart';
 import 'widgets/reorderable_overview_list.dart';
 
 class ListsOverviewScreen extends ConsumerStatefulWidget {
-  const ListsOverviewScreen({super.key});
+  const ListsOverviewScreen({
+    super.key,
+    this.tabletSidebar = false,
+    this.selectedRoute,
+  });
+
+  final bool tabletSidebar;
+  final String? selectedRoute;
 
   @override
   ConsumerState<ListsOverviewScreen> createState() =>
@@ -21,6 +29,14 @@ class ListsOverviewScreen extends ConsumerStatefulWidget {
 
 class _ListsOverviewScreenState extends ConsumerState<ListsOverviewScreen> {
   bool _isEditing = false;
+
+  void _navigateTo(BuildContext context, String route) {
+    if (widget.tabletSidebar) {
+      context.go(route);
+    } else {
+      context.push(route);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +68,7 @@ class _ListsOverviewScreenState extends ConsumerState<ListsOverviewScreen> {
             IconButton(
               icon: const Icon(Icons.bar_chart_outlined),
               tooltip: 'Shop Stats',
-              onPressed: () => context.push('/stats'),
+              onPressed: () => _navigateTo(context, '/stats'),
             ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -112,11 +128,16 @@ class _ListsOverviewScreenState extends ConsumerState<ListsOverviewScreen> {
                 item: item,
                 isEditing: _isEditing,
                 isDragging: isDragging,
+                isSelected: isOverviewRouteSelected(
+                  item.route,
+                  widget.selectedRoute,
+                ),
                 onDragStarted: onDragStarted,
                 onDragEnded: onDragEnded,
                 onLongPress: item is UserListDisplayItem && !_isEditing
                     ? () => _showListOptions(context, ref, item.entry)
                     : null,
+                onNavigate: (route) => _navigateTo(context, route),
               );
             },
           );
@@ -172,16 +193,16 @@ class _ListsOverviewScreenState extends ConsumerState<ListsOverviewScreen> {
 
     if (type == ListCreateType.shopping) {
       final id = await ref.read(listRepositoryProvider).createList(name);
-      if (context.mounted) context.push('/list/$id');
+      if (context.mounted) _navigateTo(context, '/list/$id');
     } else if (type == ListCreateType.todo) {
       final id = await ref.read(todoRepositoryProvider).createList(name);
-      if (context.mounted) context.push('/todo/$id');
+      if (context.mounted) _navigateTo(context, '/todo/$id');
     } else if (type == ListCreateType.takeAway) {
       final id = await ref.read(takeAwayRepositoryProvider).createList(name);
-      if (context.mounted) context.push('/take-away/$id');
+      if (context.mounted) _navigateTo(context, '/take-away/$id');
     } else {
       final id = await ref.read(receiptRepositoryProvider).createList(name);
-      if (context.mounted) context.push('/receipts/$id');
+      if (context.mounted) _navigateTo(context, '/receipts/$id');
     }
   }
 
@@ -849,17 +870,21 @@ class _OverviewListCard extends StatelessWidget {
     required this.item,
     this.isEditing = false,
     this.isDragging = false,
+    this.isSelected = false,
     this.onDragStarted,
     this.onDragEnded,
     this.onLongPress,
+    required this.onNavigate,
   });
 
   final OverviewDisplayItem item;
   final bool isEditing;
   final bool isDragging;
+  final bool isSelected;
   final VoidCallback? onDragStarted;
   final VoidCallback? onDragEnded;
   final VoidCallback? onLongPress;
+  final void Function(String route) onNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -886,9 +911,12 @@ class _OverviewListCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
+      color: isSelected ? theme.colorScheme.secondaryContainer : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: isEditing && !forFeedback ? null : () => context.push(item.route),
+        onTap: isEditing && !forFeedback
+            ? null
+            : () => onNavigate(item.route),
         onLongPress: isEditing && !forFeedback ? null : onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(16),

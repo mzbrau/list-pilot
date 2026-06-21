@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'navigation_history.dart';
-import 'route_screen_builder.dart';
+import '../features/lists/lists_overview_screen.dart';
+import 'route_utils.dart';
 
 const tabletBreakpoint = 600.0;
 const letterboxMinWindowWidth = 500.0;
@@ -44,19 +43,59 @@ bool isTabletLayout(BuildContext context) {
   );
 }
 
-class TabletSplitShell extends ConsumerWidget {
-  const TabletSplitShell({super.key, required this.child});
+class TabletDetailPlaceholder extends StatelessWidget {
+  const TabletDetailPlaceholder({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.colorScheme.surfaceContainerLow,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.touch_app_outlined,
+                size: 64,
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Select a list to get started',
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TabletSplitShell extends StatelessWidget {
+  const TabletSplitShell({
+    super.key,
+    required this.location,
+    required this.child,
+  });
+
+  final String location;
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final history = ref.watch(navigationHistoryProvider);
+  Widget build(BuildContext context) {
     final tablet = isTabletLayout(context);
-    final previous = history.previous;
+    final normalized = normalizeLocation(location);
+    final isRoot = normalized == '/';
 
     Widget content;
-    if (!tablet || previous == null) {
+    if (!tablet) {
       content = child;
     } else {
       content = Row(
@@ -64,15 +103,15 @@ class TabletSplitShell extends ConsumerWidget {
         children: [
           Expanded(
             flex: 1,
-            child: buildScreenForLocation(
-              previous.location,
-              extra: previous.extra,
+            child: ListsOverviewScreen(
+              tabletSidebar: true,
+              selectedRoute: isRoot ? null : normalized,
             ),
           ),
           const VerticalDivider(width: 1),
           Expanded(
             flex: 2,
-            child: child,
+            child: isRoot ? const TabletDetailPlaceholder() : child,
           ),
         ],
       );
@@ -91,7 +130,7 @@ class TabletSplitShell extends ConsumerWidget {
           right: 0,
           child: _TabletDebugBanner(
             tablet: tablet,
-            stackDepth: history.stack.length,
+            route: normalized,
           ),
         ),
       ],
@@ -102,11 +141,11 @@ class TabletSplitShell extends ConsumerWidget {
 class _TabletDebugBanner extends StatelessWidget {
   const _TabletDebugBanner({
     required this.tablet,
-    required this.stackDepth,
+    required this.route,
   });
 
   final bool tablet;
-  final int stackDepth;
+  final String route;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +170,7 @@ class _TabletDebugBanner extends StatelessWidget {
         child: Text(
           'Tablet debug: window=${window.width.toStringAsFixed(0)}x'
           '${window.height.toStringAsFixed(0)} display=$displayLabel '
-          'tablet=$tablet stack=$stackDepth',
+          'tablet=$tablet route=$route',
           style: const TextStyle(color: Colors.white, fontSize: 11),
         ),
       ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'navigation_history.dart';
 import 'route_screen_builder.dart';
 import 'tablet_layout.dart';
 
@@ -14,7 +13,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     routes: [
       ShellRoute(
-        builder: (context, state, child) => TabletSplitShell(child: child),
+        builder: (context, state, child) => TabletSplitShell(
+          location: state.uri.toString(),
+          child: child,
+        ),
         routes: [
           GoRoute(
             path: '/',
@@ -190,24 +192,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-
-  void syncHistory() {
-    final config = router.routerDelegate.currentConfiguration;
-    ref.read(navigationHistoryProvider.notifier).onLocationChange(
-          normalizeLocation(config.uri.toString()),
-          config.extra,
-        );
-  }
-
-  router.routerDelegate.addListener(syncHistory);
-  router.routeInformationProvider.addListener(syncHistory);
-
-  Future.microtask(syncHistory);
-
-  ref.onDispose(() {
-    router.routerDelegate.removeListener(syncHistory);
-    router.routeInformationProvider.removeListener(syncHistory);
-  });
 
   return router;
 });

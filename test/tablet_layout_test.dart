@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:list_pilot/router/navigation_history.dart';
+import 'package:list_pilot/router/route_utils.dart';
 import 'package:list_pilot/router/tablet_layout.dart';
 
 void main() {
@@ -22,63 +22,37 @@ void main() {
     });
   });
 
-  group('NavigationHistoryNotifier', () {
-    late ProviderContainer container;
-
-    setUp(() {
-      container = ProviderContainer();
+  group('isTabletTopLevelDetailRoute', () {
+    test('returns false for root', () {
+      expect(isTabletTopLevelDetailRoute('/'), isFalse);
     });
 
-    tearDown(() {
-      container.dispose();
+    test('returns true for top-level feature routes', () {
+      expect(isTabletTopLevelDetailRoute('/stats'), isTrue);
+      expect(isTabletTopLevelDetailRoute('/meals'), isTrue);
+      expect(isTabletTopLevelDetailRoute('/meal-manager'), isTrue);
+      expect(isTabletTopLevelDetailRoute('/todo/1'), isTrue);
+      expect(isTabletTopLevelDetailRoute('/list/2'), isTrue);
     });
 
-    test('starts at home with no previous entry', () {
-      final state = container.read(navigationHistoryProvider);
-      expect(state.stack, hasLength(1));
-      expect(state.stack.first.location, '/');
-      expect(state.previous, isNull);
+    test('returns false for nested routes', () {
+      expect(isTabletTopLevelDetailRoute('/todo/1/task/2'), isFalse);
+      expect(isTabletTopLevelDetailRoute('/list/1/item/3'), isFalse);
+      expect(isTabletTopLevelDetailRoute('/meals/calendar'), isFalse);
+      expect(isTabletTopLevelDetailRoute('/meals/5'), isFalse);
+    });
+  });
+
+  group('isOverviewRouteSelected', () {
+    test('matches exact routes for catalog items', () {
+      expect(isOverviewRouteSelected('/meals', '/meals'), isTrue);
+      expect(isOverviewRouteSelected('/meals', '/meals/calendar'), isFalse);
     });
 
-    test('push adds entries and exposes previous', () {
-      final notifier = container.read(navigationHistoryProvider.notifier);
-      notifier.onLocationChange('/list/1', null);
-
-      final state = container.read(navigationHistoryProvider);
-      expect(state.stack, hasLength(2));
-      expect(state.previous?.location, '/');
-    });
-
-    test('pop removes the latest entry', () {
-      final notifier = container.read(navigationHistoryProvider.notifier);
-      notifier.onLocationChange('/list/1', null);
-      notifier.onLocationChange('/', null);
-
-      final state = container.read(navigationHistoryProvider);
-      expect(state.stack, hasLength(1));
-      expect(state.stack.first.location, '/');
-      expect(state.previous, isNull);
-    });
-
-    test('go to root resets the stack', () {
-      final notifier = container.read(navigationHistoryProvider.notifier);
-      notifier.onLocationChange('/list/1', null);
-      notifier.onLocationChange('/list/1/item/2', null);
-      notifier.onLocationChange('/', null);
-
-      final state = container.read(navigationHistoryProvider);
-      expect(state.stack, hasLength(1));
-      expect(state.stack.first.location, '/');
-    });
-
-    test('treats equivalent paths as the same location', () {
-      final notifier = container.read(navigationHistoryProvider.notifier);
-      notifier.onLocationChange('/list/1/', null);
-      notifier.onLocationChange('/list/1?tab=1', null);
-
-      final state = container.read(navigationHistoryProvider);
-      expect(state.stack, hasLength(2));
-      expect(state.stack.last.location, '/list/1');
+    test('matches prefix for list routes', () {
+      expect(isOverviewRouteSelected('/todo/1', '/todo/1'), isTrue);
+      expect(isOverviewRouteSelected('/todo/1', '/todo/1/task/2'), isTrue);
+      expect(isOverviewRouteSelected('/todo/1', '/todo/2'), isFalse);
     });
   });
 
@@ -158,19 +132,16 @@ void main() {
   group('TabletSplitShell', () {
     Widget buildShell({
       required Size size,
-      required NavigationHistoryState history,
+      required String location,
       required Widget child,
     }) {
       return ProviderScope(
-        overrides: [
-          navigationHistoryProvider.overrideWith(
-            () => _FixedNavigationHistory(history),
-          ),
-        ],
         child: MediaQuery(
           data: MediaQueryData(size: size),
           child: MaterialApp(
-            home: Scaffold(body: TabletSplitShell(child: child)),
+            home: Scaffold(
+              body: TabletSplitShell(location: location, child: child),
+            ),
           ),
         ),
       );
@@ -180,12 +151,7 @@ void main() {
       await tester.pumpWidget(
         buildShell(
           size: const Size(390, 844),
-          history: const NavigationHistoryState(
-            stack: [
-              NavigationEntry(location: '/'),
-              NavigationEntry(location: '/stats'),
-            ],
-          ),
+          location: '/stats',
           child: const Center(child: Text('Current pane')),
         ),
       );
@@ -193,52 +159,43 @@ void main() {
 
       expect(find.text('Current pane'), findsOneWidget);
       expect(find.byType(VerticalDivider), findsNothing);
+      expect(find.text('Select a list to get started'), findsNothing);
     });
 
-    testWidgets('shows split layout on tablet when previous route exists',
+    testWidgets('shows sidebar and placeholder on tablet at root',
         (tester) async {
       await tester.pumpWidget(
         buildShell(
           size: const Size(800, 600),
-          history: const NavigationHistoryState(
-            stack: [
-              NavigationEntry(location: '/'),
-              NavigationEntry(location: '/stats'),
-            ],
-          ),
+          location: '/',
+          child: const Center(child: Text('Root child')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('List Pilot'), findsOneWidget);
+      expect(find.text('Select a list to get started'), findsOneWidget);
+      expect(find.text('Root child'), findsNothing);
+      expect(find.byType(VerticalDivider), findsOneWidget);
+    });
+
+    testWidgets('shows sidebar and detail pane on tablet for detail routes',
+        (tester) async {
+      await tester.pumpWidget(
+        buildShell(
+          size: const Size(800, 600),
+          location: '/stats',
           child: const Center(child: Text('Current pane')),
         ),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(seconds: 1));
 
+      expect(find.text('List Pilot'), findsOneWidget);
       expect(find.text('Current pane'), findsOneWidget);
+      expect(find.text('Select a list to get started'), findsNothing);
       expect(find.byType(VerticalDivider), findsOneWidget);
     });
-
-    testWidgets('shows single column on tablet at root', (tester) async {
-      await tester.pumpWidget(
-        buildShell(
-          size: const Size(800, 600),
-          history: const NavigationHistoryState(
-            stack: [NavigationEntry(location: '/')],
-          ),
-          child: const Center(child: Text('Current pane')),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Current pane'), findsOneWidget);
-      expect(find.byType(VerticalDivider), findsNothing);
-    });
   });
-}
-
-class _FixedNavigationHistory extends NavigationHistoryNotifier {
-  _FixedNavigationHistory(this.initial);
-
-  final NavigationHistoryState initial;
-
-  @override
-  NavigationHistoryState build() => initial;
 }

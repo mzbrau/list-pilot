@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'route_utils.dart';
+import 'tablet_layout.dart';
+
 bool _canPop(BuildContext context) {
   final router = GoRouter.maybeOf(context);
   if (router != null) {
@@ -25,7 +28,14 @@ void popOrGoHome(BuildContext context) {
   }
 }
 
-Widget overviewBackButton(BuildContext context) {
+Widget? overviewBackButton(BuildContext context) {
+  if (isTabletLayout(context)) {
+    final location = GoRouterState.of(context).uri.toString();
+    if (isTabletTopLevelDetailRoute(location)) {
+      return null;
+    }
+  }
+
   return IconButton(
     icon: const BackButtonIcon(),
     onPressed: () => popOrGoHome(context),
