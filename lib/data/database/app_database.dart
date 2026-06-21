@@ -32,6 +32,10 @@ part 'app_database.g.dart';
   TakeAwayMenuItems,
   TakeAwayOrders,
   TakeAwayOrderLines,
+  ReceiptLists,
+  Receipts,
+  ReceiptLines,
+  ReceiptAiInsightRuns,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -39,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +86,12 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(mealIngredients, mealIngredients.quantityUnit);
             await m.addColumn(mealPlanItems, mealPlanItems.scaleFactor);
             await _backfillMealIngredientQuantities(m.database);
+          }
+          if (from < 8) {
+            await m.createTable(receiptLists);
+            await m.createTable(receipts);
+            await m.createTable(receiptLines);
+            await m.createTable(receiptAiInsightRuns);
           }
         },
         beforeOpen: (details) async {
@@ -588,6 +598,95 @@ class AppDatabase extends _$AppDatabase {
     ).getSingle();
     return count.read<int>('c');
   }
+
+  Stream<List<ReceiptList>> watchAllReceiptLists() {
+    return (select(receiptLists)
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .watch();
+  }
+
+  Future<ReceiptList?> getReceiptListById(int id) {
+    return (select(receiptLists)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Stream<List<Receipt>> watchReceiptsForList(int listId) {
+    return (select(receipts)
+          ..where((t) => t.listId.equals(listId))
+          ..orderBy([(t) => OrderingTerm.desc(t.purchasedAt)]))
+        .watch();
+  }
+
+  Future<Receipt?> getReceiptById(int id) {
+    return (select(receipts)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Stream<Receipt?> watchReceiptById(int id) {
+    return (select(receipts)..where((t) => t.id.equals(id)))
+        .watchSingleOrNull();
+  }
+
+  Stream<List<ReceiptLine>> watchLinesForReceipt(int receiptId) {
+    return (select(receiptLines)
+          ..where((t) => t.receiptId.equals(receiptId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .watch();
+  }
+
+  Future<List<ReceiptLine>> getLinesForReceipt(int receiptId) {
+    return (select(receiptLines)
+          ..where((t) => t.receiptId.equals(receiptId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+  }
+
+  Future<Receipt?> findDuplicateReceipt({
+    required int listId,
+    required DateTime purchasedAt,
+    String? receiptNumber,
+  }) async {
+    final dayStart = DateTime(
+      purchasedAt.year,
+      purchasedAt.month,
+      purchasedAt.day,
+    );
+    final dayEnd = dayStart.add(const Duration(days: 1));
+    final query = select(receipts)
+      ..where(
+        (t) =>
+            t.listId.equals(listId) &
+            t.purchasedAt.isBiggerOrEqualValue(dayStart) &
+            t.purchasedAt.isSmallerThanValue(dayEnd),
+      );
+    if (receiptNumber != null && receiptNumber.isNotEmpty) {
+      query.where((t) => t.receiptNumber.equals(receiptNumber));
+    }
+    return query.getSingleOrNull();
+  }
+
+  Future<List<ReceiptLineWithReceipt>> getLinesForList(int listId) async {
+    final query = select(receiptLines).join([
+      innerJoin(receipts, receipts.id.equalsExp(receiptLines.receiptId)),
+    ])
+      ..where(receipts.listId.equals(listId));
+    final rows = await query.get();
+    return rows
+        .map(
+          (row) => ReceiptLineWithReceipt(
+            line: row.readTable(receiptLines),
+            receipt: row.readTable(receipts),
+          ),
+        )
+        .toList();
+  }
+
+  Stream<ReceiptAiInsightRun?> watchLatestAiInsight(int listId) {
+    return (select(receiptAiInsightRuns)
+          ..where((t) => t.listId.equals(listId))
+          ..orderBy([(t) => OrderingTerm.desc(t.generatedAt)])
+          ..limit(1))
+        .watchSingleOrNull();
+  }
 }
 
 Future<void> _backfillMealIngredientQuantities(GeneratedDatabase db) async {
@@ -642,4 +741,11 @@ class TakeAwayOrderWithLines {
 
   final TakeAwayOrder order;
   final List<TakeAwayOrderLineWithItem> lines;
+}
+
+class ReceiptLineWithReceipt {
+  const ReceiptLineWithReceipt({required this.line, required this.receipt});
+
+  final ReceiptLine line;
+  final Receipt receipt;
 }

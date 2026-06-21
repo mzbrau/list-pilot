@@ -233,3 +233,46 @@ class TakeAwayOrderLines extends Table {
       integer().references(TakeAwayMenuItems, #id)();
   IntColumn get quantity => integer().withDefault(const Constant(1))();
 }
+
+class ReceiptLists extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+class Receipts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listId => integer().references(ReceiptLists, #id)();
+  TextColumn get shopName => text()();
+  DateTimeColumn get purchasedAt => dateTime()();
+  RealColumn get totalAmount => real()();
+  TextColumn get receiptNumber => text().nullable()();
+  TextColumn get pdfFileName => text()();
+  TextColumn get currency =>
+      text().withDefault(const Constant('SEK'))();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+class ReceiptLines extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get receiptId => integer().references(Receipts, #id)();
+  TextColumn get originalDescription => text()();
+  TextColumn get englishName => text()();
+  IntColumn get catalogItemId =>
+      integer().nullable().references(CatalogItems, #id)();
+  TextColumn get categoryId => text().references(Categories, #id)();
+  TextColumn get articleNumber => text().nullable()();
+  RealColumn get unitPrice => real().nullable()();
+  RealColumn get quantity => real().nullable()();
+  TextColumn get quantityUnit => text().nullable()();
+  RealColumn get lineTotal => real()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+class ReceiptAiInsightRuns extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listId => integer().references(ReceiptLists, #id)();
+  DateTimeColumn get generatedAt => dateTime()();
+  TextColumn get content => text()();
+}

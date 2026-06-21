@@ -18,6 +18,9 @@ import '../features/take_away/take_away_list_screen.dart';
 import '../features/take_away/take_away_menu_import_screen.dart';
 import '../features/take_away/take_away_menu_screen.dart';
 import '../features/take_away/take_away_order_plan_screen.dart';
+import '../features/receipts/receipts_list_screen.dart';
+import '../features/receipts/receipt_detail_screen.dart';
+import '../features/receipts/receipt_insights_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -170,6 +173,32 @@ final routerProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/receipts/:id',
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return ReceiptsListScreen(listId: id);
+        },
+        routes: [
+          GoRoute(
+            path: 'insights',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final listId = int.parse(state.pathParameters['id']!);
+              return ReceiptInsightsScreen(listId: listId);
+            },
+          ),
+          GoRoute(
+            path: 'receipt/:receiptId',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final listId = int.parse(state.pathParameters['id']!);
+              final receiptId = int.parse(state.pathParameters['receiptId']!);
+              return ReceiptDetailScreen(listId: listId, receiptId: receiptId);
+            },
           ),
         ],
       ),

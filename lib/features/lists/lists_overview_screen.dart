@@ -152,6 +152,12 @@ class ListsOverviewScreen extends ConsumerWidget {
               subtitle: const Text('Restaurant menus and order plans'),
               onTap: () => Navigator.pop(context, ListCreateType.takeAway),
             ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Receipts list'),
+              subtitle: const Text('Import and track grocery receipts'),
+              onTap: () => Navigator.pop(context, ListCreateType.receipts),
+            ),
           ],
         ),
       ),
@@ -167,9 +173,12 @@ class ListsOverviewScreen extends ConsumerWidget {
     } else if (type == ListCreateType.todo) {
       final id = await ref.read(todoRepositoryProvider).createList(name);
       if (context.mounted) context.push('/todo/$id');
-    } else {
+    } else if (type == ListCreateType.takeAway) {
       final id = await ref.read(takeAwayRepositoryProvider).createList(name);
       if (context.mounted) context.push('/take-away/$id');
+    } else {
+      final id = await ref.read(receiptRepositoryProvider).createList(name);
+      if (context.mounted) context.push('/receipts/$id');
     }
   }
 
@@ -962,16 +971,21 @@ class _ListCard extends ConsumerWidget {
     final dateFormat = DateFormat.MMMd().add_jm();
     final isShopping = entry is ShoppingListEntry;
     final isTakeAway = entry is TakeAwayListEntry;
+    final isReceipts = entry is ReceiptListEntry;
     final route = isShopping
         ? '/list/${entry.id}'
         : isTakeAway
             ? '/take-away/${entry.id}'
-            : '/todo/${entry.id}';
+            : isReceipts
+                ? '/receipts/${entry.id}'
+                : '/todo/${entry.id}';
     final icon = isShopping
         ? Icons.store_outlined
         : isTakeAway
             ? Icons.restaurant_outlined
-            : Icons.checklist_outlined;
+            : isReceipts
+                ? Icons.receipt_long_outlined
+                : Icons.checklist_outlined;
     final theme = Theme.of(context);
 
     return _OverviewListCard(
@@ -1020,6 +1034,8 @@ class _ListCard extends ConsumerWidget {
           await ref.read(listRepositoryProvider).renameList(entry.id, name);
         } else if (entry is TakeAwayListEntry) {
           await ref.read(takeAwayRepositoryProvider).renameList(entry.id, name);
+        } else if (entry is ReceiptListEntry) {
+          await ref.read(receiptRepositoryProvider).renameList(entry.id, name);
         } else {
           await ref.read(todoRepositoryProvider).renameList(entry.id, name);
         }
@@ -1047,6 +1063,8 @@ class _ListCard extends ConsumerWidget {
           await ref.read(listRepositoryProvider).deleteList(entry.id);
         } else if (entry is TakeAwayListEntry) {
           await ref.read(takeAwayRepositoryProvider).deleteList(entry.id);
+        } else if (entry is ReceiptListEntry) {
+          await ref.read(receiptRepositoryProvider).deleteList(entry.id);
         } else {
           await ref.read(todoRepositoryProvider).deleteList(entry.id);
         }

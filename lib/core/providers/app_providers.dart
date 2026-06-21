@@ -15,6 +15,7 @@ import '../../data/repositories/meal_repository.dart';
 import '../../data/repositories/shop_stats_repository.dart';
 import '../../data/repositories/todo_repository.dart';
 import '../../data/repositories/take_away_repository.dart';
+import '../../data/repositories/receipt_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
 import '../../data/services/ingredient_catalog_matcher.dart';
@@ -22,6 +23,11 @@ import '../../data/services/ingredient_parser_service.dart';
 import '../../data/services/meal_export_service.dart';
 import '../../data/services/meal_import_service.dart';
 import '../../data/services/menu_import_service.dart';
+import '../../data/services/receipt_ai_insights_service.dart';
+import '../../data/services/receipt_import_service.dart';
+import '../../data/services/receipt_insights_service.dart';
+import '../../data/services/receipt_pdf_service.dart';
+import '../../data/services/receipt_share_service.dart';
 import '../../data/services/openai_models_service.dart';
 import '../../data/services/meal_photo_service.dart';
 import '../../data/services/recipe_page_import_service.dart';
@@ -77,6 +83,39 @@ final menuImportServiceProvider = Provider<MenuImportService>((ref) {
 
 final takeAwayRepositoryProvider = Provider<TakeAwayRepository>((ref) {
   return TakeAwayRepository(ref.watch(databaseProvider));
+});
+
+final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
+  return ReceiptRepository(ref.watch(databaseProvider));
+});
+
+final receiptPdfServiceProvider = Provider<ReceiptPdfService>((ref) {
+  return ReceiptPdfService();
+});
+
+final receiptItemEnrichmentServiceProvider =
+    Provider<ReceiptItemEnrichmentService>((ref) {
+  return ReceiptItemEnrichmentService(
+    aiConfig: ref.watch(aiConfigProvider),
+    catalogRepository: ref.watch(catalogRepositoryProvider),
+    matcher: ref.watch(ingredientCatalogMatcherProvider),
+  );
+});
+
+final receiptImportServiceProvider = Provider<ReceiptImportService>((ref) {
+  return ReceiptImportService(
+    repository: ref.watch(receiptRepositoryProvider),
+    pdfService: ref.watch(receiptPdfServiceProvider),
+    enrichmentService: ref.watch(receiptItemEnrichmentServiceProvider),
+  );
+});
+
+final receiptInsightsServiceProvider = Provider<ReceiptInsightsService>((ref) {
+  return ReceiptInsightsService();
+});
+
+final receiptAiInsightsServiceProvider = Provider<ReceiptAiInsightsService>((ref) {
+  return ReceiptAiInsightsService(aiConfig: ref.watch(aiConfigProvider));
 });
 
 final learningRepositoryProvider = Provider<LearningRepository>((ref) {
@@ -176,15 +215,22 @@ final takeAwayListsProvider = StreamProvider<List<TakeAwayList>>((ref) {
   return ref.watch(takeAwayRepositoryProvider).watchAllLists();
 });
 
+final receiptListsProvider = StreamProvider<List<ReceiptList>>((ref) {
+  ref.watch(appInitProvider);
+  return ref.watch(receiptRepositoryProvider).watchAllLists();
+});
+
 final overviewListsProvider =
     Provider<AsyncValue<List<OverviewListEntry>>>((ref) {
   final shoppingAsync = ref.watch(shoppingListsProvider);
   final todosAsync = ref.watch(todoListsProvider);
   final takeAwayAsync = ref.watch(takeAwayListsProvider);
+  final receiptsAsync = ref.watch(receiptListsProvider);
 
   if (shoppingAsync.isLoading ||
       todosAsync.isLoading ||
-      takeAwayAsync.isLoading) {
+      takeAwayAsync.isLoading ||
+      receiptsAsync.isLoading) {
     return const AsyncValue.loading();
   }
   if (shoppingAsync.hasError) {
@@ -196,11 +242,15 @@ final overviewListsProvider =
   if (takeAwayAsync.hasError) {
     return AsyncValue.error(takeAwayAsync.error!, takeAwayAsync.stackTrace!);
   }
+  if (receiptsAsync.hasError) {
+    return AsyncValue.error(receiptsAsync.error!, receiptsAsync.stackTrace!);
+  }
 
   final merged = <OverviewListEntry>[
     ...shoppingAsync.value!.map(ShoppingListEntry.new),
     ...todosAsync.value!.map(TodoListEntry.new),
     ...takeAwayAsync.value!.map(TakeAwayListEntry.new),
+    ...receiptsAsync.value!.map(ReceiptListEntry.new),
   ]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
   return AsyncValue.data(merged);
@@ -349,6 +399,50 @@ final takeAwayOrderProvider =
     StreamProvider.family<TakeAwayOrderWithLines?, int>((ref, menuId) {
   ref.watch(appInitProvider);
   return ref.watch(takeAwayRepositoryProvider).watchOrderWithLines(menuId);
+});
+
+final receiptListProvider = StreamProvider.family<ReceiptList?, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  final db = ref.watch(databaseProvider);
+  return (db.select(db.receiptLists)..where((t) => t.id.equals(listId)))
+      .watch()
+      .map((rows) => rows.isEmpty ? null : rows.first);
+});
+
+final receiptsForListProvider =
+    StreamProvider.family<List<Receipt>, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  return ref.watch(receiptRepositoryProvider).watchReceiptsForList(listId);
+});
+
+final receiptProvider = StreamProvider.family<Receipt?, int>((ref, receiptId) {
+  ref.watch(appInitProvider);
+  return ref.watch(receiptRepositoryProvider).watchReceiptById(receiptId);
+});
+
+final receiptLinesProvider =
+    StreamProvider.family<List<ReceiptLine>, int>((ref, receiptId) {
+  ref.watch(appInitProvider);
+  return ref.watch(receiptRepositoryProvider).watchLinesForReceipt(receiptId);
+});
+
+final receiptAiInsightProvider =
+    StreamProvider.family<ReceiptAiInsightRun?, int>((ref, listId) {
+  ref.watch(appInitProvider);
+  return ref.watch(receiptRepositoryProvider).watchLatestAiInsight(listId);
+});
+
+final receiptInsightsSnapshotProvider =
+    FutureProvider.family<ReceiptInsightsSnapshot, int>((ref, listId) async {
+  ref.watch(appInitProvider);
+  ref.watch(receiptsForListProvider(listId));
+  final receipts =
+      await ref.watch(receiptRepositoryProvider).watchReceiptsForList(listId).first;
+  final lines = await ref.watch(receiptRepositoryProvider).getLinesForList(listId);
+  return ref.watch(receiptInsightsServiceProvider).build(
+        receipts: receipts,
+        lines: lines,
+      );
 });
 
 final categoryRankStatsProvider =
