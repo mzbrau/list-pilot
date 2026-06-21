@@ -203,6 +203,27 @@ void main() {
     expect(html, contains('fallback'));
   });
 
+  test('RecipePageFetcher falls back to WebView when HTTP parse fails', () async {
+    var webViewCalls = 0;
+    final uri = Uri.parse('https://www.delish.com/cooking/recipe-ideas/a53823/easy-pad-thai-recipe');
+    final fetcher = RecipePageFetcher(
+      httpGet: (url, {headers}) async {
+        throw http.ClientException(
+          'Failed to parse HTTP, 115 does not match 13',
+          uri,
+        );
+      },
+      webViewFetcher: (url) async {
+        webViewCalls++;
+        return '<html><body>fallback</body></html>';
+      },
+    );
+
+    final html = await fetcher.fetchHtml(uri);
+    expect(webViewCalls, 1);
+    expect(html, contains('fallback'));
+  });
+
   test('buildImportSystemPrompt includes target language', () {
     final prompt = buildImportSystemPrompt(languageLabel: 'French');
     expect(prompt, contains('in French'));

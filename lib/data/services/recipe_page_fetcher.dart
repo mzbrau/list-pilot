@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -51,6 +52,35 @@ class RecipePageFetcher {
   final WebViewHtmlFetcher _webViewFetcher;
 
   Future<String> fetchHtml(Uri url) async {
+    if (kIsWeb) {
+      try {
+        return await _fetchHtmlViaHttpOnly(url);
+      } on http.ClientException {
+        throw const RecipePageFetchException(
+          'Failed to fetch page. This site may use HTTP features '
+          'unsupported in the browser — try the mobile or desktop app.',
+        );
+      } on HttpException catch (e) {
+        throw RecipePageFetchException('Failed to fetch page: ${e.message}');
+      } on SocketException catch (e) {
+        throw RecipePageFetchException('Failed to fetch page: ${e.message}');
+      }
+    }
+
+    try {
+      return await _fetchHtmlViaHttpOnly(url);
+    } on http.ClientException {
+      return _webViewFetcher(url);
+    } on HttpException {
+      return _webViewFetcher(url);
+    } on SocketException {
+      return _webViewFetcher(url);
+    } on RecipePageFetchException {
+      return _webViewFetcher(url);
+    }
+  }
+
+  Future<String> _fetchHtmlViaHttpOnly(Uri url) async {
     final response = await _httpGet(
       url,
       headers: recipePageFetchHeaders(url),
@@ -67,7 +97,7 @@ class RecipePageFetcher {
       );
     }
 
-    return _webViewFetcher(url);
+    throw RecipePageFetchException('HTTP ${response.statusCode}');
   }
 
   static Future<String> _fetchHtmlViaWebView(Uri url) async {
