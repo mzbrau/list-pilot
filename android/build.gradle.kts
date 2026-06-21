@@ -31,13 +31,16 @@ subprojects {
         }
     }
 
-    // Plugins such as file_saver set compileOptions to 1.8 in their own build.gradle
-    // after the android.library plugin is applied. Register Java overrides in
-    // afterEvaluate so they run after AGP configures JavaCompile tasks.
-    val enforceJavaJvm17: () -> Unit = {
-        extensions.findByType<LibraryExtension>()?.compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+    // Plugins such as file_picker and file_saver set compileSdk/compileOptions in their
+    // own build.gradle after the android.library plugin is applied. Register overrides
+    // in afterEvaluate so they run after AGP configures library modules.
+    val enforceAndroidLibraryCompatibility: () -> Unit = {
+        extensions.findByType<LibraryExtension>()?.apply {
+            compileSdk = 36
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
         }
         tasks.withType<JavaCompile>().configureEach {
             sourceCompatibility = JavaVersion.VERSION_17.toString()
@@ -45,9 +48,9 @@ subprojects {
         }
     }
     if (state.executed) {
-        enforceJavaJvm17()
+        enforceAndroidLibraryCompatibility()
     } else {
-        afterEvaluate { enforceJavaJvm17() }
+        afterEvaluate { enforceAndroidLibraryCompatibility() }
     }
 }
 
