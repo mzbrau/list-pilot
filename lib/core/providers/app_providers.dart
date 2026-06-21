@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/models/overview_display_item.dart';
 import '../../core/models/overview_list_entry.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/catalog_repository.dart';
@@ -15,6 +16,7 @@ import '../../data/repositories/meal_repository.dart';
 import '../../data/repositories/shop_stats_repository.dart';
 import '../../data/repositories/todo_repository.dart';
 import '../../data/repositories/take_away_repository.dart';
+import '../../data/repositories/overview_order_repository.dart';
 import '../../data/repositories/receipt_repository.dart';
 import '../../data/seed/database_seeder.dart';
 import '../../data/services/catalog_export_service.dart';
@@ -34,6 +36,7 @@ import '../../data/services/recipe_page_import_service.dart';
 import '../../data/services/todo_maintenance_service.dart';
 import '../../data/services/todo_notification_service.dart';
 import '../../router/app_router.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -87,6 +90,10 @@ final takeAwayRepositoryProvider = Provider<TakeAwayRepository>((ref) {
 
 final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
   return ReceiptRepository(ref.watch(databaseProvider));
+});
+
+final overviewOrderRepositoryProvider = Provider<OverviewOrderRepository>((ref) {
+  return OverviewOrderRepository(ref.watch(databaseProvider));
 });
 
 final receiptPdfServiceProvider = Provider<ReceiptPdfService>((ref) {
@@ -254,6 +261,42 @@ final overviewListsProvider =
   ]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
   return AsyncValue.data(merged);
+});
+
+final overviewOrderMapProvider = StreamProvider<Map<String, int>>((ref) {
+  ref.watch(appInitProvider);
+  return ref.watch(overviewOrderRepositoryProvider).watchOrderMap();
+});
+
+final overviewDisplayItemsProvider =
+    Provider<AsyncValue<List<OverviewDisplayItem>>>((ref) {
+  final listsAsync = ref.watch(overviewListsProvider);
+  final orderMapAsync = ref.watch(overviewOrderMapProvider);
+  final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);
+  final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
+  final dateFormat = DateFormat.MMMd().add_jm();
+
+  if (listsAsync.isLoading || orderMapAsync.isLoading) {
+    return const AsyncValue.loading();
+  }
+  if (listsAsync.hasError) {
+    return AsyncValue.error(listsAsync.error!, listsAsync.stackTrace!);
+  }
+  if (orderMapAsync.hasError) {
+    return AsyncValue.error(orderMapAsync.error!, orderMapAsync.stackTrace!);
+  }
+
+  final items = buildOverviewDisplayItems(
+    mealManagerEnabled: mealManagerEnabled,
+    mealPlanningEnabled: mealPlanningEnabled,
+    userLists: listsAsync.value!,
+    subtitleForEntry: (entry) =>
+        'Updated ${dateFormat.format(entry.updatedAt)}',
+  );
+
+  return AsyncValue.data(
+    sortOverviewDisplayItems(items, orderMapAsync.value ?? {}),
+  );
 });
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) async {

@@ -5,37 +5,15 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../../../core/widgets/drag_handle_utils.dart';
 import '../../../data/database/app_database.dart';
 
 Size _feedbackSizeForHandle(BuildContext context, double tileWidth) {
-  RenderBox? box = context.findRenderObject() as RenderBox?;
-  while (box != null) {
-    final parent = box.parent;
-    if (parent is RenderBox &&
-        parent.hasSize &&
-        parent.size.width >= tileWidth - 2) {
-      return Size(tileWidth, parent.size.height);
-    }
-    box = parent is RenderBox ? parent : null;
-  }
-  return Size(tileWidth, kMinInteractiveDimension);
+  return feedbackSizeForHandle(context, tileWidth);
 }
 
-/// Positions the drag preview so the grab handle stays under the pointer and
-/// the rest of the tile extends to the left.
 DragAnchorStrategy _todoHandleDragAnchorStrategy(double tileWidth) {
-  return (Draggable<Object> draggable, BuildContext context, Offset position) {
-    final handleBox = context.findRenderObject()! as RenderBox;
-    final touchOnHandle = handleBox.globalToLocal(position);
-    final feedbackSize = _feedbackSizeForHandle(context, tileWidth);
-
-    final anchorX =
-        feedbackSize.width - handleBox.size.width + touchOnHandle.dx;
-    final anchorY =
-        (feedbackSize.height - handleBox.size.height) / 2 + touchOnHandle.dy;
-
-    return Offset(anchorX, anchorY);
-  };
+  return handleDragAnchorStrategy(tileWidth);
 }
 
 class TodoTaskTile extends ConsumerWidget {

@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
+import '../../core/models/overview_display_item.dart';
 import '../../core/models/overview_list_entry.dart';
 import '../../core/providers/app_providers.dart';
+import '../../core/widgets/drag_handle_utils.dart';
 import '../../data/database/app_database.dart';
 import '../../data/services/openai_models_service.dart';
+import 'widgets/reorderable_overview_list.dart';
 
-class ListsOverviewScreen extends ConsumerWidget {
+class ListsOverviewScreen extends ConsumerStatefulWidget {
   const ListsOverviewScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ListsOverviewScreen> createState() =>
+      _ListsOverviewScreenState();
+}
+
+class _ListsOverviewScreenState extends ConsumerState<ListsOverviewScreen> {
+  bool _isEditing = false;
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen<AsyncValue<List<ShoppingList>>>(shoppingListsProvider, (_, next) {
       final lists = next.valueOrNull;
       final defaultId = ref.read(defaultShoppingListIdProvider);
@@ -23,28 +34,20 @@ class ListsOverviewScreen extends ConsumerWidget {
       }
     });
 
-    final listsAsync = ref.watch(overviewListsProvider);
+    final itemsAsync = ref.watch(overviewDisplayItemsProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
-    final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);
-    final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
     final theme = Theme.of(context);
+    final hasUserLists = itemsAsync.valueOrNull?.any((item) => item is UserListDisplayItem) ?? false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('List Pilot'),
         actions: [
-          if (mealManagerEnabled)
-            IconButton(
-              icon: const Icon(Icons.menu_book_outlined),
-              tooltip: 'Meal Manager',
-              onPressed: () => context.push('/meal-manager'),
-            ),
-          if (mealPlanningEnabled)
-            IconButton(
-              icon: const Icon(Icons.restaurant_menu_outlined),
-              tooltip: 'Meal Planning',
-              onPressed: () => context.push('/meals'),
-            ),
+          IconButton(
+            icon: Icon(_isEditing ? Icons.check : Icons.edit_outlined),
+            tooltip: _isEditing ? 'Done' : 'Edit',
+            onPressed: () => setState(() => _isEditing = !_isEditing),
+          ),
           if (shopStatsEnabled)
             IconButton(
               icon: const Icon(Icons.bar_chart_outlined),
@@ -58,63 +61,63 @@ class ListsOverviewScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: listsAsync.when(
+      body: itemsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (lists) {
-          if (lists.isEmpty) {
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _MealFeatureCards(
-                  mealManagerEnabled: mealManagerEnabled,
-                  mealPlanningEnabled: mealPlanningEnabled,
-                ),
-                const SizedBox(height: 24),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.shopping_cart_outlined,
-                          size: 64,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+        data: (items) {
+          return ReorderableOverviewList(
+            items: items,
+            isEditing: _isEditing,
+            footer: hasUserLists
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 64,
+                              color:
+                                  theme.colorScheme.primary.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No lists yet',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Create a shopping list or todo list to get started',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No lists yet',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Create a shopping list or todo list to get started',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: lists.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _MealFeatureCards(
-                  mealManagerEnabled: mealManagerEnabled,
-                  mealPlanningEnabled: mealPlanningEnabled,
-                );
-              }
-              final list = lists[index - 1];
-              return _ListCard(entry: list);
+            itemBuilder: (
+              OverviewDisplayItem item, {
+              required bool isDragging,
+              required VoidCallback onDragEnded,
+              required VoidCallback onDragStarted,
+            }) {
+              return _OverviewListCard(
+                item: item,
+                isEditing: _isEditing,
+                isDragging: isDragging,
+                onDragStarted: onDragStarted,
+                onDragEnded: onDragEnded,
+                onLongPress: item is UserListDisplayItem && !_isEditing
+                    ? () => _showListOptions(context, ref, item.entry)
+                    : null,
+              );
             },
           );
         },
@@ -841,72 +844,43 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   }
 }
 
-class _MealFeatureCards extends StatelessWidget {
-  const _MealFeatureCards({
-    required this.mealManagerEnabled,
-    required this.mealPlanningEnabled,
-  });
-
-  final bool mealManagerEnabled;
-  final bool mealPlanningEnabled;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!mealManagerEnabled && !mealPlanningEnabled) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (mealManagerEnabled)
-          _OverviewListCard(
-            icon: Icons.menu_book_outlined,
-            avatarBackgroundColor:
-                Theme.of(context).colorScheme.tertiaryContainer,
-            avatarForegroundColor:
-                Theme.of(context).colorScheme.onTertiaryContainer,
-            title: 'Meal Manager',
-            subtitle: 'Create and browse your recipes',
-            onTap: () => context.push('/meal-manager'),
-          ),
-        if (mealPlanningEnabled)
-          _OverviewListCard(
-            icon: Icons.restaurant_menu_outlined,
-            avatarBackgroundColor:
-                Theme.of(context).colorScheme.secondaryContainer,
-            avatarForegroundColor:
-                Theme.of(context).colorScheme.onSecondaryContainer,
-            title: 'Meal Planning',
-            subtitle: 'Plan your week and fill your shopping list',
-            onTap: () => context.push('/meals'),
-          ),
-      ],
-    );
-  }
-}
-
 class _OverviewListCard extends StatelessWidget {
   const _OverviewListCard({
-    required this.icon,
-    required this.avatarBackgroundColor,
-    required this.avatarForegroundColor,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
+    required this.item,
+    this.isEditing = false,
+    this.isDragging = false,
+    this.onDragStarted,
+    this.onDragEnded,
     this.onLongPress,
   });
 
-  final IconData icon;
-  final Color avatarBackgroundColor;
-  final Color avatarForegroundColor;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+  final OverviewDisplayItem item;
+  final bool isEditing;
+  final bool isDragging;
+  final VoidCallback? onDragStarted;
+  final VoidCallback? onDragEnded;
   final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth;
+        final card = _buildCard(context, cardWidth: cardWidth);
+
+        return Opacity(
+          opacity: isDragging ? 0 : 1,
+          child: card,
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required double cardWidth,
+    bool forFeedback = false,
+  }) {
     final theme = Theme.of(context);
 
     return Card(
@@ -914,18 +888,18 @@ class _OverviewListCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        onLongPress: onLongPress,
+        onTap: isEditing && !forFeedback ? null : () => context.push(item.route),
+        onLongPress: isEditing && !forFeedback ? null : onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: avatarBackgroundColor,
+                backgroundColor: item.avatarBackgroundColor(context),
                 child: Icon(
-                  icon,
-                  color: avatarForegroundColor,
+                  item.icon,
+                  color: item.avatarForegroundColor(context),
                 ),
               ),
               const SizedBox(width: 16),
@@ -934,14 +908,14 @@ class _OverviewListCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      item.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      subtitle,
+                      item.subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -949,9 +923,10 @@ class _OverviewListCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
+              _buildTrailing(
+                context,
+                cardWidth: cardWidth,
+                forFeedback: forFeedback,
               ),
             ],
           ),
@@ -959,47 +934,65 @@ class _OverviewListCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class _ListCard extends ConsumerWidget {
-  const _ListCard({required this.entry});
-
-  final OverviewListEntry entry;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dateFormat = DateFormat.MMMd().add_jm();
-    final isShopping = entry is ShoppingListEntry;
-    final isTakeAway = entry is TakeAwayListEntry;
-    final isReceipts = entry is ReceiptListEntry;
-    final route = isShopping
-        ? '/list/${entry.id}'
-        : isTakeAway
-            ? '/take-away/${entry.id}'
-            : isReceipts
-                ? '/receipts/${entry.id}'
-                : '/todo/${entry.id}';
-    final icon = isShopping
-        ? Icons.store_outlined
-        : isTakeAway
-            ? Icons.restaurant_outlined
-            : isReceipts
-                ? Icons.receipt_long_outlined
-                : Icons.checklist_outlined;
+  Widget _buildTrailing(
+    BuildContext context, {
+    required double cardWidth,
+    bool forFeedback = false,
+  }) {
     final theme = Theme.of(context);
 
-    return _OverviewListCard(
-      icon: icon,
-      avatarBackgroundColor: theme.colorScheme.primaryContainer,
-      avatarForegroundColor: theme.colorScheme.onPrimaryContainer,
-      title: entry.name,
-      subtitle: 'Updated ${dateFormat.format(entry.updatedAt)}',
-      onTap: () => context.push(route),
-      onLongPress: () => _showListOptions(context, ref),
+    if (!isEditing) {
+      return Icon(
+        Icons.chevron_right,
+        color: theme.colorScheme.onSurfaceVariant,
+      );
+    }
+
+    final handle = forFeedback
+        ? const Icon(Icons.drag_handle, size: 20)
+        : const MouseRegion(
+            cursor: SystemMouseCursors.grab,
+            child: Icon(Icons.drag_handle, size: 20),
+          );
+
+    if (forFeedback) {
+      return handle;
+    }
+
+    return Draggable<OverviewDisplayItem>(
+      data: item,
+      dragAnchorStrategy: handleDragAnchorStrategy(cardWidth),
+      onDragStarted: () {
+        HapticFeedback.lightImpact();
+        onDragStarted?.call();
+      },
+      onDragEnd: (_) => onDragEnded?.call(),
+      feedback: _buildDragFeedback(context, cardWidth),
+      childWhenDragging: const SizedBox(width: 20, height: 20),
+      child: handle,
     );
   }
 
-  Future<void> _showListOptions(BuildContext context, WidgetRef ref) async {
+  Widget _buildDragFeedback(BuildContext context, double cardWidth) {
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: cardWidth,
+        child: IgnorePointer(
+          child: _buildCard(context, cardWidth: cardWidth, forFeedback: true),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _showListOptions(
+  BuildContext context,
+  WidgetRef ref,
+  OverviewListEntry entry,
+) async {
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
@@ -1070,7 +1063,6 @@ class _ListCard extends ConsumerWidget {
         }
       }
     }
-  }
 }
 
 class _AiSummaryRow extends StatelessWidget {

@@ -9629,6 +9629,201 @@ class ReceiptAiInsightRunsCompanion
   }
 }
 
+class $OverviewOrderEntriesTable extends OverviewOrderEntries
+    with TableInfo<$OverviewOrderEntriesTable, OverviewOrderEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OverviewOrderEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _itemKeyMeta =
+      const VerificationMeta('itemKey');
+  @override
+  late final GeneratedColumn<String> itemKey = GeneratedColumn<String>(
+      'item_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [itemKey, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'overview_order_entries';
+  @override
+  VerificationContext validateIntegrity(Insertable<OverviewOrderEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('item_key')) {
+      context.handle(_itemKeyMeta,
+          itemKey.isAcceptableOrUnknown(data['item_key']!, _itemKeyMeta));
+    } else if (isInserting) {
+      context.missing(_itemKeyMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {itemKey};
+  @override
+  OverviewOrderEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OverviewOrderEntry(
+      itemKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_key'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+    );
+  }
+
+  @override
+  $OverviewOrderEntriesTable createAlias(String alias) {
+    return $OverviewOrderEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class OverviewOrderEntry extends DataClass
+    implements Insertable<OverviewOrderEntry> {
+  final String itemKey;
+  final int sortOrder;
+  const OverviewOrderEntry({required this.itemKey, required this.sortOrder});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['item_key'] = Variable<String>(itemKey);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  OverviewOrderEntriesCompanion toCompanion(bool nullToAbsent) {
+    return OverviewOrderEntriesCompanion(
+      itemKey: Value(itemKey),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory OverviewOrderEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OverviewOrderEntry(
+      itemKey: serializer.fromJson<String>(json['itemKey']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'itemKey': serializer.toJson<String>(itemKey),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  OverviewOrderEntry copyWith({String? itemKey, int? sortOrder}) =>
+      OverviewOrderEntry(
+        itemKey: itemKey ?? this.itemKey,
+        sortOrder: sortOrder ?? this.sortOrder,
+      );
+  OverviewOrderEntry copyWithCompanion(OverviewOrderEntriesCompanion data) {
+    return OverviewOrderEntry(
+      itemKey: data.itemKey.present ? data.itemKey.value : this.itemKey,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OverviewOrderEntry(')
+          ..write('itemKey: $itemKey, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(itemKey, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OverviewOrderEntry &&
+          other.itemKey == this.itemKey &&
+          other.sortOrder == this.sortOrder);
+}
+
+class OverviewOrderEntriesCompanion
+    extends UpdateCompanion<OverviewOrderEntry> {
+  final Value<String> itemKey;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const OverviewOrderEntriesCompanion({
+    this.itemKey = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OverviewOrderEntriesCompanion.insert({
+    required String itemKey,
+    required int sortOrder,
+    this.rowid = const Value.absent(),
+  })  : itemKey = Value(itemKey),
+        sortOrder = Value(sortOrder);
+  static Insertable<OverviewOrderEntry> custom({
+    Expression<String>? itemKey,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (itemKey != null) 'item_key': itemKey,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OverviewOrderEntriesCompanion copyWith(
+      {Value<String>? itemKey, Value<int>? sortOrder, Value<int>? rowid}) {
+    return OverviewOrderEntriesCompanion(
+      itemKey: itemKey ?? this.itemKey,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (itemKey.present) {
+      map['item_key'] = Variable<String>(itemKey.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OverviewOrderEntriesCompanion(')
+          ..write('itemKey: $itemKey, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9668,6 +9863,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReceiptLinesTable receiptLines = $ReceiptLinesTable(this);
   late final $ReceiptAiInsightRunsTable receiptAiInsightRuns =
       $ReceiptAiInsightRunsTable(this);
+  late final $OverviewOrderEntriesTable overviewOrderEntries =
+      $OverviewOrderEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9699,7 +9896,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         receiptLists,
         receipts,
         receiptLines,
-        receiptAiInsightRuns
+        receiptAiInsightRuns,
+        overviewOrderEntries
       ];
 }
 
@@ -14708,6 +14906,140 @@ typedef $$ReceiptAiInsightRunsTableProcessedTableManager
         ),
         ReceiptAiInsightRun,
         PrefetchHooks Function()>;
+typedef $$OverviewOrderEntriesTableCreateCompanionBuilder
+    = OverviewOrderEntriesCompanion Function({
+  required String itemKey,
+  required int sortOrder,
+  Value<int> rowid,
+});
+typedef $$OverviewOrderEntriesTableUpdateCompanionBuilder
+    = OverviewOrderEntriesCompanion Function({
+  Value<String> itemKey,
+  Value<int> sortOrder,
+  Value<int> rowid,
+});
+
+class $$OverviewOrderEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $OverviewOrderEntriesTable> {
+  $$OverviewOrderEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get itemKey => $composableBuilder(
+      column: $table.itemKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+}
+
+class $$OverviewOrderEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $OverviewOrderEntriesTable> {
+  $$OverviewOrderEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get itemKey => $composableBuilder(
+      column: $table.itemKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+}
+
+class $$OverviewOrderEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OverviewOrderEntriesTable> {
+  $$OverviewOrderEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get itemKey =>
+      $composableBuilder(column: $table.itemKey, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+}
+
+class $$OverviewOrderEntriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $OverviewOrderEntriesTable,
+    OverviewOrderEntry,
+    $$OverviewOrderEntriesTableFilterComposer,
+    $$OverviewOrderEntriesTableOrderingComposer,
+    $$OverviewOrderEntriesTableAnnotationComposer,
+    $$OverviewOrderEntriesTableCreateCompanionBuilder,
+    $$OverviewOrderEntriesTableUpdateCompanionBuilder,
+    (
+      OverviewOrderEntry,
+      BaseReferences<_$AppDatabase, $OverviewOrderEntriesTable,
+          OverviewOrderEntry>
+    ),
+    OverviewOrderEntry,
+    PrefetchHooks Function()> {
+  $$OverviewOrderEntriesTableTableManager(
+      _$AppDatabase db, $OverviewOrderEntriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OverviewOrderEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OverviewOrderEntriesTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OverviewOrderEntriesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> itemKey = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              OverviewOrderEntriesCompanion(
+            itemKey: itemKey,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String itemKey,
+            required int sortOrder,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              OverviewOrderEntriesCompanion.insert(
+            itemKey: itemKey,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$OverviewOrderEntriesTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $OverviewOrderEntriesTable,
+        OverviewOrderEntry,
+        $$OverviewOrderEntriesTableFilterComposer,
+        $$OverviewOrderEntriesTableOrderingComposer,
+        $$OverviewOrderEntriesTableAnnotationComposer,
+        $$OverviewOrderEntriesTableCreateCompanionBuilder,
+        $$OverviewOrderEntriesTableUpdateCompanionBuilder,
+        (
+          OverviewOrderEntry,
+          BaseReferences<_$AppDatabase, $OverviewOrderEntriesTable,
+              OverviewOrderEntry>
+        ),
+        OverviewOrderEntry,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14766,4 +15098,6 @@ class $AppDatabaseManager {
       $$ReceiptLinesTableTableManager(_db, _db.receiptLines);
   $$ReceiptAiInsightRunsTableTableManager get receiptAiInsightRuns =>
       $$ReceiptAiInsightRunsTableTableManager(_db, _db.receiptAiInsightRuns);
+  $$OverviewOrderEntriesTableTableManager get overviewOrderEntries =>
+      $$OverviewOrderEntriesTableTableManager(_db, _db.overviewOrderEntries);
 }

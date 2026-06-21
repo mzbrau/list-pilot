@@ -276,3 +276,11 @@ class ReceiptAiInsightRuns extends Table {
   DateTimeColumn get generatedAt => dateTime()();
   TextColumn get content => text()();
 }
+
+class OverviewOrderEntries extends Table {
+  TextColumn get itemKey => text()();
+  IntColumn get sortOrder => integer()();
+
+  @override
+  Set<Column> get primaryKey => {itemKey};
+}

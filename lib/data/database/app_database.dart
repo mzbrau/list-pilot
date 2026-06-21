@@ -36,6 +36,7 @@ part 'app_database.g.dart';
   Receipts,
   ReceiptLines,
   ReceiptAiInsightRuns,
+  OverviewOrderEntries,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -43,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -92,6 +93,9 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(receipts);
             await m.createTable(receiptLines);
             await m.createTable(receiptAiInsightRuns);
+          }
+          if (from < 9) {
+            await m.createTable(overviewOrderEntries);
           }
         },
         beforeOpen: (details) async {
@@ -686,6 +690,12 @@ class AppDatabase extends _$AppDatabase {
           ..orderBy([(t) => OrderingTerm.desc(t.generatedAt)])
           ..limit(1))
         .watchSingleOrNull();
+  }
+
+  Stream<List<OverviewOrderEntry>> watchOverviewOrderEntries() {
+    return (select(overviewOrderEntries)
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .watch();
   }
 }
 
