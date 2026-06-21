@@ -14,10 +14,12 @@ class CatalogExportData {
   const CatalogExportData({
     required this.customItems,
     required this.recategorizedItems,
+    required this.aliases,
   });
 
   final List<Map<String, String>> customItems;
   final List<Map<String, String>> recategorizedItems;
+  final List<Map<String, String>> aliases;
 }
 
 class CatalogExportResult {
@@ -38,6 +40,8 @@ CatalogExportData buildCatalogExportData({
   required List<CatalogItem> userAdded,
   required List<CatalogItem> allItems,
   required Map<String, String> seedCategoriesByName,
+  required List<CatalogItemAlias> aliases,
+  required Map<int, String> catalogDisplayNamesById,
 }) {
   final customItems = userAdded
       .map(
@@ -64,6 +68,16 @@ CatalogExportData buildCatalogExportData({
   return CatalogExportData(
     customItems: customItems,
     recategorizedItems: recategorizedItems,
+    aliases: aliases
+        .map(
+          (alias) => {
+            'alias': alias.alias,
+            'catalogDisplayName':
+                catalogDisplayNamesById[alias.catalogItemId] ?? '',
+          },
+        )
+        .where((entry) => entry['catalogDisplayName']!.isNotEmpty)
+        .toList(),
   );
 }
 
@@ -98,17 +112,23 @@ class CatalogExportService {
     final seedCategories = await loadSeedCategoryMap();
     final userAdded = await _catalog.getUserAddedItems();
     final allItems = await _catalog.getAllCatalogItems();
+    final aliases = await _catalog.getAllAliases();
 
     final exportData = buildCatalogExportData(
       userAdded: userAdded,
       allItems: allItems,
       seedCategoriesByName: seedCategories,
+      aliases: aliases,
+      catalogDisplayNamesById: {
+        for (final item in allItems) item.id: item.displayName,
+      },
     );
 
     final payload = {
       'exportedAt': DateTime.now().toUtc().toIso8601String(),
       'customItems': exportData.customItems,
       'recategorizedItems': exportData.recategorizedItems,
+      'aliases': exportData.aliases,
     };
 
     final date = DateTime.now().toIso8601String().split('T').first;

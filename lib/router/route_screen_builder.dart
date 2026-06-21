@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../features/catalog/catalog_item_detail_screen.dart';
+import '../features/catalog/catalog_screen.dart';
 import '../features/item_detail/item_detail_screen.dart';
 import '../features/lists/lists_overview_screen.dart';
 import '../features/meal_manager/meal_import_screen.dart';
@@ -30,6 +32,15 @@ Widget buildScreenForLocation(String location, {Object? extra}) {
 
   if (uri.path == '/stats') {
     return const ShopStatsScreen();
+  }
+
+  if (uri.path == '/catalog') {
+    return const CatalogScreen();
+  }
+
+  if (segments.first == 'catalog' && segments.length == 2) {
+    final itemId = int.parse(segments[1]);
+    return CatalogItemDetailScreen(itemId: itemId);
   }
 
   if (segments.first == 'meals') {

@@ -158,7 +158,7 @@ class IngredientCatalogMatcher {
     final tokens = _significantTokens(normalized);
     for (final token in tokens) {
       if (suggestions.length >= limit) break;
-      add(await _catalog.findByName(token));
+      add(await _catalog.findByNameOrAlias(token));
     }
 
     for (final token in tokens) {
@@ -185,12 +185,12 @@ class IngredientCatalogMatcher {
     final normalized = itemName.trim().toLowerCase();
     if (normalized.isEmpty) return null;
 
-    final exact = await _catalog.findByName(normalized);
+    final exact = await _catalog.findByNameOrAlias(normalized);
     if (exact != null) return exact;
 
     final tokens = _significantTokens(normalized);
     for (final token in tokens) {
-      final match = await _catalog.findByName(token);
+      final match = await _catalog.findByNameOrAlias(token);
       if (match != null) return match;
     }
 

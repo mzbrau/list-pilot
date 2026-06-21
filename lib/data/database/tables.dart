@@ -19,6 +19,22 @@ class CatalogItems extends Table {
   DateTimeColumn get createdAt => dateTime()();
 }
 
+@DataClassName('CatalogItemAlias')
+class CatalogItemAliases extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get catalogItemId =>
+      integer().references(CatalogItems, #id, onDelete: KeyAction.cascade)();
+  TextColumn get alias => text().unique()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+class CatalogItemExclusions extends Table {
+  TextColumn get name => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {name};
+}
+
 class ShoppingLists extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();

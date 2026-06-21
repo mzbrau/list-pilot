@@ -92,4 +92,26 @@ void main() {
     expect(suggestions.length, 1);
     expect(suggestions.first.displayName, 'Apples');
   });
+
+  test('matches catalog item via alias', () async {
+    final capsicum = await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'capsicum',
+            displayName: 'Capsicum',
+            categoryId: 'fruit_veg',
+            createdAt: DateTime.now(),
+          ),
+        );
+    await db.into(db.catalogItemAliases).insert(
+          CatalogItemAliasesCompanion.insert(
+            catalogItemId: capsicum,
+            alias: 'bell peppers',
+            createdAt: DateTime.now(),
+          ),
+        );
+
+    final result = await matcher.matchLine('bell peppers');
+    expect(result.confidence, IngredientMatchConfidence.matched);
+    expect(result.catalogItem?.displayName, 'Capsicum');
+  });
 }

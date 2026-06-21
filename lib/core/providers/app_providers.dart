@@ -304,6 +304,44 @@ final categoriesProvider = FutureProvider<List<Category>>((ref) async {
   return ref.watch(catalogRepositoryProvider).getCategories();
 });
 
+class CatalogOverviewData {
+  const CatalogOverviewData({
+    required this.items,
+    required this.categories,
+    required this.aliasCounts,
+  });
+
+  final List<CatalogItem> items;
+  final List<Category> categories;
+  final Map<int, int> aliasCounts;
+}
+
+final allCatalogItemsProvider =
+    FutureProvider<CatalogOverviewData>((ref) async {
+  ref.watch(appInitProvider);
+  final repo = ref.watch(catalogRepositoryProvider);
+  final items = await repo.getAllCatalogItems();
+  final categories = await repo.getCategories();
+  final aliasCounts = await repo.getAliasCountsByCatalogItemId();
+  return CatalogOverviewData(
+    items: items,
+    categories: categories,
+    aliasCounts: aliasCounts,
+  );
+});
+
+final catalogItemProvider =
+    FutureProvider.family<CatalogItem?, int>((ref, id) async {
+  ref.watch(appInitProvider);
+  return ref.watch(catalogRepositoryProvider).getById(id);
+});
+
+final catalogItemAliasesProvider =
+    FutureProvider.family<List<CatalogItemAlias>, int>((ref, id) async {
+  ref.watch(appInitProvider);
+  return ref.watch(catalogRepositoryProvider).getAliases(id);
+});
+
 final themeModeProvider =
     StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   return ThemeModeNotifier();

@@ -11,6 +11,8 @@ part 'app_database.g.dart';
 @DriftDatabase(tables: [
   Categories,
   CatalogItems,
+  CatalogItemAliases,
+  CatalogItemExclusions,
   ShoppingLists,
   ListItems,
   CheckOffEvents,
@@ -44,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -96,6 +98,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 9) {
             await m.createTable(overviewOrderEntries);
+          }
+          if (from < 10) {
+            await m.createTable(catalogItemAliases);
+            await m.createTable(catalogItemExclusions);
           }
         },
         beforeOpen: (details) async {
@@ -149,6 +155,128 @@ class AppDatabase extends _$AppDatabase {
     if (normalized.isEmpty) return Future.value(null);
     return (select(catalogItems)..where((t) => t.name.equals(normalized)))
         .getSingleOrNull();
+  }
+
+  Future<CatalogItem?> findCatalogByAlias(String alias) async {
+    final normalized = alias.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+
+    final aliasRow = await (select(catalogItemAliases)
+          ..where((t) => t.alias.equals(normalized)))
+        .getSingleOrNull();
+    if (aliasRow == null) return null;
+
+    return getCatalogItemById(aliasRow.catalogItemId);
+  }
+
+  Future<CatalogItem?> findCatalogByNameOrAlias(String name) async {
+    final byName = await findCatalogByName(name);
+    if (byName != null) return byName;
+    return findCatalogByAlias(name);
+  }
+
+  Future<CatalogItem?> getCatalogItemById(int id) {
+    return (select(catalogItems)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<List<CatalogItem>> getAllCatalogItemsOrdered() {
+    return (select(catalogItems)
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+        .get();
+  }
+
+  Future<List<CatalogItem>> searchCatalogAndAliases(
+    String query, {
+    int limit = 8,
+  }) async {
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return searchCatalog(query, limit: limit);
+    }
+
+    final byName = await (select(catalogItems)
+          ..where((t) => t.name.like('$normalized%'))
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+        .get();
+
+    final aliasRows = await (select(catalogItemAliases)
+          ..where((t) => t.alias.like('$normalized%')))
+        .get();
+
+    final aliasItemIds = aliasRows.map((row) => row.catalogItemId).toSet();
+    final aliasItems = aliasItemIds.isEmpty
+        ? <CatalogItem>[]
+        : await (select(catalogItems)
+              ..where((t) => t.id.isIn(aliasItemIds.toList())))
+            .get();
+
+    final seenIds = <int>{};
+    final results = <CatalogItem>[];
+    for (final item in [...byName, ...aliasItems]) {
+      if (seenIds.add(item.id)) {
+        results.add(item);
+      }
+    }
+
+    results.sort((a, b) => a.displayName.compareTo(b.displayName));
+    if (results.length > limit) {
+      return results.sublist(0, limit);
+    }
+    return results;
+  }
+
+  Future<List<CatalogItemAlias>> getAliasesForCatalogItem(int catalogItemId) {
+    return (select(catalogItemAliases)
+          ..where((t) => t.catalogItemId.equals(catalogItemId))
+          ..orderBy([(t) => OrderingTerm.asc(t.alias)]))
+        .get();
+  }
+
+  Future<Map<int, int>> getAliasCountsByCatalogItemId() async {
+    final rows = await customSelect(
+      'SELECT catalog_item_id AS item_id, COUNT(*) AS alias_count '
+      'FROM catalog_item_aliases GROUP BY catalog_item_id',
+      readsFrom: {catalogItemAliases},
+    ).get();
+
+    return {
+      for (final row in rows)
+        row.read<int>('item_id'): row.read<int>('alias_count'),
+    };
+  }
+
+  Future<bool> isCatalogNameExcluded(String name) async {
+    final normalized = name.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+    final row = await (select(catalogItemExclusions)
+          ..where((t) => t.name.equals(normalized)))
+        .getSingleOrNull();
+    return row != null;
+  }
+
+  Future<void> addCatalogExclusion(String name) {
+    final normalized = name.trim().toLowerCase();
+    return into(catalogItemExclusions).insert(
+      CatalogItemExclusionsCompanion.insert(name: normalized),
+      mode: InsertMode.insertOrIgnore,
+    );
+  }
+
+  Future<void> clearCatalogItemReferences(int catalogItemId) async {
+    await (update(listItems)
+          ..where((t) => t.catalogItemId.equals(catalogItemId)))
+        .write(const ListItemsCompanion(catalogItemId: Value(null)));
+    await (update(mealIngredients)
+          ..where((t) => t.catalogItemId.equals(catalogItemId)))
+        .write(const MealIngredientsCompanion(catalogItemId: Value(null)));
+    await (update(receiptLines)
+          ..where((t) => t.catalogItemId.equals(catalogItemId)))
+        .write(const ReceiptLinesCompanion(catalogItemId: Value(null)));
+  }
+
+  Future<void> deleteCatalogItemById(int id) async {
+    await (delete(catalogItems)..where((t) => t.id.equals(id))).go();
   }
 
   Stream<List<ShoppingList>> watchAllLists() {

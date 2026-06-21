@@ -42,6 +42,8 @@ void main() {
         userAdded: userAdded,
         allItems: userAdded,
         seedCategoriesByName: seedCategories,
+        aliases: const [],
+        catalogDisplayNamesById: const {1: 'My Snack'},
       );
 
       expect(result.customItems, [
@@ -63,6 +65,8 @@ void main() {
         userAdded: const [],
         allItems: [milk],
         seedCategoriesByName: seedCategories,
+        aliases: const [],
+        catalogDisplayNamesById: const {2: 'Milk'},
       );
 
       expect(result.customItems, isEmpty);
@@ -87,6 +91,8 @@ void main() {
         userAdded: const [],
         allItems: [apples],
         seedCategoriesByName: seedCategories,
+        aliases: const [],
+        catalogDisplayNamesById: const {3: 'Apples'},
       );
 
       expect(result.customItems, isEmpty);
@@ -106,10 +112,44 @@ void main() {
         userAdded: [custom],
         allItems: [custom],
         seedCategoriesByName: seedCategories,
+        aliases: const [],
+        catalogDisplayNamesById: const {4: 'Special Tea'},
       );
 
       expect(result.customItems, hasLength(1));
       expect(result.recategorizedItems, isEmpty);
+    });
+
+    test('includes aliases with catalog display names', () {
+      final capsicum = catalogItem(
+        id: 5,
+        name: 'capsicum',
+        displayName: 'Capsicum',
+        categoryId: 'fruit_veg',
+      );
+      final aliases = [
+        CatalogItemAlias(
+          id: 1,
+          catalogItemId: 5,
+          alias: 'bell peppers',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ];
+
+      final result = buildCatalogExportData(
+        userAdded: const [],
+        allItems: [capsicum],
+        seedCategoriesByName: seedCategories,
+        aliases: aliases,
+        catalogDisplayNamesById: const {5: 'Capsicum'},
+      );
+
+      expect(result.aliases, [
+        {
+          'alias': 'bell peppers',
+          'catalogDisplayName': 'Capsicum',
+        },
+      ]);
     });
   });
 }

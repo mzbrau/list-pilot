@@ -576,6 +576,429 @@ class CatalogItemsCompanion extends UpdateCompanion<CatalogItem> {
   }
 }
 
+class $CatalogItemAliasesTable extends CatalogItemAliases
+    with TableInfo<$CatalogItemAliasesTable, CatalogItemAlias> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CatalogItemAliasesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _catalogItemIdMeta =
+      const VerificationMeta('catalogItemId');
+  @override
+  late final GeneratedColumn<int> catalogItemId = GeneratedColumn<int>(
+      'catalog_item_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _aliasMeta = const VerificationMeta('alias');
+  @override
+  late final GeneratedColumn<String> alias = GeneratedColumn<String>(
+      'alias', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, catalogItemId, alias, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'catalog_item_aliases';
+  @override
+  VerificationContext validateIntegrity(Insertable<CatalogItemAlias> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('catalog_item_id')) {
+      context.handle(
+          _catalogItemIdMeta,
+          catalogItemId.isAcceptableOrUnknown(
+              data['catalog_item_id']!, _catalogItemIdMeta));
+    } else if (isInserting) {
+      context.missing(_catalogItemIdMeta);
+    }
+    if (data.containsKey('alias')) {
+      context.handle(
+          _aliasMeta, alias.isAcceptableOrUnknown(data['alias']!, _aliasMeta));
+    } else if (isInserting) {
+      context.missing(_aliasMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CatalogItemAlias map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CatalogItemAlias(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      catalogItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}catalog_item_id'])!,
+      alias: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}alias'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $CatalogItemAliasesTable createAlias(String alias) {
+    return $CatalogItemAliasesTable(attachedDatabase, alias);
+  }
+}
+
+class CatalogItemAlias extends DataClass
+    implements Insertable<CatalogItemAlias> {
+  final int id;
+  final int catalogItemId;
+  final String alias;
+  final DateTime createdAt;
+  const CatalogItemAlias(
+      {required this.id,
+      required this.catalogItemId,
+      required this.alias,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['catalog_item_id'] = Variable<int>(catalogItemId);
+    map['alias'] = Variable<String>(alias);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CatalogItemAliasesCompanion toCompanion(bool nullToAbsent) {
+    return CatalogItemAliasesCompanion(
+      id: Value(id),
+      catalogItemId: Value(catalogItemId),
+      alias: Value(alias),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CatalogItemAlias.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CatalogItemAlias(
+      id: serializer.fromJson<int>(json['id']),
+      catalogItemId: serializer.fromJson<int>(json['catalogItemId']),
+      alias: serializer.fromJson<String>(json['alias']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'catalogItemId': serializer.toJson<int>(catalogItemId),
+      'alias': serializer.toJson<String>(alias),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CatalogItemAlias copyWith(
+          {int? id, int? catalogItemId, String? alias, DateTime? createdAt}) =>
+      CatalogItemAlias(
+        id: id ?? this.id,
+        catalogItemId: catalogItemId ?? this.catalogItemId,
+        alias: alias ?? this.alias,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  CatalogItemAlias copyWithCompanion(CatalogItemAliasesCompanion data) {
+    return CatalogItemAlias(
+      id: data.id.present ? data.id.value : this.id,
+      catalogItemId: data.catalogItemId.present
+          ? data.catalogItemId.value
+          : this.catalogItemId,
+      alias: data.alias.present ? data.alias.value : this.alias,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogItemAlias(')
+          ..write('id: $id, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('alias: $alias, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, catalogItemId, alias, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CatalogItemAlias &&
+          other.id == this.id &&
+          other.catalogItemId == this.catalogItemId &&
+          other.alias == this.alias &&
+          other.createdAt == this.createdAt);
+}
+
+class CatalogItemAliasesCompanion extends UpdateCompanion<CatalogItemAlias> {
+  final Value<int> id;
+  final Value<int> catalogItemId;
+  final Value<String> alias;
+  final Value<DateTime> createdAt;
+  const CatalogItemAliasesCompanion({
+    this.id = const Value.absent(),
+    this.catalogItemId = const Value.absent(),
+    this.alias = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  CatalogItemAliasesCompanion.insert({
+    this.id = const Value.absent(),
+    required int catalogItemId,
+    required String alias,
+    required DateTime createdAt,
+  })  : catalogItemId = Value(catalogItemId),
+        alias = Value(alias),
+        createdAt = Value(createdAt);
+  static Insertable<CatalogItemAlias> custom({
+    Expression<int>? id,
+    Expression<int>? catalogItemId,
+    Expression<String>? alias,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (catalogItemId != null) 'catalog_item_id': catalogItemId,
+      if (alias != null) 'alias': alias,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  CatalogItemAliasesCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? catalogItemId,
+      Value<String>? alias,
+      Value<DateTime>? createdAt}) {
+    return CatalogItemAliasesCompanion(
+      id: id ?? this.id,
+      catalogItemId: catalogItemId ?? this.catalogItemId,
+      alias: alias ?? this.alias,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (catalogItemId.present) {
+      map['catalog_item_id'] = Variable<int>(catalogItemId.value);
+    }
+    if (alias.present) {
+      map['alias'] = Variable<String>(alias.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogItemAliasesCompanion(')
+          ..write('id: $id, ')
+          ..write('catalogItemId: $catalogItemId, ')
+          ..write('alias: $alias, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CatalogItemExclusionsTable extends CatalogItemExclusions
+    with TableInfo<$CatalogItemExclusionsTable, CatalogItemExclusion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CatalogItemExclusionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [name];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'catalog_item_exclusions';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CatalogItemExclusion> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {name};
+  @override
+  CatalogItemExclusion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CatalogItemExclusion(
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+    );
+  }
+
+  @override
+  $CatalogItemExclusionsTable createAlias(String alias) {
+    return $CatalogItemExclusionsTable(attachedDatabase, alias);
+  }
+}
+
+class CatalogItemExclusion extends DataClass
+    implements Insertable<CatalogItemExclusion> {
+  final String name;
+  const CatalogItemExclusion({required this.name});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['name'] = Variable<String>(name);
+    return map;
+  }
+
+  CatalogItemExclusionsCompanion toCompanion(bool nullToAbsent) {
+    return CatalogItemExclusionsCompanion(
+      name: Value(name),
+    );
+  }
+
+  factory CatalogItemExclusion.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CatalogItemExclusion(
+      name: serializer.fromJson<String>(json['name']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'name': serializer.toJson<String>(name),
+    };
+  }
+
+  CatalogItemExclusion copyWith({String? name}) => CatalogItemExclusion(
+        name: name ?? this.name,
+      );
+  CatalogItemExclusion copyWithCompanion(CatalogItemExclusionsCompanion data) {
+    return CatalogItemExclusion(
+      name: data.name.present ? data.name.value : this.name,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogItemExclusion(')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => name.hashCode;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CatalogItemExclusion && other.name == this.name);
+}
+
+class CatalogItemExclusionsCompanion
+    extends UpdateCompanion<CatalogItemExclusion> {
+  final Value<String> name;
+  final Value<int> rowid;
+  const CatalogItemExclusionsCompanion({
+    this.name = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CatalogItemExclusionsCompanion.insert({
+    required String name,
+    this.rowid = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<CatalogItemExclusion> custom({
+    Expression<String>? name,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (name != null) 'name': name,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CatalogItemExclusionsCompanion copyWith(
+      {Value<String>? name, Value<int>? rowid}) {
+    return CatalogItemExclusionsCompanion(
+      name: name ?? this.name,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogItemExclusionsCompanion(')
+          ..write('name: $name, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ShoppingListsTable extends ShoppingLists
     with TableInfo<$ShoppingListsTable, ShoppingList> {
   @override
@@ -9829,6 +10252,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $CatalogItemsTable catalogItems = $CatalogItemsTable(this);
+  late final $CatalogItemAliasesTable catalogItemAliases =
+      $CatalogItemAliasesTable(this);
+  late final $CatalogItemExclusionsTable catalogItemExclusions =
+      $CatalogItemExclusionsTable(this);
   late final $ShoppingListsTable shoppingLists = $ShoppingListsTable(this);
   late final $ListItemsTable listItems = $ListItemsTable(this);
   late final $CheckOffEventsTable checkOffEvents = $CheckOffEventsTable(this);
@@ -9872,6 +10299,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         categories,
         catalogItems,
+        catalogItemAliases,
+        catalogItemExclusions,
         shoppingLists,
         listItems,
         checkOffEvents,
@@ -10218,6 +10647,281 @@ typedef $$CatalogItemsTableProcessedTableManager = ProcessedTableManager<
     ),
     CatalogItem,
     PrefetchHooks Function()>;
+typedef $$CatalogItemAliasesTableCreateCompanionBuilder
+    = CatalogItemAliasesCompanion Function({
+  Value<int> id,
+  required int catalogItemId,
+  required String alias,
+  required DateTime createdAt,
+});
+typedef $$CatalogItemAliasesTableUpdateCompanionBuilder
+    = CatalogItemAliasesCompanion Function({
+  Value<int> id,
+  Value<int> catalogItemId,
+  Value<String> alias,
+  Value<DateTime> createdAt,
+});
+
+class $$CatalogItemAliasesTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogItemAliasesTable> {
+  $$CatalogItemAliasesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get alias => $composableBuilder(
+      column: $table.alias, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CatalogItemAliasesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogItemAliasesTable> {
+  $$CatalogItemAliasesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get alias => $composableBuilder(
+      column: $table.alias, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CatalogItemAliasesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogItemAliasesTable> {
+  $$CatalogItemAliasesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get catalogItemId => $composableBuilder(
+      column: $table.catalogItemId, builder: (column) => column);
+
+  GeneratedColumn<String> get alias =>
+      $composableBuilder(column: $table.alias, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CatalogItemAliasesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CatalogItemAliasesTable,
+    CatalogItemAlias,
+    $$CatalogItemAliasesTableFilterComposer,
+    $$CatalogItemAliasesTableOrderingComposer,
+    $$CatalogItemAliasesTableAnnotationComposer,
+    $$CatalogItemAliasesTableCreateCompanionBuilder,
+    $$CatalogItemAliasesTableUpdateCompanionBuilder,
+    (
+      CatalogItemAlias,
+      BaseReferences<_$AppDatabase, $CatalogItemAliasesTable, CatalogItemAlias>
+    ),
+    CatalogItemAlias,
+    PrefetchHooks Function()> {
+  $$CatalogItemAliasesTableTableManager(
+      _$AppDatabase db, $CatalogItemAliasesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CatalogItemAliasesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CatalogItemAliasesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CatalogItemAliasesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> catalogItemId = const Value.absent(),
+            Value<String> alias = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              CatalogItemAliasesCompanion(
+            id: id,
+            catalogItemId: catalogItemId,
+            alias: alias,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int catalogItemId,
+            required String alias,
+            required DateTime createdAt,
+          }) =>
+              CatalogItemAliasesCompanion.insert(
+            id: id,
+            catalogItemId: catalogItemId,
+            alias: alias,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CatalogItemAliasesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CatalogItemAliasesTable,
+    CatalogItemAlias,
+    $$CatalogItemAliasesTableFilterComposer,
+    $$CatalogItemAliasesTableOrderingComposer,
+    $$CatalogItemAliasesTableAnnotationComposer,
+    $$CatalogItemAliasesTableCreateCompanionBuilder,
+    $$CatalogItemAliasesTableUpdateCompanionBuilder,
+    (
+      CatalogItemAlias,
+      BaseReferences<_$AppDatabase, $CatalogItemAliasesTable, CatalogItemAlias>
+    ),
+    CatalogItemAlias,
+    PrefetchHooks Function()>;
+typedef $$CatalogItemExclusionsTableCreateCompanionBuilder
+    = CatalogItemExclusionsCompanion Function({
+  required String name,
+  Value<int> rowid,
+});
+typedef $$CatalogItemExclusionsTableUpdateCompanionBuilder
+    = CatalogItemExclusionsCompanion Function({
+  Value<String> name,
+  Value<int> rowid,
+});
+
+class $$CatalogItemExclusionsTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogItemExclusionsTable> {
+  $$CatalogItemExclusionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+}
+
+class $$CatalogItemExclusionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogItemExclusionsTable> {
+  $$CatalogItemExclusionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CatalogItemExclusionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogItemExclusionsTable> {
+  $$CatalogItemExclusionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+}
+
+class $$CatalogItemExclusionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CatalogItemExclusionsTable,
+    CatalogItemExclusion,
+    $$CatalogItemExclusionsTableFilterComposer,
+    $$CatalogItemExclusionsTableOrderingComposer,
+    $$CatalogItemExclusionsTableAnnotationComposer,
+    $$CatalogItemExclusionsTableCreateCompanionBuilder,
+    $$CatalogItemExclusionsTableUpdateCompanionBuilder,
+    (
+      CatalogItemExclusion,
+      BaseReferences<_$AppDatabase, $CatalogItemExclusionsTable,
+          CatalogItemExclusion>
+    ),
+    CatalogItemExclusion,
+    PrefetchHooks Function()> {
+  $$CatalogItemExclusionsTableTableManager(
+      _$AppDatabase db, $CatalogItemExclusionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CatalogItemExclusionsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CatalogItemExclusionsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CatalogItemExclusionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> name = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CatalogItemExclusionsCompanion(
+            name: name,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String name,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CatalogItemExclusionsCompanion.insert(
+            name: name,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CatalogItemExclusionsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $CatalogItemExclusionsTable,
+        CatalogItemExclusion,
+        $$CatalogItemExclusionsTableFilterComposer,
+        $$CatalogItemExclusionsTableOrderingComposer,
+        $$CatalogItemExclusionsTableAnnotationComposer,
+        $$CatalogItemExclusionsTableCreateCompanionBuilder,
+        $$CatalogItemExclusionsTableUpdateCompanionBuilder,
+        (
+          CatalogItemExclusion,
+          BaseReferences<_$AppDatabase, $CatalogItemExclusionsTable,
+              CatalogItemExclusion>
+        ),
+        CatalogItemExclusion,
+        PrefetchHooks Function()>;
 typedef $$ShoppingListsTableCreateCompanionBuilder = ShoppingListsCompanion
     Function({
   Value<int> id,
@@ -15048,6 +15752,10 @@ class $AppDatabaseManager {
       $$CategoriesTableTableManager(_db, _db.categories);
   $$CatalogItemsTableTableManager get catalogItems =>
       $$CatalogItemsTableTableManager(_db, _db.catalogItems);
+  $$CatalogItemAliasesTableTableManager get catalogItemAliases =>
+      $$CatalogItemAliasesTableTableManager(_db, _db.catalogItemAliases);
+  $$CatalogItemExclusionsTableTableManager get catalogItemExclusions =>
+      $$CatalogItemExclusionsTableTableManager(_db, _db.catalogItemExclusions);
   $$ShoppingListsTableTableManager get shoppingLists =>
       $$ShoppingListsTableTableManager(_db, _db.shoppingLists);
   $$ListItemsTableTableManager get listItems =>

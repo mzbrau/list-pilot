@@ -33,6 +33,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/catalog',
+            builder: (context, state) => buildScreenForLocation(
+              state.uri.toString(),
+              extra: state.extra,
+            ),
+            routes: [
+              GoRoute(
+                path: ':itemId',
+                builder: (context, state) => buildScreenForLocation(
+                  state.uri.toString(),
+                  extra: state.extra,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
             path: '/meals',
             builder: (context, state) => buildScreenForLocation(
               state.uri.toString(),

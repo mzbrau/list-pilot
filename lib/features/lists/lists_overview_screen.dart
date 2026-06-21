@@ -828,6 +828,15 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: const Text('Manage shopping catalog'),
+            subtitle: const Text('Browse, edit, and add aliases'),
+            onTap: () {
+              Navigator.pop(context);
+              context.push('/catalog');
+            },
+          ),
+          ListTile(
             leading: _exportingCatalog
                 ? SizedBox(
                     width: 24,

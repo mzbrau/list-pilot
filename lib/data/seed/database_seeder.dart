@@ -74,12 +74,15 @@ class DatabaseSeeder {
     await _db.transaction(() async {
       for (final item in items) {
         final displayName = item['name'] as String;
+        final normalized = displayName.toLowerCase();
+        if (await _db.isCatalogNameExcluded(normalized)) continue;
+
         final existing = await _db.findCatalogByName(displayName);
         if (existing != null) continue;
 
         await _db.into(_db.catalogItems).insert(
               CatalogItemsCompanion.insert(
-                name: displayName.toLowerCase(),
+                name: normalized,
                 displayName: displayName,
                 categoryId: item['categoryId'] as String,
                 createdAt: now,
