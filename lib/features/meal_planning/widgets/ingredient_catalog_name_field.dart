@@ -8,10 +8,12 @@ class IngredientCatalogNameField extends StatelessWidget {
     required this.controller,
     required this.categories,
     required this.suggestions,
+    this.matchSuggestions = const [],
     required this.addToCatalog,
     this.categoryId,
     this.matchedCatalogItem,
     this.originalLine,
+    this.onRemove,
     this.onNameChanged,
     required this.onCatalogSelected,
     required this.onAddToCatalogChanged,
@@ -21,10 +23,12 @@ class IngredientCatalogNameField extends StatelessWidget {
   final TextEditingController controller;
   final List<Category> categories;
   final List<CatalogItem> suggestions;
+  final List<CatalogItem> matchSuggestions;
   final bool addToCatalog;
   final String? categoryId;
   final CatalogItem? matchedCatalogItem;
   final String? originalLine;
+  final VoidCallback? onRemove;
   final ValueChanged<String>? onNameChanged;
   final ValueChanged<CatalogItem> onCatalogSelected;
   final ValueChanged<bool?> onAddToCatalogChanged;
@@ -38,11 +42,25 @@ class IngredientCatalogNameField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (originalLine != null) ...[
-          Text(
-            'Original: $originalLine',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Original: $originalLine',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              if (onRemove != null)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Remove ingredient',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onRemove,
+                ),
+            ],
           ),
           const SizedBox(height: 8),
         ],
@@ -55,12 +73,47 @@ class IngredientCatalogNameField extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
-        TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Ingredient name',
+        if (matchSuggestions.isNotEmpty) ...[
+          Text(
+            'Suggestions',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
-          onChanged: onNameChanged,
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final item in matchSuggestions)
+                ActionChip(
+                  label: Text(item.displayName),
+                  onPressed: () => onCatalogSelected(item),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) {
+            return TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: 'Ingredient name',
+                suffixIcon: value.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          controller.clear();
+                          onNameChanged?.call('');
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: onNameChanged,
+            );
+          },
         ),
         if (suggestions.isNotEmpty)
           Material(

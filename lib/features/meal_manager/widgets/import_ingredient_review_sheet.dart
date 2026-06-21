@@ -36,90 +36,148 @@ class ImportIngredientReviewSheet extends ConsumerStatefulWidget {
       _ImportIngredientReviewSheetState();
 }
 
+class _DraftEntry {
+  _DraftEntry({
+    required this.id,
+    required ImportIngredientDraft draft,
+  })  : draft = ImportIngredientDraft(
+          parsed: draft.parsed,
+          confidence: draft.confidence,
+          catalogItem: draft.catalogItem,
+          displayName: draft.displayName,
+          addToCatalog: draft.addToCatalog,
+          categoryId: draft.categoryId,
+        ),
+        controller = TextEditingController(text: draft.displayName);
+
+  final String id;
+  final ImportIngredientDraft draft;
+  final TextEditingController controller;
+
+  void dispose() => controller.dispose();
+}
+
 class _ImportIngredientReviewSheetState
     extends ConsumerState<ImportIngredientReviewSheet> {
-  late List<ImportIngredientDraft> _drafts;
+  late List<_DraftEntry> _entries;
   List<Category> _categories = [];
-  final _controllers = <int, TextEditingController>{};
   Timer? _debounce;
-  List<CatalogItem> _suggestions = [];
-  int? _activeDraftIndex;
+  List<CatalogItem> _typingSuggestions = [];
+  String? _activeEntryId;
+  final _proactiveSuggestions = <String, List<CatalogItem>>{};
+  var _nextEntryId = 0;
 
   @override
   void initState() {
     super.initState();
-    _drafts = widget.drafts
-        .map(
-          (d) => ImportIngredientDraft(
-            parsed: d.parsed,
-            confidence: d.confidence,
-            catalogItem: d.catalogItem,
-            displayName: d.displayName,
-            addToCatalog: d.addToCatalog,
-            categoryId: d.categoryId,
-          ),
-        )
+    _entries = widget.drafts
+        .map((d) => _DraftEntry(id: '${_nextEntryId++}', draft: d))
         .toList();
-    _loadCategories();
-    for (var i = 0; i < _drafts.length; i++) {
-      _controllers[i] = TextEditingController(text: _drafts[i].displayName);
-    }
+    _loadInitialData();
   }
 
-  Future<void> _loadCategories() async {
+  Future<void> _loadInitialData() async {
     final categories = await ref.read(catalogRepositoryProvider).getCategories();
-    if (mounted) setState(() => _categories = categories);
+    final matcher = ref.read(ingredientCatalogMatcherProvider);
+    final suggestions = <String, List<CatalogItem>>{};
+
+    for (final entry in _entries) {
+      if (entry.draft.confidence == IngredientMatchConfidence.unmatched) {
+        suggestions[entry.id] =
+            await matcher.suggestMatches(entry.draft.displayName);
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _categories = categories;
+        _proactiveSuggestions
+          ..clear()
+          ..addAll(suggestions);
+      });
+    }
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    for (final controller in _controllers.values) {
-      controller.dispose();
+    for (final entry in _entries) {
+      entry.dispose();
     }
     super.dispose();
   }
 
-  List<ImportIngredientDraft> get _unmatched =>
-      _drafts.where((d) => d.confidence == IngredientMatchConfidence.unmatched).toList();
+  List<_DraftEntry> get _unmatchedEntries => _entries
+      .where((e) => e.draft.confidence == IngredientMatchConfidence.unmatched)
+      .toList();
 
-  void _onNameChanged(int index, String value) {
-    setState(() => _drafts[index].displayName = value);
+  _DraftEntry? _entryById(String id) {
+    for (final entry in _entries) {
+      if (entry.id == id) return entry;
+    }
+    return null;
+  }
+
+  void _onNameChanged(String entryId, String value) {
+    final entry = _entryById(entryId);
+    if (entry == null) return;
+
+    setState(() => entry.draft.displayName = value);
     _debounce?.cancel();
     _debounce = Timer(
       const Duration(milliseconds: AppConstants.autocompleteDebounceMs),
       () async {
         if (value.trim().isEmpty) {
-          if (mounted) setState(() => _suggestions = []);
+          if (mounted) setState(() => _typingSuggestions = []);
           return;
         }
         final results =
             await ref.read(catalogRepositoryProvider).search(value);
         if (mounted) {
           setState(() {
-            _suggestions = results;
-            _activeDraftIndex = index;
+            _typingSuggestions = results;
+            _activeEntryId = entryId;
           });
         }
       },
     );
   }
 
-  void _selectCatalogItem(int index, CatalogItem item) {
+  void _selectCatalogItem(String entryId, CatalogItem item) {
+    final entry = _entryById(entryId);
+    if (entry == null) return;
+
     setState(() {
-      _drafts[index].displayName = item.displayName;
-      _drafts[index].catalogItem = item;
-      _drafts[index].confidence = IngredientMatchConfidence.matched;
-      _drafts[index].addToCatalog = false;
-      _controllers[index]?.text = item.displayName;
-      _suggestions = [];
-      _activeDraftIndex = null;
+      entry.draft.displayName = item.displayName;
+      entry.draft.catalogItem = item;
+      entry.draft.confidence = IngredientMatchConfidence.matched;
+      entry.draft.addToCatalog = false;
+      entry.controller.text = item.displayName;
+      _typingSuggestions = [];
+      _activeEntryId = null;
+      _proactiveSuggestions.remove(entryId);
+    });
+  }
+
+  void _removeDraft(String entryId) {
+    final index = _entries.indexWhere((e) => e.id == entryId);
+    if (index == -1) return;
+
+    setState(() {
+      if (_activeEntryId == entryId) {
+        _typingSuggestions = [];
+        _activeEntryId = null;
+      }
+      _proactiveSuggestions.remove(entryId);
+      _entries[index].dispose();
+      _entries.removeAt(index);
     });
   }
 
   Future<void> _confirm() async {
     final catalogRepo = ref.read(catalogRepositoryProvider);
-    for (final draft in _drafts) {
+    for (final entry in _entries) {
+      final draft = entry.draft;
       if (draft.addToCatalog && draft.catalogItem == null) {
         final name = draft.displayName.trim();
         if (name.isEmpty) continue;
@@ -133,15 +191,21 @@ class _ImportIngredientReviewSheetState
         draft.confidence = IngredientMatchConfidence.matched;
       }
     }
+
+    final result = _entries
+        .map((e) => e.draft)
+        .where((d) => d.displayName.trim().isNotEmpty)
+        .toList();
+
     if (!mounted) return;
-    Navigator.pop(context, _drafts);
+    Navigator.pop(context, result);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final unmatched = _unmatched;
-    final matchedCount = _drafts.length - unmatched.length;
+    final unmatched = _unmatchedEntries;
+    final matchedCount = _entries.length - unmatched.length;
 
     return DraggableScrollableSheet(
       expand: false,
@@ -181,24 +245,28 @@ class _ImportIngredientReviewSheetState
                 child: ListView(
                   controller: scrollController,
                   children: [
-                    for (final draft in unmatched) ...[
+                    for (final entry in unmatched) ...[
                       _UnmatchedRow(
-                        draft: draft,
-                        controller: _controllers[_drafts.indexOf(draft)]!,
+                        entry: entry,
                         categories: _categories,
-                        suggestions: _activeDraftIndex == _drafts.indexOf(draft)
-                            ? _suggestions
+                        matchSuggestions:
+                            _proactiveSuggestions[entry.id] ?? const [],
+                        typingSuggestions: _activeEntryId == entry.id
+                            ? _typingSuggestions
                             : const [],
+                        onRemove: () => _removeDraft(entry.id),
                         onNameChanged: (value) =>
-                            _onNameChanged(_drafts.indexOf(draft), value),
+                            _onNameChanged(entry.id, value),
                         onCatalogSelected: (item) =>
-                            _selectCatalogItem(_drafts.indexOf(draft), item),
+                            _selectCatalogItem(entry.id, item),
                         onAddToCatalogChanged: (value) {
-                          setState(() => draft.addToCatalog = value ?? false);
+                          setState(
+                            () => entry.draft.addToCatalog = value ?? false,
+                          );
                         },
                         onCategoryChanged: (value) {
                           if (value != null) {
-                            setState(() => draft.categoryId = value);
+                            setState(() => entry.draft.categoryId = value);
                           }
                         },
                       ),
@@ -221,20 +289,22 @@ class _ImportIngredientReviewSheetState
 
 class _UnmatchedRow extends StatelessWidget {
   const _UnmatchedRow({
-    required this.draft,
-    required this.controller,
+    required this.entry,
     required this.categories,
-    required this.suggestions,
+    required this.matchSuggestions,
+    required this.typingSuggestions,
+    required this.onRemove,
     required this.onNameChanged,
     required this.onCatalogSelected,
     required this.onAddToCatalogChanged,
     required this.onCategoryChanged,
   });
 
-  final ImportIngredientDraft draft;
-  final TextEditingController controller;
+  final _DraftEntry entry;
   final List<Category> categories;
-  final List<CatalogItem> suggestions;
+  final List<CatalogItem> matchSuggestions;
+  final List<CatalogItem> typingSuggestions;
+  final VoidCallback onRemove;
   final ValueChanged<String> onNameChanged;
   final ValueChanged<CatalogItem> onCatalogSelected;
   final ValueChanged<bool?> onAddToCatalogChanged;
@@ -246,12 +316,14 @@ class _UnmatchedRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: IngredientCatalogNameField(
-          controller: controller,
+          controller: entry.controller,
           categories: categories,
-          suggestions: suggestions,
-          addToCatalog: draft.addToCatalog,
-          categoryId: draft.categoryId,
-          originalLine: draft.parsed.originalLine,
+          suggestions: typingSuggestions,
+          matchSuggestions: matchSuggestions,
+          addToCatalog: entry.draft.addToCatalog,
+          categoryId: entry.draft.categoryId,
+          originalLine: entry.draft.parsed.originalLine,
+          onRemove: onRemove,
           onNameChanged: onNameChanged,
           onCatalogSelected: onCatalogSelected,
           onAddToCatalogChanged: onAddToCatalogChanged,

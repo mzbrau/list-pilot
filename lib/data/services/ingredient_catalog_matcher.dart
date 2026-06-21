@@ -139,6 +139,48 @@ class IngredientCatalogMatcher {
     return drafts;
   }
 
+  Future<List<CatalogItem>> suggestMatches(
+    String itemName, {
+    int limit = 5,
+  }) async {
+    final normalized = itemName.trim().toLowerCase();
+    if (normalized.isEmpty) return const [];
+
+    final suggestions = <CatalogItem>[];
+    final seenIds = <int>{};
+
+    void add(CatalogItem? item) {
+      if (item == null || seenIds.contains(item.id)) return;
+      seenIds.add(item.id);
+      suggestions.add(item);
+    }
+
+    final tokens = _significantTokens(normalized);
+    for (final token in tokens) {
+      if (suggestions.length >= limit) break;
+      add(await _catalog.findByName(token));
+    }
+
+    for (final token in tokens) {
+      if (suggestions.length >= limit) break;
+      final prefixMatches = await _catalog.search(token, limit: 2);
+      for (final item in prefixMatches) {
+        if (suggestions.length >= limit) break;
+        add(item);
+      }
+    }
+
+    if (suggestions.length < limit) {
+      final prefixMatches = await _catalog.search(itemName, limit: limit);
+      for (final item in prefixMatches) {
+        if (suggestions.length >= limit) break;
+        add(item);
+      }
+    }
+
+    return suggestions;
+  }
+
   Future<CatalogItem?> _findMatch(String itemName) async {
     final normalized = itemName.trim().toLowerCase();
     if (normalized.isEmpty) return null;

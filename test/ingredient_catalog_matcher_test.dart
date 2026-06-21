@@ -32,6 +32,14 @@ void main() {
             createdAt: DateTime.now(),
           ),
         );
+    await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'apples',
+            displayName: 'Apples',
+            categoryId: 'fruit_veg',
+            createdAt: DateTime.now(),
+          ),
+        );
     catalogRepo = CatalogRepository(db);
     matcher = IngredientCatalogMatcher(
       catalogRepo,
@@ -66,5 +74,22 @@ void main() {
     expect(result.parsed.quantityValue, 750);
     expect(result.parsed.itemName, 'Potatoes');
     expect(result.confidence, IngredientMatchConfidence.matched);
+  });
+
+  test('suggestMatches returns token match for descriptive name', () async {
+    final suggestions = await matcher.suggestMatches('green apples');
+    expect(suggestions.map((item) => item.displayName), ['Apples']);
+  });
+
+  test('suggestMatches returns empty list for unknown item', () async {
+    final suggestions =
+        await matcher.suggestMatches('unicorn tears and moon dust');
+    expect(suggestions, isEmpty);
+  });
+
+  test('suggestMatches dedupes when multiple strategies match same item', () async {
+    final suggestions = await matcher.suggestMatches('apples');
+    expect(suggestions.length, 1);
+    expect(suggestions.first.displayName, 'Apples');
   });
 }
