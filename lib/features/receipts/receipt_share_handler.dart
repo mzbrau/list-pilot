@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
@@ -8,6 +7,7 @@ import '../../data/repositories/receipt_repository.dart';
 import '../../data/services/ica_receipt_parser.dart';
 import '../../data/services/receipt_import_service.dart';
 import '../../data/services/receipt_share_service.dart';
+import '../../router/app_router.dart';
 
 class ReceiptShareHandler extends ConsumerStatefulWidget {
   const ReceiptShareHandler({super.key, required this.child});
@@ -24,9 +24,34 @@ class _ReceiptShareHandlerState extends ConsumerState<ReceiptShareHandler> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(receiptShareServiceProvider).initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(receiptShareServiceProvider).initialize();
+      if (!mounted) return;
+      final pending = ref.read(pendingReceiptShareProvider);
+      if (pending != null) {
+        await _handlePendingShare(pending);
+      }
     });
+  }
+
+  BuildContext? get _overlayContext => rootNavigatorKey.currentContext;
+
+  void _showSnackBar(SnackBar snackBar) {
+    final overlayContext = _overlayContext;
+    if (overlayContext != null) {
+      ScaffoldMessenger.of(overlayContext).showSnackBar(snackBar);
+    }
+  }
+
+  int? _currentReceiptListId() {
+    final location = ref
+        .read(routerProvider)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .toString();
+    final match = RegExp(r'/receipts/(\d+)').firstMatch(location);
+    return match != null ? int.tryParse(match.group(1)!) : null;
   }
 
   Future<void> _handlePendingShare(PendingReceiptShare pending) async {
@@ -43,43 +68,51 @@ class _ReceiptShareHandlerState extends ConsumerState<ReceiptShareHandler> {
       } else if (lists.length == 1) {
         listId = lists.first.id;
       } else {
-        listId = await _pickList(lists);
+        final currentListId = _currentReceiptListId();
+        if (currentListId != null && lists.any((list) => list.id == currentListId)) {
+          listId = currentListId;
+        } else {
+          listId = await _pickList(lists);
+        }
       }
 
       if (listId == null || !mounted) return;
 
-      final messenger = ScaffoldMessenger.of(context);
       try {
         final receiptId = await ref.read(receiptShareServiceProvider).importToList(
               listId: listId,
               sourcePath: pending.filePath,
             );
-        if (!mounted || receiptId == null) return;
-        messenger.showSnackBar(
+        if (!mounted) return;
+        _showSnackBar(
           const SnackBar(content: Text('Shared receipt imported')),
         );
-        context.push('/receipts/$listId/receipt/$receiptId');
+        ref.read(routerProvider).push('/receipts/$listId/receipt/$receiptId');
       } on DuplicateReceiptException catch (e) {
-        messenger.showSnackBar(
+        _showSnackBar(
           SnackBar(content: Text('Receipt already imported (#${e.existingReceiptId})')),
         );
-        context.push('/receipts/$listId');
+        ref.read(routerProvider).push('/receipts/$listId');
       } on IcaReceiptParseException catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+        _showSnackBar(SnackBar(content: Text(e.message)));
       } on ReceiptImportException catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+        _showSnackBar(SnackBar(content: Text(e.message)));
       } catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
+        _showSnackBar(SnackBar(content: Text('Import failed: $e')));
       }
     } finally {
+      await ref.read(receiptShareServiceProvider).resetIntent();
       ref.read(pendingReceiptShareProvider.notifier).state = null;
       _handling = false;
     }
   }
 
   Future<int?> _pickList(List<ReceiptList> lists) async {
+    final overlayContext = _overlayContext;
+    if (overlayContext == null) return null;
+
     return showModalBottomSheet<int>(
-      context: context,
+      context: overlayContext,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

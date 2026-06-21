@@ -1,0 +1,18 @@
+Kvitto
+Maxi ICA Stormarknad Kungälv
+Datum
+Tid
+Org nr
+Kvitto nr
+Kassa
+Kassör
+2026-04-06
+18:42
+SE556197636501
+6123
+67
+1231231231
+Beskrivning Artikelnummer Pris Mängd Summa(SEK)
+Aktiv-gel citrus 1444229 22,60 1,00 st 22,60
+Betalat 2,027,91
+Totalt SEK 2,027,91

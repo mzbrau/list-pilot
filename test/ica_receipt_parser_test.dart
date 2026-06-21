@@ -33,4 +33,22 @@ void main() {
       throwsA(isA<IcaReceiptParseException>()),
     );
   });
+
+  test('parseSwedishNumber handles common ICA formats', () {
+    expect(IcaReceiptParser.parseSwedishNumber('55,90'), 55.90);
+    expect(IcaReceiptParser.parseSwedishNumber('2,027,91'), 2027.91);
+    expect(IcaReceiptParser.parseSwedishNumber('1.166,63'), 1166.63);
+    expect(IcaReceiptParser.parseSwedishNumber('1,166,63'), 1166.63);
+    expect(IcaReceiptParser.parseSwedishNumber('1.166.63'), 1166.63);
+  });
+
+  test('parses receipt with comma-grouped thousands total', () {
+    final text =
+        File('test/fixtures/ica_receipt_large_total.txt').readAsStringSync();
+    final result = IcaReceiptParser().parse(text);
+
+    expect(result.totalAmount, 2027.91);
+    expect(result.lines, hasLength(1));
+    expect(result.lines.first.lineTotal, 22.60);
+  });
 }

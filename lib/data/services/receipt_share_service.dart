@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import '../../core/providers/app_providers.dart';
-import '../repositories/receipt_repository.dart';
 
 class PendingReceiptShare {
   const PendingReceiptShare({required this.filePath});
@@ -20,11 +19,12 @@ class ReceiptShareService {
   final Ref _ref;
   StreamSubscription<List<SharedMediaFile>>? _mediaSubscription;
 
-  void initialize() {
+  Future<void> initialize() async {
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      ReceiveSharingIntent.instance.getInitialMedia().then(_handleSharedFiles);
-      _mediaSubscription =
+      _mediaSubscription ??=
           ReceiveSharingIntent.instance.getMediaStream().listen(_handleSharedFiles);
+      final initial = await ReceiveSharingIntent.instance.getInitialMedia();
+      await _handleSharedFiles(initial);
     }
   }
 
@@ -42,27 +42,28 @@ class ReceiptShareService {
       orElse: () => files.first,
     );
     if (!pdf.path.toLowerCase().endsWith('.pdf')) {
-      ReceiveSharingIntent.instance.reset();
+      await resetIntent();
       return;
     }
 
     _ref.read(pendingReceiptShareProvider.notifier).state =
         PendingReceiptShare(filePath: pdf.path);
-    ReceiveSharingIntent.instance.reset();
   }
 
-  Future<int?> importToList({
+  Future<void> resetIntent() async {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      await ReceiveSharingIntent.instance.reset();
+    }
+  }
+
+  Future<int> importToList({
     required int listId,
     required String sourcePath,
-  }) async {
-    try {
-      return await _ref.read(receiptImportServiceProvider).importPdf(
-            listId: listId,
-            sourcePdfPath: sourcePath,
-          );
-    } on DuplicateReceiptException {
-      rethrow;
-    }
+  }) {
+    return _ref.read(receiptImportServiceProvider).importPdf(
+          listId: listId,
+          sourcePdfPath: sourcePath,
+        );
   }
 }
 

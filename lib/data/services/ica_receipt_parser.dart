@@ -47,21 +47,21 @@ class IcaReceiptParser {
   static final _datePattern = RegExp(r'^(\d{4}-\d{2}-\d{2})$', multiLine: true);
   static final _timePattern = RegExp(r'^(\d{2}:\d{2})$', multiLine: true);
   static final _totalPattern = RegExp(
-    r'Totalt\s+SEK\s+([\d,]+)',
+    r'Totalt\s+SEK\s+([\d.,\s]+)',
     caseSensitive: false,
   );
   static final _productLine = RegExp(
     r'^(\*)?'
     r'(.+?)\s+'
     r'(\d{7})\s+'
-    r'([\d,]+)\s+'
-    r'([\d,]+)\s+'
+    r'([\d.,]+)\s+'
+    r'([\d.,]+)\s+'
     r'(st|kg)\s+'
-    r'([\d,]+)'
+    r'([\d.,]+)'
     r'\s*$',
   );
   static final _discountLine = RegExp(
-    r'kr/st\s+-[\d,]+$|kr/kg\s+-[\d,]+$|rabatt\d+%\s+-[\d,]+$',
+    r'kr/st\s+-[\d.,]+$|kr/kg\s+-[\d.,]+$|rabatt\d+%\s+-[\d.,]+$',
     caseSensitive: false,
   );
 
@@ -147,7 +147,7 @@ class IcaReceiptParser {
     if (totalMatch == null) {
       throw IcaReceiptParseException('Could not find receipt total');
     }
-    final totalAmount = _parseSwedishNumber(totalMatch.group(1)!);
+    final totalAmount = parseSwedishNumber(totalMatch.group(1)!);
 
     final items = <IcaReceiptLineItem>[];
     for (final raw in lines) {
@@ -156,7 +156,7 @@ class IcaReceiptParser {
       final lower = line.toLowerCase();
       if (_skipPrefixes.any(lower.startsWith)) continue;
       if (_discountLine.hasMatch(lower)) continue;
-      if (RegExp(r'^kort [\d,]+$').hasMatch(lower)) continue;
+      if (RegExp(r'^kort [\d.,]+$').hasMatch(lower)) continue;
 
       final match = _productLine.firstMatch(line);
       if (match == null) continue;
@@ -166,10 +166,10 @@ class IcaReceiptParser {
           isPromo: match.group(1) == '*',
           description: match.group(2)!.trim(),
           articleNumber: match.group(3),
-          unitPrice: _parseSwedishNumber(match.group(4)!),
-          quantity: _parseSwedishNumber(match.group(5)!),
+          unitPrice: parseSwedishNumber(match.group(4)!),
+          quantity: parseSwedishNumber(match.group(5)!),
           quantityUnit: match.group(6),
-          lineTotal: _parseSwedishNumber(match.group(7)!),
+          lineTotal: parseSwedishNumber(match.group(7)!),
         ),
       );
     }
@@ -214,7 +214,43 @@ class IcaReceiptParser {
     return RegExp(r'^\d+$').hasMatch(value) ? value : null;
   }
 
-  static double _parseSwedishNumber(String value) {
-    return double.parse(value.replaceAll(',', '.').trim());
+  static double parseSwedishNumber(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) {
+      throw IcaReceiptParseException('Invalid number: empty value');
+    }
+
+    var s = raw.replaceAll('\u00A0', '').replaceAll(' ', '');
+
+    final lastComma = s.lastIndexOf(',');
+    final lastPeriod = s.lastIndexOf('.');
+
+    if (lastComma >= 0 && lastPeriod >= 0) {
+      if (lastComma > lastPeriod) {
+        s = s.replaceAll('.', '').replaceAll(',', '.');
+      } else {
+        s = s.replaceAll(',', '');
+      }
+    } else if (lastComma >= 0) {
+      final parts = s.split(',');
+      if (parts.length > 2) {
+        final decimal = parts.removeLast();
+        s = '${parts.join('')}.$decimal';
+      } else if (parts.length == 2) {
+        s = '${parts[0]}.${parts[1]}';
+      }
+    } else if (lastPeriod >= 0) {
+      final parts = s.split('.');
+      if (parts.length > 2) {
+        final decimal = parts.removeLast();
+        s = '${parts.join('')}.$decimal';
+      }
+    }
+
+    try {
+      return double.parse(s);
+    } on FormatException {
+      throw IcaReceiptParseException('Invalid number: $raw');
+    }
   }
 }
