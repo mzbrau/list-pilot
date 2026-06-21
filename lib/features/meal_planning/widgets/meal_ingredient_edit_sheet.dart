@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/widgets/keyboard_inset_padding.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/ingredient_parser_service.dart';
 import 'ingredient_catalog_name_field.dart';
@@ -221,12 +222,7 @@ class _MealIngredientEditSheetState
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            8,
-            16,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
+          padding: keyboardAwareSheetPadding(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

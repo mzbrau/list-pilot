@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/widgets/keyboard_inset_padding.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/ingredient_catalog_matcher.dart';
 import '../../meal_planning/widgets/ingredient_catalog_name_field.dart';
@@ -214,7 +215,7 @@ class _ImportIngredientReviewSheetState
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: keyboardAwareSheetPadding(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

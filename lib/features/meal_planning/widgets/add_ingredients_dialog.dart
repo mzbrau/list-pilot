@@ -252,19 +252,23 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
     }
     final needsListPicker = lists.length > 1 && effectiveListId == null;
 
-    return AlertDialog(
-      title: const Text('Add ingredients to list'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: _loading
-            ? const SizedBox(
-                height: 80,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: AlertDialog(
+        title: const Text('Add ingredients to list'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _loading
+              ? const SizedBox(
+                  height: 80,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   if (lists.isEmpty)
                     Text(
                       'Create a shopping list first.',
@@ -388,25 +392,26 @@ class _AddIngredientsDialogState extends ConsumerState<AddIngredientsDialog> {
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ],
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: _submitting ? null : () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: _submitting || lists.isEmpty ? null : _confirm,
+            child: _submitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Add to list'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: _submitting ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submitting || lists.isEmpty ? null : _confirm,
-          child: _submitting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Add to list'),
-        ),
-      ],
     );
   }
 }
