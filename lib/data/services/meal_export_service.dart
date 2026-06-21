@@ -92,7 +92,7 @@ class MealExportService {
       final savedPath = await FileSaver.instance.saveFile(
         name: fileName,
         bytes: utf8.encode(contents),
-        ext: 'json',
+        fileExtension: 'json',
         mimeType: MimeType.json,
       );
       return (
