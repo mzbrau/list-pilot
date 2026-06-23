@@ -48,10 +48,18 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _urlController.dispose();
     _nameController.dispose();
     _notesController.dispose();
@@ -137,13 +145,34 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     });
   }
 
-  Future<void> _pickPhoto() async {
+  void _resetPreviewDrafts() {
+    _hasPreview = false;
+    _ingredientDrafts = [];
+    _steps = [];
+    _tags = [];
+    _nameController.clear();
+    _notesController.clear();
+    _recipeController.clear();
+    _portionsController.text = '4';
+    _prepTimeController.clear();
+    _imageUrl = null;
+  }
+
+  Future<void> _pickPhoto({bool autoImport = true}) async {
     final file = await ref.read(mealPhotoServiceProvider).pickImageForImport();
     if (!mounted || file == null) return;
     setState(() {
       _pickedPhotoFile = file;
-      _hasPreview = false;
+      _resetPreviewDrafts();
     });
+    if (autoImport) {
+      await _import();
+    }
+  }
+
+  Future<void> _changePhotoFromReview() async {
+    setState(_resetPreviewDrafts);
+    await _pickPhoto();
   }
 
   Future<void> _addIngredientLine() async {
@@ -238,56 +267,312 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     }
   }
 
-  Widget _buildIngredientsTab(ThemeData theme) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        TextField(
-          controller: _ingredientController,
-          decoration: InputDecoration(
-            hintText: 'Add ingredient…',
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: _addIngredientLine,
+  List<Widget> _ingredientTabChildren(ThemeData theme) {
+    return [
+      TextField(
+        controller: _ingredientController,
+        decoration: InputDecoration(
+          hintText: 'Add ingredient…',
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _addIngredientLine,
+          ),
+        ),
+        textCapitalization: TextCapitalization.sentences,
+        onSubmitted: (_) => _addIngredientLine(),
+      ),
+      const SizedBox(height: 8),
+      if (_ingredientDrafts.isEmpty)
+        Text(
+          'No ingredients yet',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ..._ingredientDrafts.asMap().entries.map((entry) {
+        final draft = entry.value;
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            title: MealIngredientLineText(
+              displayName: draft.displayName,
+              quantityValue: draft.parsed.quantityValue,
+              quantityUnit: draft.parsed.quantityUnit,
+            ),
+            subtitle: draft.confidence == IngredientMatchConfidence.unmatched
+                ? const Text('Needs review before save')
+                : draft.catalogItem != null
+                    ? Text('Matched: ${draft.catalogItem!.displayName}')
+                    : null,
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {
+                setState(() => _ingredientDrafts.removeAt(entry.key));
+              },
             ),
           ),
-          textCapitalization: TextCapitalization.sentences,
-          onSubmitted: (_) => _addIngredientLine(),
+        );
+      }),
+    ];
+  }
+
+  Widget _buildIngredientsTab(ThemeData theme, {required bool nestedScroll}) {
+    final children = _ingredientTabChildren(theme);
+
+    if (!nestedScroll) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: children,
+      );
+    }
+
+    return CustomScrollView(
+      key: const PageStorageKey('meal-import-ingredients'),
+      slivers: [
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
         ),
-        const SizedBox(height: 8),
-        if (_ingredientDrafts.isEmpty)
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate(children),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhotoPicker(RecipeImportLanguage importLanguage) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_pickedPhotoFile != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                _pickedPhotoFile!,
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: _importing ? null : () => _pickPhoto(),
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('Choose photo'),
+            ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              if (_pickedPhotoFile != null)
+                TextButton.icon(
+                  onPressed: _importing
+                      ? null
+                      : () => _pickPhoto(autoImport: false),
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: const Text('Change photo'),
+                ),
+              const Spacer(),
+              FilledButton(
+                onPressed: _importing || _pickedPhotoFile == null
+                    ? null
+                    : _import,
+                child: _importing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Import'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: importLanguage.code,
+            decoration: const InputDecoration(
+              labelText: 'Import language',
+            ),
+            items: [
+              for (final language in recipeImportLanguages)
+                DropdownMenuItem(
+                  value: language.code,
+                  child: Text(language.label),
+                ),
+            ],
+            onChanged: _importing
+                ? null
+                : (code) {
+                    if (code == null) return;
+                    ref
+                        .read(recipeImportLanguageProvider.notifier)
+                        .setLanguage(recipeImportLanguageByCode(code));
+                  },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUrlImporter(RecipeImportLanguage importLanguage) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _urlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Recipe URL',
+                    hintText: 'https://…',
+                  ),
+                  keyboardType: TextInputType.url,
+                  enabled: !_importing,
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: _importing ? null : _import,
+                child: _importing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Import'),
+              ),
+            ],
+          ),
+          if (widget.mode == MealImportMode.ai) ...[
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: importLanguage.code,
+              decoration: const InputDecoration(
+                labelText: 'Import language',
+              ),
+              items: [
+                for (final language in recipeImportLanguages)
+                  DropdownMenuItem(
+                    value: language.code,
+                    child: Text(language.label),
+                  ),
+              ],
+              onChanged: _importing
+                  ? null
+                  : (code) {
+                      if (code == null) return;
+                      ref
+                          .read(recipeImportLanguageProvider.notifier)
+                          .setLanguage(
+                            recipeImportLanguageByCode(code),
+                          );
+                    },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyzingBody(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
           Text(
-            'No ingredients yet',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            'Analyzing recipe…',
+            style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-        ..._ingredientDrafts.asMap().entries.map((entry) {
-          final draft = entry.value;
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: MealIngredientLineText(
-                displayName: draft.displayName,
-                quantityValue: draft.parsed.quantityValue,
-                quantityUnit: draft.parsed.quantityUnit,
-              ),
-              subtitle: draft.confidence == IngredientMatchConfidence.unmatched
-                  ? const Text('Needs review before save')
-                  : draft.catalogItem != null
-                      ? Text('Matched: ${draft.catalogItem!.displayName}')
-                      : null,
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () {
-                  setState(() => _ingredientDrafts.removeAt(entry.key));
-                },
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewBody(ThemeData theme) {
+    return NestedScrollView(
+      physics: const ClampingScrollPhysics(),
+      headerSliverBuilder: (context, innerBoxIsScrolled) => [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: MealDetailHeader(
+              displayName: _nameController.text,
+              photoPath: null,
+              photoFile: _pickedPhotoFile,
+              imageUrl: _imageUrl,
+              isEditing: true,
+              nameController: _nameController,
+            ),
+          ),
+        ),
+        SliverOverlapAbsorber(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          sliver: SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabBarDelegate(
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: 'Ingredients'),
+                  Tab(text: 'Steps'),
+                  Tab(text: 'Other'),
+                ],
               ),
             ),
-          );
-        }),
+          ),
+        ),
       ],
+      body: TabBarView(
+        controller: _tabController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _buildIngredientsTab(theme, nestedScroll: true),
+          MealDetailStepsTab(
+            mealId: null,
+            isEditing: true,
+            draftSteps: _steps,
+            onDraftStepsChanged: (value) => setState(() => _steps = value),
+            nestedScroll: true,
+          ),
+          MealDetailOtherTab(
+            isEditing: true,
+            tags: _tags,
+            onTagsChanged: (value) => setState(() => _tags = value),
+            notes: _notesController.text,
+            portions: int.tryParse(_portionsController.text) ?? 4,
+            prepTimeMinutes: int.tryParse(_prepTimeController.text),
+            recipeLink: _recipeController.text,
+            notesController: _notesController,
+            portionsController: _portionsController,
+            prepTimeController: _prepTimeController,
+            recipeController: _recipeController,
+            nestedScroll: true,
+          ),
+        ],
+      ),
     );
+  }
+
+  String get _appBarTitle {
+    if (_hasPreview && _isPhotoMode) {
+      return 'Review recipe';
+    }
+    return switch (widget.mode) {
+      MealImportMode.ai => 'Import recipe (AI)',
+      MealImportMode.extract => 'Import recipe',
+      MealImportMode.photo => 'Import recipe (photo)',
+    };
   }
 
   @override
@@ -297,14 +582,14 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          switch (widget.mode) {
-            MealImportMode.ai => 'Import recipe (AI)',
-            MealImportMode.extract => 'Import recipe',
-            MealImportMode.photo => 'Import recipe (photo)',
-          },
-        ),
+        title: Text(_appBarTitle),
         actions: [
+          if (_hasPreview && _isPhotoMode)
+            IconButton(
+              icon: const Icon(Icons.photo_library_outlined),
+              tooltip: 'Change photo',
+              onPressed: _importing ? null : _changePhotoFromReview,
+            ),
           if (_hasPreview)
             TextButton(
               onPressed: _save,
@@ -312,201 +597,69 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
             ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: _hasPreview
+          ? Column(
               children: [
-                if (_isPhotoMode) ...[
-                  if (_pickedPhotoFile != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        _pickedPhotoFile!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  else
-                    OutlinedButton.icon(
-                      onPressed: _importing ? null : _pickPhoto,
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Choose photo'),
-                    ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      if (_pickedPhotoFile != null)
-                        TextButton.icon(
-                          onPressed: _importing ? null : _pickPhoto,
-                          icon: const Icon(Icons.photo_library_outlined),
-                          label: const Text('Change photo'),
-                        ),
-                      const Spacer(),
-                      FilledButton(
-                        onPressed: _importing || _pickedPhotoFile == null
-                            ? null
-                            : _import,
-                        child: _importing
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Import'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: importLanguage.code,
-                    decoration: const InputDecoration(
-                      labelText: 'Import language',
-                    ),
-                    items: [
-                      for (final language in recipeImportLanguages)
-                        DropdownMenuItem(
-                          value: language.code,
-                          child: Text(language.label),
-                        ),
-                    ],
-                    onChanged: _importing
-                        ? null
-                        : (code) {
-                            if (code == null) return;
-                            ref
-                                .read(recipeImportLanguageProvider.notifier)
-                                .setLanguage(recipeImportLanguageByCode(code));
-                          },
-                  ),
-                ] else ...[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _urlController,
-                          decoration: const InputDecoration(
-                            labelText: 'Recipe URL',
-                            hintText: 'https://…',
+                if (!_isPhotoMode) ...[
+                  _buildUrlImporter(importLanguage),
+                  if (_importing) const LinearProgressIndicator(),
+                ],
+                Expanded(child: _buildPreviewBody(theme)),
+              ],
+            )
+          : _isPhotoMode && _importing
+              ? _buildAnalyzingBody(theme)
+              : Column(
+                  children: [
+                    if (_isPhotoMode)
+                      _buildPhotoPicker(importLanguage)
+                    else
+                      _buildUrlImporter(importLanguage),
+                    if (_importing && !_isPhotoMode)
+                      const LinearProgressIndicator(),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          _isPhotoMode
+                              ? 'Choose a recipe photo to import'
+                              : 'Enter a recipe URL and tap Import',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          keyboardType: TextInputType.url,
-                          enabled: !_importing,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _importing ? null : _import,
-                        child: _importing
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Import'),
-                      ),
-                    ],
-                  ),
-                  if (widget.mode == MealImportMode.ai) ...[
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: importLanguage.code,
-                      decoration: const InputDecoration(
-                        labelText: 'Import language',
-                      ),
-                      items: [
-                        for (final language in recipeImportLanguages)
-                          DropdownMenuItem(
-                            value: language.code,
-                            child: Text(language.label),
-                          ),
-                      ],
-                      onChanged: _importing
-                          ? null
-                          : (code) {
-                              if (code == null) return;
-                              ref
-                                  .read(recipeImportLanguageProvider.notifier)
-                                  .setLanguage(
-                                    recipeImportLanguageByCode(code),
-                                  );
-                            },
                     ),
                   ],
-                ],
-              ],
-            ),
-          ),
-          if (_importing)
-            const LinearProgressIndicator(),
-          if (!_hasPreview)
-            Expanded(
-              child: Center(
-                child: Text(
-                  _isPhotoMode
-                      ? 'Choose a recipe photo and tap Import'
-                      : 'Enter a recipe URL and tap Import',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
                 ),
-              ),
-            )
-          else ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: MealDetailHeader(
-                displayName: _nameController.text,
-                photoPath: null,
-                photoFile: _pickedPhotoFile,
-                imageUrl: _imageUrl,
-                isEditing: true,
-                nameController: _nameController,
-              ),
-            ),
-            TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: 'Ingredients'),
-                Tab(text: 'Steps'),
-                Tab(text: 'Other'),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildIngredientsTab(theme),
-                  MealDetailStepsTab(
-                    mealId: null,
-                    isEditing: true,
-                    draftSteps: _steps,
-                    onDraftStepsChanged: (value) =>
-                        setState(() => _steps = value),
-                  ),
-                  MealDetailOtherTab(
-                    isEditing: true,
-                    tags: _tags,
-                    onTagsChanged: (value) => setState(() => _tags = value),
-                    notes: _notesController.text,
-                    portions: int.tryParse(_portionsController.text) ?? 4,
-                    prepTimeMinutes: int.tryParse(_prepTimeController.text),
-                    recipeLink: _recipeController.text,
-                    notesController: _notesController,
-                    portionsController: _portionsController,
-                    prepTimeController: _prepTimeController,
-                    recipeController: _recipeController,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
     );
+  }
+}
+
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _StickyTabBarDelegate(this.tabBar);
+
+  final TabBar tabBar;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar;
   }
 }
