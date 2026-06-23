@@ -262,7 +262,7 @@ void main() {
     expect(tags, isEmpty);
   });
 
-  test('updatePlanItemScale persists scale factor', () async {
+  test('updatePlanItemScale persists scale factor and syncs to meal', () async {
     final meal = await repo.getOrCreateMeal(displayName: 'Stew');
     final planItemId = await repo.addMealToPlan(meal.id);
 
@@ -270,6 +270,68 @@ void main() {
 
     final items = await repo.watchPlanItems().first;
     expect(items.first.planItem.scaleFactor, 1.5);
+
+    final updatedMeal = await repo.getMealById(meal.id);
+    expect(updatedMeal?.viewScaleFactor, 1.5);
+  });
+
+  test('updateMealViewScale persists and clamps', () async {
+    final meal = await repo.getOrCreateMeal(displayName: 'Soup');
+
+    await repo.updateMealViewScale(meal.id, 2.0);
+    var updated = await repo.getMealById(meal.id);
+    expect(updated?.viewScaleFactor, 2.0);
+
+    await repo.updateMealViewScale(meal.id, 20.0);
+    updated = await repo.getMealById(meal.id);
+    expect(updated?.viewScaleFactor, 10.0);
+
+    await repo.updateMealViewScale(meal.id, 0.1);
+    updated = await repo.getMealById(meal.id);
+    expect(updated?.viewScaleFactor, 0.25);
+  });
+
+  test('updatePlanItemScale syncs all plan items for the meal', () async {
+    final meal = await repo.getOrCreateMeal(displayName: 'Curry');
+    final firstPlanItemId = await repo.addMealToPlan(meal.id);
+    final secondPlanItemId = await repo.addMealToPlan(meal.id);
+
+    await repo.updatePlanItemScale(firstPlanItemId, 2.0);
+
+    final items = await repo.watchPlanItems().first;
+    expect(items, hasLength(2));
+    expect(
+      items.map((entry) => entry.planItem.scaleFactor).toSet(),
+      {2.0},
+    );
+    expect(items.map((entry) => entry.planItem.id).toSet(), {
+      firstPlanItemId,
+      secondPlanItemId,
+    });
+  });
+
+  test('addMealToPlan copies meal viewScaleFactor', () async {
+    final meal = await repo.getOrCreateMeal(displayName: 'Risotto');
+    await repo.updateMealViewScale(meal.id, 1.5);
+
+    final planItemId = await repo.addMealToPlan(meal.id);
+
+    final items = await repo.watchPlanItems().first;
+    final planItem =
+        items.firstWhere((entry) => entry.planItem.id == planItemId);
+    expect(planItem.planItem.scaleFactor, 1.5);
+  });
+
+  test('syncMealScaleToPlanItems updates plan rows from recipe scale', () async {
+    final meal = await repo.getOrCreateMeal(displayName: 'Tacos');
+    final planItemId = await repo.addMealToPlan(meal.id);
+
+    await repo.updateMealViewScale(meal.id, 0.5);
+    await repo.syncMealScaleToPlanItems(meal.id, 0.5);
+
+    final items = await repo.watchPlanItems().first;
+    expect(items.first.planItem.id, planItemId);
+    expect(items.first.planItem.scaleFactor, 0.5);
   });
 
   test('createMeal with structured ingredients', () async {

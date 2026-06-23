@@ -3502,6 +3502,14 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _viewScaleFactorMeta =
+      const VerificationMeta('viewScaleFactor');
+  @override
+  late final GeneratedColumn<double> viewScaleFactor = GeneratedColumn<double>(
+      'view_scale_factor', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1.0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -3512,7 +3520,8 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
         portions,
         recipeLink,
         isUserAdded,
-        createdAt
+        createdAt,
+        viewScaleFactor
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3571,6 +3580,12 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('view_scale_factor')) {
+      context.handle(
+          _viewScaleFactorMeta,
+          viewScaleFactor.isAcceptableOrUnknown(
+              data['view_scale_factor']!, _viewScaleFactorMeta));
+    }
     return context;
   }
 
@@ -3598,6 +3613,8 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_user_added'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      viewScaleFactor: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}view_scale_factor'])!,
     );
   }
 
@@ -3617,6 +3634,7 @@ class Meal extends DataClass implements Insertable<Meal> {
   final String? recipeLink;
   final bool isUserAdded;
   final DateTime createdAt;
+  final double viewScaleFactor;
   const Meal(
       {required this.id,
       required this.name,
@@ -3626,7 +3644,8 @@ class Meal extends DataClass implements Insertable<Meal> {
       required this.portions,
       this.recipeLink,
       required this.isUserAdded,
-      required this.createdAt});
+      required this.createdAt,
+      required this.viewScaleFactor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3645,6 +3664,7 @@ class Meal extends DataClass implements Insertable<Meal> {
     }
     map['is_user_added'] = Variable<bool>(isUserAdded);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['view_scale_factor'] = Variable<double>(viewScaleFactor);
     return map;
   }
 
@@ -3664,6 +3684,7 @@ class Meal extends DataClass implements Insertable<Meal> {
           : Value(recipeLink),
       isUserAdded: Value(isUserAdded),
       createdAt: Value(createdAt),
+      viewScaleFactor: Value(viewScaleFactor),
     );
   }
 
@@ -3680,6 +3701,7 @@ class Meal extends DataClass implements Insertable<Meal> {
       recipeLink: serializer.fromJson<String?>(json['recipeLink']),
       isUserAdded: serializer.fromJson<bool>(json['isUserAdded']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      viewScaleFactor: serializer.fromJson<double>(json['viewScaleFactor']),
     );
   }
   @override
@@ -3695,6 +3717,7 @@ class Meal extends DataClass implements Insertable<Meal> {
       'recipeLink': serializer.toJson<String?>(recipeLink),
       'isUserAdded': serializer.toJson<bool>(isUserAdded),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'viewScaleFactor': serializer.toJson<double>(viewScaleFactor),
     };
   }
 
@@ -3707,7 +3730,8 @@ class Meal extends DataClass implements Insertable<Meal> {
           int? portions,
           Value<String?> recipeLink = const Value.absent(),
           bool? isUserAdded,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          double? viewScaleFactor}) =>
       Meal(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -3718,6 +3742,7 @@ class Meal extends DataClass implements Insertable<Meal> {
         recipeLink: recipeLink.present ? recipeLink.value : this.recipeLink,
         isUserAdded: isUserAdded ?? this.isUserAdded,
         createdAt: createdAt ?? this.createdAt,
+        viewScaleFactor: viewScaleFactor ?? this.viewScaleFactor,
       );
   Meal copyWithCompanion(MealsCompanion data) {
     return Meal(
@@ -3733,6 +3758,9 @@ class Meal extends DataClass implements Insertable<Meal> {
       isUserAdded:
           data.isUserAdded.present ? data.isUserAdded.value : this.isUserAdded,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      viewScaleFactor: data.viewScaleFactor.present
+          ? data.viewScaleFactor.value
+          : this.viewScaleFactor,
     );
   }
 
@@ -3747,14 +3775,15 @@ class Meal extends DataClass implements Insertable<Meal> {
           ..write('portions: $portions, ')
           ..write('recipeLink: $recipeLink, ')
           ..write('isUserAdded: $isUserAdded, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('viewScaleFactor: $viewScaleFactor')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, name, displayName, photoPath, notes,
-      portions, recipeLink, isUserAdded, createdAt);
+      portions, recipeLink, isUserAdded, createdAt, viewScaleFactor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3767,7 +3796,8 @@ class Meal extends DataClass implements Insertable<Meal> {
           other.portions == this.portions &&
           other.recipeLink == this.recipeLink &&
           other.isUserAdded == this.isUserAdded &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.viewScaleFactor == this.viewScaleFactor);
 }
 
 class MealsCompanion extends UpdateCompanion<Meal> {
@@ -3780,6 +3810,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
   final Value<String?> recipeLink;
   final Value<bool> isUserAdded;
   final Value<DateTime> createdAt;
+  final Value<double> viewScaleFactor;
   const MealsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -3790,6 +3821,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     this.recipeLink = const Value.absent(),
     this.isUserAdded = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.viewScaleFactor = const Value.absent(),
   });
   MealsCompanion.insert({
     this.id = const Value.absent(),
@@ -3801,6 +3833,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     this.recipeLink = const Value.absent(),
     this.isUserAdded = const Value.absent(),
     required DateTime createdAt,
+    this.viewScaleFactor = const Value.absent(),
   })  : name = Value(name),
         displayName = Value(displayName),
         createdAt = Value(createdAt);
@@ -3814,6 +3847,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     Expression<String>? recipeLink,
     Expression<bool>? isUserAdded,
     Expression<DateTime>? createdAt,
+    Expression<double>? viewScaleFactor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3825,6 +3859,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
       if (recipeLink != null) 'recipe_link': recipeLink,
       if (isUserAdded != null) 'is_user_added': isUserAdded,
       if (createdAt != null) 'created_at': createdAt,
+      if (viewScaleFactor != null) 'view_scale_factor': viewScaleFactor,
     });
   }
 
@@ -3837,7 +3872,8 @@ class MealsCompanion extends UpdateCompanion<Meal> {
       Value<int>? portions,
       Value<String?>? recipeLink,
       Value<bool>? isUserAdded,
-      Value<DateTime>? createdAt}) {
+      Value<DateTime>? createdAt,
+      Value<double>? viewScaleFactor}) {
     return MealsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -3848,6 +3884,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
       recipeLink: recipeLink ?? this.recipeLink,
       isUserAdded: isUserAdded ?? this.isUserAdded,
       createdAt: createdAt ?? this.createdAt,
+      viewScaleFactor: viewScaleFactor ?? this.viewScaleFactor,
     );
   }
 
@@ -3881,6 +3918,9 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (viewScaleFactor.present) {
+      map['view_scale_factor'] = Variable<double>(viewScaleFactor.value);
+    }
     return map;
   }
 
@@ -3895,7 +3935,8 @@ class MealsCompanion extends UpdateCompanion<Meal> {
           ..write('portions: $portions, ')
           ..write('recipeLink: $recipeLink, ')
           ..write('isUserAdded: $isUserAdded, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('viewScaleFactor: $viewScaleFactor')
           ..write(')'))
         .toString();
   }
@@ -12150,6 +12191,7 @@ typedef $$MealsTableCreateCompanionBuilder = MealsCompanion Function({
   Value<String?> recipeLink,
   Value<bool> isUserAdded,
   required DateTime createdAt,
+  Value<double> viewScaleFactor,
 });
 typedef $$MealsTableUpdateCompanionBuilder = MealsCompanion Function({
   Value<int> id,
@@ -12161,6 +12203,7 @@ typedef $$MealsTableUpdateCompanionBuilder = MealsCompanion Function({
   Value<String?> recipeLink,
   Value<bool> isUserAdded,
   Value<DateTime> createdAt,
+  Value<double> viewScaleFactor,
 });
 
 class $$MealsTableFilterComposer extends Composer<_$AppDatabase, $MealsTable> {
@@ -12197,6 +12240,10 @@ class $$MealsTableFilterComposer extends Composer<_$AppDatabase, $MealsTable> {
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get viewScaleFactor => $composableBuilder(
+      column: $table.viewScaleFactor,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$MealsTableOrderingComposer
@@ -12234,6 +12281,10 @@ class $$MealsTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get viewScaleFactor => $composableBuilder(
+      column: $table.viewScaleFactor,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$MealsTableAnnotationComposer
@@ -12271,6 +12322,9 @@ class $$MealsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<double> get viewScaleFactor => $composableBuilder(
+      column: $table.viewScaleFactor, builder: (column) => column);
 }
 
 class $$MealsTableTableManager extends RootTableManager<
@@ -12305,6 +12359,7 @@ class $$MealsTableTableManager extends RootTableManager<
             Value<String?> recipeLink = const Value.absent(),
             Value<bool> isUserAdded = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<double> viewScaleFactor = const Value.absent(),
           }) =>
               MealsCompanion(
             id: id,
@@ -12316,6 +12371,7 @@ class $$MealsTableTableManager extends RootTableManager<
             recipeLink: recipeLink,
             isUserAdded: isUserAdded,
             createdAt: createdAt,
+            viewScaleFactor: viewScaleFactor,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -12327,6 +12383,7 @@ class $$MealsTableTableManager extends RootTableManager<
             Value<String?> recipeLink = const Value.absent(),
             Value<bool> isUserAdded = const Value.absent(),
             required DateTime createdAt,
+            Value<double> viewScaleFactor = const Value.absent(),
           }) =>
               MealsCompanion.insert(
             id: id,
@@ -12338,6 +12395,7 @@ class $$MealsTableTableManager extends RootTableManager<
             recipeLink: recipeLink,
             isUserAdded: isUserAdded,
             createdAt: createdAt,
+            viewScaleFactor: viewScaleFactor,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -46,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +102,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 10) {
             await m.createTable(catalogItemAliases);
             await m.createTable(catalogItemExclusions);
+          }
+          if (from < 11) {
+            await m.addColumn(meals, meals.viewScaleFactor);
           }
         },
         beforeOpen: (details) async {
@@ -504,6 +507,7 @@ class AppDatabase extends _$AppDatabase {
             recipeLink: row.read<String?>('recipe_link'),
             isUserAdded: row.read<bool>('is_user_added'),
             createdAt: row.read<DateTime>('created_at'),
+            viewScaleFactor: row.read<double>('view_scale_factor'),
           ),
         )
         .toList();

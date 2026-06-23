@@ -116,6 +116,8 @@ class Meals extends Table {
   BoolColumn get isUserAdded =>
       boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
+  RealColumn get viewScaleFactor =>
+      real().withDefault(const Constant(1.0))();
 }
 
 class MealPlanItems extends Table {

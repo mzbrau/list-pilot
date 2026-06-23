@@ -9,6 +9,7 @@ import '../../../data/database/app_database.dart';
 import '../../../data/services/ingredient_parser_service.dart';
 import 'meal_ingredient_edit_sheet.dart';
 import 'meal_ingredient_line_text.dart';
+import 'recipe_scale_control.dart';
 
 class MealDetailIngredientsTab extends ConsumerStatefulWidget {
   const MealDetailIngredientsTab({
@@ -18,6 +19,8 @@ class MealDetailIngredientsTab extends ConsumerStatefulWidget {
     this.draftIngredients,
     this.onDraftIngredientsChanged,
     this.nestedScroll = false,
+    this.scaleFactor = 1.0,
+    this.onScaleChanged,
   });
 
   final int? mealId;
@@ -25,6 +28,8 @@ class MealDetailIngredientsTab extends ConsumerStatefulWidget {
   final List<String>? draftIngredients;
   final ValueChanged<List<String>>? onDraftIngredientsChanged;
   final bool nestedScroll;
+  final double scaleFactor;
+  final ValueChanged<double>? onScaleChanged;
 
   @override
   ConsumerState<MealDetailIngredientsTab> createState() =>
@@ -198,6 +203,22 @@ class _MealDetailIngredientsTabState
       data: (ingredients) => _wrapScrollView(
         context,
         [
+          if (!widget.isEditing && widget.onScaleChanged != null) ...[
+            RecipeScaleControl(
+              scaleFactor: widget.scaleFactor,
+              onScaleChanged: widget.onScaleChanged!,
+            ),
+            if (widget.scaleFactor != 1.0) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Quantities scaled to ×${widget.scaleFactor == widget.scaleFactor.roundToDouble() ? widget.scaleFactor.toInt() : widget.scaleFactor}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+          ],
           if (widget.isEditing) ...[
             _buildAddIngredientField(theme),
             const SizedBox(height: 8),
@@ -232,6 +253,10 @@ class _MealDetailIngredientsTabState
                         displayName: ingredient.displayName,
                         quantityValue: ingredient.quantityValue,
                         quantityUnit: ingredient.quantityUnit,
+                        scaledQuantityValue: scaleQuantity(
+                          ingredient.quantityValue,
+                          widget.scaleFactor,
+                        ),
                       ),
                     ),
                   ],

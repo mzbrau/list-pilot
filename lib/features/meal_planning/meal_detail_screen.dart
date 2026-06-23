@@ -165,6 +165,12 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
     );
   }
 
+  Future<void> _updateViewScale(double scaleFactor) async {
+    final repo = ref.read(mealRepositoryProvider);
+    await repo.updateMealViewScale(widget.mealId, scaleFactor);
+    await repo.syncMealScaleToPlanItems(widget.mealId, scaleFactor);
+  }
+
   Future<void> _deleteMeal(Meal meal) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -337,6 +343,10 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
                       mealId: widget.mealId,
                       isEditing: _isEditing,
                       nestedScroll: true,
+                      scaleFactor: meal.viewScaleFactor,
+                      onScaleChanged: _isEditing
+                          ? null
+                          : (scale) => _updateViewScale(scale),
                     ),
                     MealDetailStepsTab(
                       key: _stepsTabKey,

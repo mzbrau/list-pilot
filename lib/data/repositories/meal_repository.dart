@@ -93,10 +93,14 @@ class MealRepository {
   }
 
   Future<int> addMealToPlan(int mealId) async {
+    final meal = await (_db.select(_db.meals)..where((t) => t.id.equals(mealId)))
+        .getSingleOrNull();
+    final scaleFactor = meal?.viewScaleFactor ?? 1.0;
     return _db.into(_db.mealPlanItems).insert(
           MealPlanItemsCompanion.insert(
             mealId: mealId,
             addedAt: DateTime.now(),
+            scaleFactor: Value(scaleFactor),
           ),
         );
   }
@@ -135,9 +139,27 @@ class MealRepository {
   }
 
   Future<void> updatePlanItemScale(int planItemId, double scaleFactor) async {
+    final planItem = await (_db.select(_db.mealPlanItems)
+          ..where((t) => t.id.equals(planItemId)))
+        .getSingleOrNull();
+    if (planItem == null) return;
+
+    final clamped = scaleFactor.clamp(0.25, 10.0);
+    await updateMealViewScale(planItem.mealId, clamped);
+    await syncMealScaleToPlanItems(planItem.mealId, clamped);
+  }
+
+  Future<void> updateMealViewScale(int mealId, double scaleFactor) async {
+    final clamped = scaleFactor.clamp(0.25, 10.0);
+    await (_db.update(_db.meals)..where((t) => t.id.equals(mealId))).write(
+      MealsCompanion(viewScaleFactor: Value(clamped)),
+    );
+  }
+
+  Future<void> syncMealScaleToPlanItems(int mealId, double scaleFactor) async {
     final clamped = scaleFactor.clamp(0.25, 10.0);
     await (_db.update(_db.mealPlanItems)
-          ..where((t) => t.id.equals(planItemId)))
+          ..where((t) => t.mealId.equals(mealId)))
         .write(
       MealPlanItemsCompanion(scaleFactor: Value(clamped)),
     );

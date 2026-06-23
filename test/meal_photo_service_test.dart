@@ -27,6 +27,7 @@ void main() {
         portions: 4,
         isUserAdded: true,
         createdAt: DateTime.now(),
+        viewScaleFactor: 1.0,
       ),
     );
 
