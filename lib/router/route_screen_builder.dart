@@ -6,6 +6,7 @@ import '../features/item_detail/item_detail_screen.dart';
 import '../features/lists/lists_overview_screen.dart';
 import '../features/meal_manager/meal_import_screen.dart';
 import '../features/meal_manager/meal_manager_screen.dart';
+import '../features/meal_manager/paprika_import_screen.dart';
 import '../data/services/meal_plan_ai_suggest_service.dart';
 import '../features/meal_planning/ai_meal_suggest_results_screen.dart';
 import '../features/meal_planning/meal_calendar_screen.dart';
@@ -82,6 +83,9 @@ Widget buildScreenForLocation(String location, {Object? extra}) {
       }
       if (segments[2] == 'photo') {
         return const MealImportScreen(mode: MealImportMode.photo);
+      }
+      if (segments[2] == 'paprika') {
+        return const PaprikaImportScreen();
       }
     }
     if (segments.length == 2) {

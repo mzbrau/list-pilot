@@ -106,6 +106,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                       extra: state.extra,
                     ),
                   ),
+                  GoRoute(
+                    path: 'paprika',
+                    builder: (context, state) => buildScreenForLocation(
+                      state.uri.toString(),
+                      extra: state.extra,
+                    ),
+                  ),
                 ],
               ),
               GoRoute(

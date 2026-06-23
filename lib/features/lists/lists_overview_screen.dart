@@ -745,6 +745,17 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               ),
             ] else
               _buildAiForm(),
+            ListTile(
+              leading: const Icon(Icons.folder_open_outlined),
+              title: const Text('Import from Paprika'),
+              subtitle: const Text(
+                'Import recipes from a Paprika HTML export folder',
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/meal-manager/import/paprika');
+              },
+            ),
           ],
           if (mealPlanningEnabled) ...[
           Padding(

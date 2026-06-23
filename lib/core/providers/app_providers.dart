@@ -33,6 +33,7 @@ import '../../data/services/receipt_pdf_service.dart';
 import '../../data/services/receipt_share_service.dart';
 import '../../data/services/openai_models_service.dart';
 import '../../data/services/meal_photo_service.dart';
+import '../../data/services/paprika_import_service.dart';
 import '../../data/services/recipe_page_import_service.dart';
 import '../../data/services/todo_maintenance_service.dart';
 import '../../data/services/todo_notification_service.dart';
@@ -77,6 +78,14 @@ final mealPlanAiSuggestServiceProvider =
 
 final recipePageImportServiceProvider = Provider<RecipePageImportService>((ref) {
   return RecipePageImportService();
+});
+
+final paprikaImportServiceProvider = Provider<PaprikaImportService>((ref) {
+  return PaprikaImportService(
+    mealRepository: ref.watch(mealRepositoryProvider),
+    matcher: ref.watch(ingredientCatalogMatcherProvider),
+    photoService: ref.watch(mealPhotoServiceProvider),
+  );
 });
 
 final ingredientCatalogMatcherProvider = Provider<IngredientCatalogMatcher>((ref) {
