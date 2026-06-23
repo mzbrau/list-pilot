@@ -61,6 +61,7 @@ class RecipePageImportService {
       steps: extracted.steps,
       notes: extracted.notes,
       tags: extracted.tags,
+      prepTimeMinutes: extracted.prepTimeMinutes,
       imageUrl: imageUrl,
       recipeUrl: extracted.recipeUrl ?? pageUri.toString(),
     );

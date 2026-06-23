@@ -32,6 +32,8 @@ Map<String, dynamic> buildMealExportPayload(MealExportData data) {
             if (meal.notes != null && meal.notes!.isNotEmpty)
               'notes': meal.notes,
             'portions': meal.portions,
+            if (meal.prepTimeMinutes != null)
+              'prepTimeMinutes': meal.prepTimeMinutes,
             if (meal.recipeLink != null && meal.recipeLink!.isNotEmpty)
               'recipeLink': meal.recipeLink,
             'ingredients': meal.ingredients

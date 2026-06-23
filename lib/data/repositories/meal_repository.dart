@@ -18,6 +18,7 @@ class MealExportMeal {
     required this.displayName,
     this.notes,
     required this.portions,
+    this.prepTimeMinutes,
     this.recipeLink,
     required this.ingredients,
     required this.steps,
@@ -27,6 +28,7 @@ class MealExportMeal {
   final String displayName;
   final String? notes;
   final int portions;
+  final int? prepTimeMinutes;
   final String? recipeLink;
   final List<MealExportIngredient> ingredients;
   final List<String> steps;
@@ -187,6 +189,8 @@ class MealRepository {
     String? notes,
     bool clearNotes = false,
     int? portions,
+    int? prepTimeMinutes,
+    bool clearPrepTime = false,
     String? recipeLink,
     bool clearRecipeLink = false,
   }) async {
@@ -208,6 +212,11 @@ class MealRepository {
                 ? Value(notes)
                 : const Value.absent(),
         portions: portions != null ? Value(portions) : const Value.absent(),
+        prepTimeMinutes: clearPrepTime
+            ? const Value(null)
+            : prepTimeMinutes != null
+                ? Value(prepTimeMinutes.clamp(1, 9999))
+                : const Value.absent(),
         recipeLink: clearRecipeLink
             ? const Value(null)
             : recipeLink != null
@@ -259,6 +268,7 @@ class MealRepository {
     required String displayName,
     String? notes,
     int portions = 4,
+    int? prepTimeMinutes,
     String? recipeLink,
     List<MealIngredientInput> ingredients = const [],
     List<String> steps = const [],
@@ -271,6 +281,9 @@ class MealRepository {
             displayName: displayName.trim(),
             notes: Value(notes),
             portions: Value(portions.clamp(1, 99)),
+            prepTimeMinutes: Value(
+              prepTimeMinutes != null ? prepTimeMinutes.clamp(1, 9999) : null,
+            ),
             recipeLink: Value(recipeLink),
             isUserAdded: Value(isUserAdded),
             createdAt: DateTime.now(),
@@ -527,6 +540,7 @@ class MealRepository {
           displayName: meal.displayName,
           notes: meal.notes,
           portions: meal.portions,
+          prepTimeMinutes: meal.prepTimeMinutes,
           recipeLink: meal.recipeLink,
           ingredients: ingredients
               .map(
@@ -563,4 +577,67 @@ class MealRepository {
 
     return MealExportData(meals: meals, checkOffHistory: checkOffHistory);
   }
+
+  Future<List<MealAiCatalogEntry>> getMealCatalogForAi() async {
+    final allMeals = await (_db.select(_db.meals)
+          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+        .get();
+
+    final catalog = <MealAiCatalogEntry>[];
+    for (final meal in allMeals) {
+      final tags = await getTagsForMeal(meal.id);
+      final ingredients = await getIngredientsForMeal(meal.id);
+      final steps = await getStepsForMeal(meal.id);
+      final lastEaten = await getLastEatenDate(meal.id);
+      final notes = meal.notes?.trim();
+      catalog.add(
+        MealAiCatalogEntry(
+          id: meal.id,
+          displayName: meal.displayName,
+          tags: tags.map((t) => t.displayName).toList(),
+          lastEaten: lastEaten,
+          prepTimeMinutes: meal.prepTimeMinutes,
+          stepCount: steps.length,
+          ingredientCount: ingredients.length,
+          notes: notes != null && notes.length > 150
+              ? '${notes.substring(0, 150)}…'
+              : notes,
+        ),
+      );
+    }
+    return catalog;
+  }
+}
+
+class MealAiCatalogEntry {
+  const MealAiCatalogEntry({
+    required this.id,
+    required this.displayName,
+    required this.tags,
+    this.lastEaten,
+    this.prepTimeMinutes,
+    required this.stepCount,
+    required this.ingredientCount,
+    this.notes,
+  });
+
+  final int id;
+  final String displayName;
+  final List<String> tags;
+  final DateTime? lastEaten;
+  final int? prepTimeMinutes;
+  final int stepCount;
+  final int ingredientCount;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'displayName': displayName,
+        if (tags.isNotEmpty) 'tags': tags,
+        if (lastEaten != null) 'lastEaten': lastEaten!.toUtc().toIso8601String(),
+        if (prepTimeMinutes != null) 'prepTimeMinutes': prepTimeMinutes,
+        'stepCount': stepCount,
+        'ingredientCount': ingredientCount,
+        if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      };
 }

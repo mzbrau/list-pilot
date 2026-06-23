@@ -81,6 +81,7 @@ class MealImportResult {
     required this.steps,
     this.notes,
     required this.tags,
+    this.prepTimeMinutes,
     this.imageUrl,
     this.recipeUrl,
   });
@@ -90,6 +91,7 @@ class MealImportResult {
   final List<String> steps;
   final String? notes;
   final List<String> tags;
+  final int? prepTimeMinutes;
   final String? imageUrl;
   final String? recipeUrl;
 
@@ -100,9 +102,23 @@ class MealImportResult {
       steps: _stringList(json['steps']),
       notes: (json['notes'] as String?)?.trim(),
       tags: _stringList(json['tags']),
+      prepTimeMinutes: _prepTimeFromJson(json['prepTimeMinutes']),
       imageUrl: (json['imageUrl'] as String?)?.trim(),
       recipeUrl: (json['recipeUrl'] as String?)?.trim(),
     );
+  }
+
+  static int? _prepTimeFromJson(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value > 0 ? value : null;
+    if (value is num) {
+      final minutes = value.round();
+      return minutes > 0 ? minutes : null;
+    }
+    if (value is String) {
+      return int.tryParse(value.trim());
+    }
+    return null;
   }
 
   static List<String> _stringList(dynamic value) {
@@ -137,9 +153,11 @@ Use this exact schema:
   "steps": ["step 1", "step 2"],
   "notes": "optional tips or description",
   "tags": ["Dinner", "Chicken"],
+  "prepTimeMinutes": 45,
   "imageUrl": "absolute URL of main recipe image or null",
   "recipeUrl": "canonical recipe page URL or null"
 }
+Include prepTimeMinutes as total preparation plus cooking time in minutes when stated on the page, or null if unknown.
 ''';
 }
 
@@ -154,8 +172,10 @@ Use this exact schema:
   "ingredients": ["ingredient 1", "ingredient 2"],
   "steps": ["step 1", "step 2"],
   "notes": "optional tips or description",
-  "tags": ["Dinner", "Chicken"]
+  "tags": ["Dinner", "Chicken"],
+  "prepTimeMinutes": 45
 }
+Include prepTimeMinutes as total preparation plus cooking time in minutes when stated, or null if unknown.
 ''';
 }
 
@@ -323,6 +343,7 @@ class MealImportService {
       steps: result.steps,
       notes: result.notes,
       tags: result.tags,
+      prepTimeMinutes: result.prepTimeMinutes,
       imageUrl: imageUrl,
       recipeUrl: result.recipeUrl ?? pageUri.toString(),
     );

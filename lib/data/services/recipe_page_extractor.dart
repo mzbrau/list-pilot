@@ -2,6 +2,7 @@ import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 
 import 'meal_import_service.dart';
+import 'recipe_duration.dart';
 import 'recipe_json_ld.dart';
 
 class RecipePageExtractor {
@@ -60,15 +61,27 @@ class RecipePageExtractor {
         ? resolveUrl(rawRecipeUrl, pageUri) ?? rawRecipeUrl
         : null;
 
+    final prepTimeMinutes = resolveRecipePrepTimeMinutes(
+      totalTime: _durationField(recipe['totalTime']),
+      prepTime: _durationField(recipe['prepTime']),
+      cookTime: _durationField(recipe['cookTime']),
+    );
+
     return MealImportResult(
       name: name,
       ingredients: ingredients,
       steps: steps,
       notes: notes?.isEmpty == true ? null : notes,
       tags: tags,
+      prepTimeMinutes: prepTimeMinutes,
       imageUrl: imageUrl,
       recipeUrl: recipeUrl,
     );
+  }
+
+  String? _durationField(dynamic value) {
+    if (value is String) return value;
+    return null;
   }
 
   MealImportResult? _extractFromMicrodata(String html, Uri pageUri) {
@@ -92,15 +105,38 @@ class RecipePageExtractor {
     final imageUrl =
         imageRaw != null ? resolveUrl(imageRaw, pageUri) ?? imageRaw : null;
 
+    final prepTimeMinutes = resolveRecipePrepTimeMinutes(
+      totalTime: _microdataDuration(recipeRoot, 'totalTime'),
+      prepTime: _microdataDuration(recipeRoot, 'prepTime'),
+      cookTime: _microdataDuration(recipeRoot, 'cookTime'),
+    );
+
     return MealImportResult(
       name: name,
       ingredients: ingredients,
       steps: steps,
       notes: notes?.isEmpty == true ? null : notes,
       tags: const [],
+      prepTimeMinutes: prepTimeMinutes,
       imageUrl: imageUrl,
       recipeUrl: null,
     );
+  }
+
+  String? _microdataDuration(dom.Element root, String property) {
+    for (final element in root.querySelectorAll('[itemprop="$property"]')) {
+      final content = element.attributes['content'];
+      if (content != null && content.trim().isNotEmpty) {
+        return content.trim();
+      }
+      final datetime = element.attributes['datetime'];
+      if (datetime != null && datetime.trim().isNotEmpty) {
+        return datetime.trim();
+      }
+      final value = _elementText(element);
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
   }
 
   dom.Element? _findMicrodataRecipeRoot(dom.Document document) {
@@ -222,12 +258,18 @@ class RecipePageExtractor {
     final imageUrl =
         imageRaw != null ? resolveUrl(imageRaw, pageUri) ?? imageRaw : null;
 
+    final prepTimeMinutes = resolveRecipePrepTimeMinutes(
+      totalTime: _classText(recipeRoot, 'dt-duration') ??
+          _classText(recipeRoot, 'p-duration'),
+    );
+
     return MealImportResult(
       name: name,
       ingredients: ingredients,
       steps: steps.map(normalizeStepLine).where((s) => s.isNotEmpty).toList(),
       notes: notes?.isEmpty == true ? null : notes,
       tags: const [],
+      prepTimeMinutes: prepTimeMinutes,
       imageUrl: imageUrl,
       recipeUrl: null,
     );
@@ -287,12 +329,19 @@ class RecipePageExtractor {
     final imageUrl =
         imageRaw != null ? resolveUrl(imageRaw, pageUri) ?? imageRaw : null;
 
+    final prepTimeMinutes = resolveRecipePrepTimeMinutes(
+      totalTime: _elementText(recipeRoot.querySelector('.wprm-recipe-total-time')),
+      prepTime: _elementText(recipeRoot.querySelector('.wprm-recipe-prep-time')),
+      cookTime: _elementText(recipeRoot.querySelector('.wprm-recipe-cook-time')),
+    );
+
     return MealImportResult(
       name: name,
       ingredients: ingredients,
       steps: steps,
       notes: notes?.isEmpty == true ? null : notes,
       tags: const [],
+      prepTimeMinutes: prepTimeMinutes,
       imageUrl: imageUrl,
       recipeUrl: null,
     );

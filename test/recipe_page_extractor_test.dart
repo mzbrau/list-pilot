@@ -72,6 +72,20 @@ void main() {
     expect(result?.steps, ['roast']);
   });
 
+  test('extracts JSON-LD totalTime as prepTimeMinutes', () {
+    const html = '''
+    <script type="application/ld+json">
+    {"@type":"Recipe","name":"Timed Pasta","totalTime":"PT45M","recipeIngredient":["pasta"],"recipeInstructions":["cook"]}
+    </script>
+    ''';
+    final result = extractor.extract(
+      html,
+      Uri.parse('https://example-recipes.test/pasta'),
+    );
+    expect(result?.name, 'Timed Pasta');
+    expect(result?.prepTimeMinutes, 45);
+  });
+
   test('resolves relative image URLs from JSON-LD', () {
     const html = '''
     <script type="application/ld+json">

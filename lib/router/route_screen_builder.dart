@@ -6,6 +6,8 @@ import '../features/item_detail/item_detail_screen.dart';
 import '../features/lists/lists_overview_screen.dart';
 import '../features/meal_manager/meal_import_screen.dart';
 import '../features/meal_manager/meal_manager_screen.dart';
+import '../data/services/meal_plan_ai_suggest_service.dart';
+import '../features/meal_planning/ai_meal_suggest_results_screen.dart';
 import '../features/meal_planning/meal_calendar_screen.dart';
 import '../features/meal_planning/meal_detail_screen.dart';
 import '../features/meal_planning/meal_plan_screen.dart';
@@ -49,6 +51,13 @@ Widget buildScreenForLocation(String location, {Object? extra}) {
     }
     if (segments.length == 2 && segments[1] == 'calendar') {
       return const MealCalendarScreen();
+    }
+    if (segments.length == 2 && segments[1] == 'suggest') {
+      final options = extra as MealPlanAiSuggestOptions?;
+      if (options == null) {
+        return const MealPlanScreen();
+      }
+      return AiMealSuggestResultsScreen(options: options);
     }
     if (segments.length == 2) {
       final mealId = int.parse(segments[1]);

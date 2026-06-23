@@ -89,6 +89,24 @@ void main() {
     expect(result.steps, hasLength(2));
     expect(result.tags, ['Dinner']);
     expect(result.imageUrl, 'https://example.com/img.jpg');
+    expect(result.prepTimeMinutes, isNull);
+  });
+
+  test('MealImportResult.fromJson parses prepTimeMinutes', () {
+    final result = MealImportResult.fromJson({
+      'name': 'Pasta',
+      'ingredients': ['Noodles'],
+      'steps': ['Boil'],
+      'tags': [],
+      'prepTimeMinutes': 45,
+    });
+
+    expect(result.prepTimeMinutes, 45);
+  });
+
+  test('buildImportSystemPrompt mentions prepTimeMinutes', () {
+    final prompt = buildImportSystemPrompt(languageLabel: 'English');
+    expect(prompt, contains('prepTimeMinutes'));
   });
 
   test('parseImportResponseBody extracts recipe JSON', () {

@@ -118,6 +118,7 @@ class Meals extends Table {
   DateTimeColumn get createdAt => dateTime()();
   RealColumn get viewScaleFactor =>
       real().withDefault(const Constant(1.0))();
+  IntColumn get prepTimeMinutes => integer().nullable()();
 }
 
 class MealPlanItems extends Table {

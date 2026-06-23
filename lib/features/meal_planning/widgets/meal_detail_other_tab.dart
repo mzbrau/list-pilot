@@ -12,9 +12,11 @@ class MealDetailOtherTab extends StatelessWidget {
     required this.onTagsChanged,
     required this.notes,
     required this.portions,
+    this.prepTimeMinutes,
     required this.recipeLink,
     required this.notesController,
     required this.portionsController,
+    required this.prepTimeController,
     required this.recipeController,
     this.nestedScroll = false,
   });
@@ -24,9 +26,11 @@ class MealDetailOtherTab extends StatelessWidget {
   final ValueChanged<List<String>> onTagsChanged;
   final String notes;
   final int portions;
+  final int? prepTimeMinutes;
   final String? recipeLink;
   final TextEditingController notesController;
   final TextEditingController portionsController;
+  final TextEditingController prepTimeController;
   final TextEditingController recipeController;
   final bool nestedScroll;
 
@@ -112,6 +116,36 @@ class MealDetailOtherTab extends StatelessWidget {
       else
         Text(
           '$portions ${portions == 1 ? 'person' : 'people'}',
+          style: theme.textTheme.bodyLarge,
+        ),
+      const SizedBox(height: 24),
+      Text(
+        'Prep time',
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: 8),
+      if (isEditing)
+        TextField(
+          controller: prepTimeController,
+          decoration: const InputDecoration(
+            helperText: 'Total prep and cook time in minutes (optional)',
+            suffixText: 'min',
+          ),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        )
+      else if (prepTimeMinutes == null)
+        Text(
+          'Not set',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        )
+      else
+        Text(
+          '$prepTimeMinutes min',
           style: theme.textTheme.bodyLarge,
         ),
       const SizedBox(height: 24),

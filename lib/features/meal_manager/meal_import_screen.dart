@@ -30,6 +30,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
   final _portionsController = TextEditingController(text: '4');
+  final _prepTimeController = TextEditingController();
   final _recipeController = TextEditingController();
   final _ingredientController = TextEditingController();
   late TabController _tabController;
@@ -55,6 +56,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     _nameController.dispose();
     _notesController.dispose();
     _portionsController.dispose();
+    _prepTimeController.dispose();
     _recipeController.dispose();
     _ingredientController.dispose();
     _tabController.dispose();
@@ -126,6 +128,8 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
       _notesController.text = result.notes ?? '';
       _recipeController.text = recipeUrl ?? result.recipeUrl ?? '';
       _portionsController.text = '4';
+      _prepTimeController.text =
+          result.prepTimeMinutes?.toString() ?? '';
       _ingredientDrafts = drafts;
       _steps = List.of(result.steps);
       _tags = List.of(result.tags);
@@ -181,6 +185,8 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
 
     final portions =
         int.tryParse(_portionsController.text.trim())?.clamp(1, 99) ?? 4;
+    final prepTimeText = _prepTimeController.text.trim();
+    final prepTime = int.tryParse(prepTimeText);
 
     final meal = await ref.read(mealRepositoryProvider).createMeal(
           displayName: name,
@@ -188,6 +194,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
               ? null
               : _notesController.text.trim(),
           portions: portions,
+          prepTimeMinutes: prepTime,
           recipeLink: _recipeController.text.trim().isEmpty
               ? null
               : _recipeController.text.trim(),
@@ -487,9 +494,11 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
                     onTagsChanged: (value) => setState(() => _tags = value),
                     notes: _notesController.text,
                     portions: int.tryParse(_portionsController.text) ?? 4,
+                    prepTimeMinutes: int.tryParse(_prepTimeController.text),
                     recipeLink: _recipeController.text,
                     notesController: _notesController,
                     portionsController: _portionsController,
+                    prepTimeController: _prepTimeController,
                     recipeController: _recipeController,
                   ),
                 ],

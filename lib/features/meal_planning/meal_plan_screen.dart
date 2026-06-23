@@ -6,6 +6,7 @@ import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../router/navigation_helpers.dart';
 import 'widgets/add_ingredients_dialog.dart';
+import 'widgets/ai_meal_suggest_options_dialog.dart';
 import 'widgets/completed_meals_section.dart';
 import 'widgets/meal_autocomplete_field.dart';
 import 'widgets/meal_plan_tile.dart';
@@ -16,6 +17,7 @@ class MealPlanScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(mealPlanItemsProvider);
+    final aiConfigured = ref.watch(aiConfigProvider).isConfigured;
 
     return popOrGoHomeScope(
       child: Scaffold(
@@ -23,6 +25,12 @@ class MealPlanScreen extends ConsumerWidget {
         leading: overviewBackButton(context),
         title: const Text('Meal Planning'),
         actions: [
+          if (aiConfigured)
+            IconButton(
+              icon: const Icon(Icons.auto_awesome_outlined),
+              tooltip: 'Suggest meals',
+              onPressed: () => _openAiSuggest(context, ref),
+            ),
           IconButton(
             icon: const Icon(Icons.calendar_month_outlined),
             tooltip: 'Calendar',
@@ -174,6 +182,12 @@ class MealPlanScreen extends ConsumerWidget {
     );
     if (confirmed != true) return;
     await ref.read(mealRepositoryProvider).clearCompletedPlanItems();
+  }
+
+  Future<void> _openAiSuggest(BuildContext context, WidgetRef ref) async {
+    final options = await AiMealSuggestOptionsDialog.show(context, ref);
+    if (options == null || !context.mounted) return;
+    context.push('/meals/suggest', extra: options);
   }
 
   Future<void> _exportMeals(BuildContext context, WidgetRef ref) async {

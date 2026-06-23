@@ -46,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -105,6 +105,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 11) {
             await m.addColumn(meals, meals.viewScaleFactor);
+          }
+          if (from < 12) {
+            await m.addColumn(meals, meals.prepTimeMinutes);
           }
         },
         beforeOpen: (details) async {

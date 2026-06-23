@@ -35,6 +35,13 @@ class AppConstants {
   static const String menuImportLanguageKey = 'menu_import_language';
   static const String openAiModelsCacheKey = 'openai_models_cache';
   static const String mealManagerLayoutModeKey = 'meal_manager_layout_mode';
+  static const String mealPlanAiQueryKey = 'meal_plan_ai_query';
+  static const String mealPlanAiPrioritizeRecentKey =
+      'meal_plan_ai_prioritize_recent';
+  static const String mealPlanAiOfferAlternativesKey =
+      'meal_plan_ai_offer_alternatives';
+  static const String mealPlanAiSuggestionCountKey =
+      'meal_plan_ai_suggestion_count';
 }
 
 class QuantityUnits {

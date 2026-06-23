@@ -373,4 +373,42 @@ void main() {
     expect((await repo.getStepsForMeal(meal.id)), hasLength(1));
     expect((await repo.getTagsForMeal(meal.id)), hasLength(1));
   });
+
+  test('createMeal and updateMeal persist prepTimeMinutes', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Quick Lunch',
+      prepTimeMinutes: 20,
+    );
+    expect(meal.prepTimeMinutes, 20);
+
+    await repo.updateMeal(id: meal.id, prepTimeMinutes: 35);
+    final updated = await repo.getMealById(meal.id);
+    expect(updated?.prepTimeMinutes, 35);
+
+    await repo.updateMeal(id: meal.id, clearPrepTime: true);
+    final cleared = await repo.getMealById(meal.id);
+    expect(cleared?.prepTimeMinutes, isNull);
+  });
+
+  test('getMealCatalogForAi returns compact catalog entries', () async {
+    final meal = await repo.createMeal(
+      displayName: 'Catalog Meal',
+      notes: 'A note',
+      prepTimeMinutes: 30,
+      steps: ['Step one'],
+      tags: ['Dinner'],
+      ingredients: [const MealIngredientInput(displayName: 'Rice')],
+    );
+    await repo.recordCheckOff(mealId: meal.id);
+
+    final catalog = await repo.getMealCatalogForAi();
+    expect(catalog, hasLength(1));
+    expect(catalog.first.id, meal.id);
+    expect(catalog.first.displayName, 'Catalog Meal');
+    expect(catalog.first.tags, ['Dinner']);
+    expect(catalog.first.prepTimeMinutes, 30);
+    expect(catalog.first.stepCount, 1);
+    expect(catalog.first.ingredientCount, 1);
+    expect(catalog.first.lastEaten, isNotNull);
+  });
 }

@@ -35,6 +35,7 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
   final _portionsController = TextEditingController();
+  final _prepTimeController = TextEditingController();
   final _recipeController = TextEditingController();
   bool _isEditing = false;
   bool _initialized = false;
@@ -54,6 +55,7 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
     _nameController.dispose();
     _notesController.dispose();
     _portionsController.dispose();
+    _prepTimeController.dispose();
     _recipeController.dispose();
     super.dispose();
   }
@@ -65,6 +67,8 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
       _nameController.text = meal.displayName;
       _notesController.text = meal.notes ?? '';
       _portionsController.text = meal.portions.toString();
+      _prepTimeController.text =
+          meal.prepTimeMinutes?.toString() ?? '';
       _recipeController.text = meal.recipeLink ?? '';
       _tags = tags.map((t) => t.displayName).toList();
       _loadPhoto(meal);
@@ -86,6 +90,7 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
     _nameController.text = meal.displayName;
     _notesController.text = meal.notes ?? '';
     _portionsController.text = meal.portions.toString();
+    _prepTimeController.text = meal.prepTimeMinutes?.toString() ?? '';
     _recipeController.text = meal.recipeLink ?? '';
     _tags = tags.map((t) => t.displayName).toList();
     _loadPhoto(meal);
@@ -98,6 +103,8 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
         int.tryParse(_portionsController.text.trim()) ?? meal.portions;
     final notes = _notesController.text.trim();
     final recipe = _recipeController.text.trim();
+    final prepTimeText = _prepTimeController.text.trim();
+    final prepTime = int.tryParse(prepTimeText);
 
     await repo.updateMeal(
       id: meal.id,
@@ -105,6 +112,8 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
       notes: notes,
       clearNotes: notes.isEmpty,
       portions: portions.clamp(1, 99),
+      prepTimeMinutes: prepTime,
+      clearPrepTime: prepTimeText.isEmpty,
       recipeLink: recipe,
       clearRecipeLink: recipe.isEmpty,
     );
@@ -363,9 +372,11 @@ class _MealDetailScreenState extends ConsumerState<MealDetailScreen>
                           setState(() => _tags = value),
                       notes: meal.notes ?? '',
                       portions: meal.portions,
+                      prepTimeMinutes: meal.prepTimeMinutes,
                       recipeLink: meal.recipeLink,
                       notesController: _notesController,
                       portionsController: _portionsController,
+                      prepTimeController: _prepTimeController,
                       recipeController: _recipeController,
                       nestedScroll: true,
                     ),

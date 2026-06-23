@@ -24,6 +24,7 @@ import '../../data/services/ingredient_catalog_matcher.dart';
 import '../../data/services/ingredient_parser_service.dart';
 import '../../data/services/meal_export_service.dart';
 import '../../data/services/meal_import_service.dart';
+import '../../data/services/meal_plan_ai_suggest_service.dart';
 import '../../data/services/menu_import_service.dart';
 import '../../data/services/receipt_ai_insights_service.dart';
 import '../../data/services/receipt_import_service.dart';
@@ -67,6 +68,11 @@ final mealExportServiceProvider = Provider<MealExportService>((ref) {
 
 final mealImportServiceProvider = Provider<MealImportService>((ref) {
   return MealImportService(aiConfig: ref.watch(aiConfigProvider));
+});
+
+final mealPlanAiSuggestServiceProvider =
+    Provider<MealPlanAiSuggestService>((ref) {
+  return MealPlanAiSuggestService(aiConfig: ref.watch(aiConfigProvider));
 });
 
 final recipePageImportServiceProvider = Provider<RecipePageImportService>((ref) {
@@ -793,6 +799,53 @@ class AiConfigNotifier extends StateNotifier<AiConfig> {
         );
       }
     }
+  }
+}
+
+final mealPlanAiSuggestPrefsProvider =
+    StateNotifierProvider<MealPlanAiSuggestPrefsNotifier, MealPlanAiSuggestOptions>(
+        (ref) {
+  return MealPlanAiSuggestPrefsNotifier();
+});
+
+class MealPlanAiSuggestPrefsNotifier
+    extends StateNotifier<MealPlanAiSuggestOptions> {
+  MealPlanAiSuggestPrefsNotifier() : super(const MealPlanAiSuggestOptions()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final count = prefs.getInt(AppConstants.mealPlanAiSuggestionCountKey) ?? 5;
+    state = MealPlanAiSuggestOptions(
+      query: prefs.getString(AppConstants.mealPlanAiQueryKey) ?? '',
+      prioritizeNotMadeRecently:
+          prefs.getBool(AppConstants.mealPlanAiPrioritizeRecentKey) ?? true,
+      offerAlternatives:
+          prefs.getBool(AppConstants.mealPlanAiOfferAlternativesKey) ?? false,
+      suggestionCount: MealPlanAiSuggestOptions.suggestionCountChoices
+              .contains(count)
+          ? count
+          : 5,
+    );
+  }
+
+  Future<void> save(MealPlanAiSuggestOptions options) async {
+    state = options;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.mealPlanAiQueryKey, options.query);
+    await prefs.setBool(
+      AppConstants.mealPlanAiPrioritizeRecentKey,
+      options.prioritizeNotMadeRecently,
+    );
+    await prefs.setBool(
+      AppConstants.mealPlanAiOfferAlternativesKey,
+      options.offerAlternatives,
+    );
+    await prefs.setInt(
+      AppConstants.mealPlanAiSuggestionCountKey,
+      options.suggestionCount,
+    );
   }
 }
 
