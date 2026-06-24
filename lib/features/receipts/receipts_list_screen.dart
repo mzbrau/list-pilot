@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/io/import_folder_resolver.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/receipt_repository.dart';
@@ -141,10 +142,6 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
 
   Future<void> _importFolder() async {
     if (_importing) return;
-    final folderPath = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Choose receipts folder',
-    );
-    if (folderPath == null) return;
 
     setState(() {
       _importing = true;
@@ -154,9 +151,31 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
       _currentFileName = null;
     });
 
+    ImportFolderHandle? handle;
     try {
+      handle = await pickImportFolder(
+        dialogTitle: 'Choose receipts folder',
+      );
+      if (!mounted || handle == null) return;
+
+      final fileCount = await countImportableFiles(
+        handle,
+        extensions: const {'.pdf'},
+        skipFileNames: const {},
+      );
+      if (!mounted) return;
+
+      if (fileCount == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No PDF files found in the selected folder.'),
+          ),
+        );
+        return;
+      }
+
       final result = await ref.read(receiptImportServiceProvider).importFolder(
-            folderPath,
+            handle.path,
             listId: widget.listId,
             onProgress: (current, total, fileName) {
               if (!mounted) return;
@@ -183,6 +202,7 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Import failed: $e')));
     } finally {
+      await handle?.dispose();
       if (mounted) {
         setState(() {
           _importing = false;

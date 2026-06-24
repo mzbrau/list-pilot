@@ -1,8 +1,8 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/io/import_folder_resolver.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/services/paprika_import_service.dart';
 
@@ -15,7 +15,9 @@ class PaprikaImportScreen extends ConsumerStatefulWidget {
 }
 
 class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
-  String? _folderPath;
+  ImportFolderHandle? _folder;
+  int? _fileCount;
+  bool _preparingFolder = false;
   bool _importing = false;
   int _progressCurrent = 0;
   int _progressTotal = 0;
@@ -23,19 +25,59 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
   PaprikaImportResult? _result;
 
   Future<void> _pickFolder() async {
-    final path = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Choose Paprika export folder',
-    );
-    if (!mounted || path == null) return;
+    if (_preparingFolder || _importing) return;
+
     setState(() {
-      _folderPath = path;
+      _preparingFolder = true;
       _result = null;
     });
+
+    final previous = _folder;
+    try {
+      final handle = await pickImportFolder(
+        dialogTitle: 'Choose Paprika export folder',
+      );
+      if (!mounted) return;
+      if (handle == null) return;
+
+      await previous?.dispose();
+
+      final count = await countImportableFiles(
+        handle,
+        extensions: const {'.html'},
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _folder = handle;
+        _fileCount = count;
+      });
+
+      if (count == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No recipe HTML files found. Try selecting the Recipes '
+              'folder inside your Paprika export.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not read folder: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _preparingFolder = false);
+      }
+    }
   }
 
   Future<void> _import() async {
-    final folderPath = _folderPath;
-    if (folderPath == null || _importing) return;
+    final folder = _folder;
+    if (folder == null || _importing || (_fileCount ?? 0) == 0) return;
 
     setState(() {
       _importing = true;
@@ -47,7 +89,7 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
 
     try {
       final result = await ref.read(paprikaImportServiceProvider).importFolder(
-            folderPath,
+            folder.path,
             onProgress: (current, total, fileName) {
               if (!mounted) return;
               setState(() {
@@ -65,18 +107,31 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
         SnackBar(content: Text('Import failed: $e')),
       );
     } finally {
+      await folder.dispose();
       if (mounted) {
         setState(() {
           _importing = false;
           _currentFileName = null;
+          if (folder.isTemporary) {
+            _folder = null;
+            _fileCount = null;
+          }
         });
       }
     }
   }
 
   @override
+  void dispose() {
+    _folder?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final folder = _folder;
+    final canImport = folder != null && (_fileCount ?? 0) > 0 && !_importing;
 
     return Scaffold(
       appBar: AppBar(
@@ -98,28 +153,52 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
               children: [
                 Text(
                   'Export your recipes from Paprika as HTML, then choose '
-                  'the export folder. You can select the top-level export '
-                  'folder or the Recipes subfolder inside it.',
+                  'the export folder. Select the top-level export folder '
+                  '(containing Recipes and index.html) or the Recipes '
+                  'subfolder directly.',
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 24),
                 OutlinedButton.icon(
-                  onPressed: _importing ? null : _pickFolder,
-                  icon: const Icon(Icons.folder_open_outlined),
-                  label: const Text('Choose folder'),
+                  onPressed:
+                      _importing || _preparingFolder ? null : _pickFolder,
+                  icon: _preparingFolder
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      : const Icon(Icons.folder_open_outlined),
+                  label: Text(
+                    _preparingFolder ? 'Reading folder…' : 'Choose folder',
+                  ),
                 ),
-                if (_folderPath != null) ...[
+                if (folder != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    _folderPath!,
+                    folder.path,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (_fileCount != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Found $_fileCount recipe${_fileCount == 1 ? '' : 's'}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: _fileCount == 0
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 24),
                 FilledButton.icon(
-                  onPressed: _folderPath == null || _importing ? null : _import,
+                  onPressed: canImport ? _import : null,
                   icon: _importing
                       ? SizedBox(
                           width: 18,

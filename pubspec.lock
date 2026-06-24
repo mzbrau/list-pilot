@@ -233,6 +233,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  dir_picker:
+    dependency: "direct main"
+    description:
+      name: dir_picker
+      sha256: ab214c53716e75ea8d8ccda3840378f9b3c518434c4f7eca69ad61a7d095c374
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.1"
   drift:
     dependency: "direct main"
     description:
@@ -968,6 +976,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
+  saf_stream:
+    dependency: "direct main"
+    description:
+      name: saf_stream
+      sha256: "2d6b071b4a893720d2235aaf3c32deb70319928eb7103ff39cd183c5b3857427"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   shared_preferences:
     dependency: "direct main"
     description:
