@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../../core/platform/import_wakelock.dart';
 import '../../core/providers/app_providers.dart';
 import 'recipe_page_fetcher.dart';
 import 'recipe_page_metadata.dart';
@@ -287,7 +288,8 @@ class MealImportService {
   Future<MealImportResult> importFromUrl(
     String url, {
     RecipeImportLanguage language = defaultRecipeImportLanguage,
-  }) async {
+  }) {
+    return runWithImportWakelock(() async {
     if (!_aiConfig.isConfigured) {
       throw StateError('AI configuration is incomplete');
     }
@@ -347,12 +349,14 @@ class MealImportService {
       imageUrl: imageUrl,
       recipeUrl: result.recipeUrl ?? pageUri.toString(),
     );
+    });
   }
 
   Future<MealImportResult> importFromPhoto(
     String imagePath, {
     RecipeImportLanguage language = defaultRecipeImportLanguage,
-  }) async {
+  }) {
+    return runWithImportWakelock(() async {
     if (!_aiConfig.isConfigured) {
       throw StateError('AI configuration is incomplete');
     }
@@ -411,6 +415,7 @@ class MealImportService {
     }
 
     return parseImportResponseBody(aiResponse.body);
+    });
   }
 }
 

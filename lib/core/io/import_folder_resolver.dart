@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:saf_stream/saf_stream.dart';
 
+import '../platform/import_wakelock.dart';
+
 /// A local filesystem folder path that [dart:io] can read.
 ///
 /// On Android, [path] points at a temp copy of a SAF-picked tree.
@@ -83,7 +85,8 @@ Future<ImportFolderHandle?> pickImportFolder({
   return ImportFolderHandle(path: path, isTemporary: false);
 }
 
-Future<ImportFolderHandle?> _pickImportFolderAndroid() async {
+Future<ImportFolderHandle?> _pickImportFolderAndroid() {
+  return runWithImportWakelock(() async {
   final location = await DirPicker.pick(
     options: const PickOptions.android(shouldPersist: false),
   );
@@ -111,4 +114,5 @@ Future<ImportFolderHandle?> _pickImportFolderAndroid() async {
     isTemporary: true,
     tempDirectory: importDir,
   );
+  });
 }

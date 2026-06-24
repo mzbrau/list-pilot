@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../core/platform/import_wakelock.dart';
 import '../../core/providers/app_providers.dart';
 import 'meal_import_service.dart';
 import 'recipe_page_fetcher.dart' hide HttpGet, HttpPost;
@@ -215,7 +216,8 @@ class MenuImportService {
   Future<MenuImportResult> importFromUrl(
     String url, {
     RecipeImportLanguage language = defaultMenuImportLanguage,
-  }) async {
+  }) {
+    return runWithImportWakelock(() async {
     if (!_aiConfig.isConfigured) {
       throw StateError('AI configuration is incomplete');
     }
@@ -274,6 +276,7 @@ class MenuImportService {
       currency: result.currency,
       items: result.items,
     );
+    });
   }
 }
 

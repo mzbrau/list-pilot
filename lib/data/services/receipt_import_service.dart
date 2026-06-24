@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/platform/import_wakelock.dart';
 import '../../core/providers/app_providers.dart';
 import '../repositories/catalog_repository.dart';
 import '../repositories/receipt_repository.dart';
@@ -262,7 +263,8 @@ class ReceiptImportService {
   Future<int> importPdf({
     required int listId,
     required String sourcePdfPath,
-  }) async {
+  }) {
+    return runWithImportWakelock(() async {
     final aiConfig = await _resolveAiConfig();
     final text = await _pdfService.extractTextFromFile(sourcePdfPath);
     final parsed = _parser.parse(text);
@@ -299,6 +301,7 @@ class ReceiptImportService {
       draft: draft,
       sourcePdfPath: sourcePdfPath,
     );
+    });
   }
 
   Future<ReceiptImportResult> importFolder(
@@ -324,7 +327,8 @@ class ReceiptImportService {
     List<String> paths, {
     required int listId,
     ReceiptImportProgress? onProgress,
-  }) async {
+  }) {
+    return runWithImportWakelock(() async {
     if (paths.isEmpty) {
       return const ReceiptImportResult(
         imported: 0,
@@ -396,6 +400,7 @@ class ReceiptImportService {
       errors: errors,
       importedReceiptIds: importedReceiptIds,
     );
+    });
   }
 
   Future<List<File>> _findPdfFiles(Directory directory) async {
