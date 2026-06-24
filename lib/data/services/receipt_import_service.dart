@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../core/providers/app_providers.dart';
-import '../../core/utils/concurrent_runner.dart';
 import '../repositories/catalog_repository.dart';
 import '../repositories/receipt_repository.dart';
 import 'ica_receipt_parser.dart';
@@ -306,7 +305,6 @@ class ReceiptImportService {
     String folderPath, {
     required int listId,
     ReceiptImportProgress? onProgress,
-    int concurrency = 4,
   }) async {
     final folder = Directory(folderPath);
     if (!await folder.exists()) {
@@ -319,7 +317,6 @@ class ReceiptImportService {
       paths,
       listId: listId,
       onProgress: onProgress,
-      concurrency: concurrency,
     );
   }
 
@@ -327,7 +324,6 @@ class ReceiptImportService {
     List<String> paths, {
     required int listId,
     ReceiptImportProgress? onProgress,
-    int concurrency = 4,
   }) async {
     if (paths.isEmpty) {
       return const ReceiptImportResult(
@@ -339,37 +335,40 @@ class ReceiptImportService {
     }
 
     var completed = 0;
-    final outcomes = await mapConcurrent(
-      paths,
-      (path) async {
-        final fileName = p.basename(path);
-        try {
-          final receiptId = await importPdf(
-            listId: listId,
-            sourcePdfPath: path,
-          );
-          return _ImportOutcome.imported(receiptId);
-        } on DuplicateReceiptException catch (e) {
-          return _ImportOutcome.skipped(e.existingReceiptId);
-        } on IcaReceiptParseException catch (e) {
-          return _ImportOutcome.failed(
+    final outcomes = <_ImportOutcome>[];
+    for (final path in paths) {
+      final fileName = p.basename(path);
+      try {
+        final receiptId = await importPdf(
+          listId: listId,
+          sourcePdfPath: path,
+        );
+        outcomes.add(_ImportOutcome.imported(receiptId));
+      } on DuplicateReceiptException catch (e) {
+        outcomes.add(_ImportOutcome.skipped(e.existingReceiptId));
+      } on IcaReceiptParseException catch (e) {
+        outcomes.add(
+          _ImportOutcome.failed(
             ReceiptImportFileError(fileName: fileName, message: e.message),
-          );
-        } on ReceiptImportException catch (e) {
-          return _ImportOutcome.failed(
+          ),
+        );
+      } on ReceiptImportException catch (e) {
+        outcomes.add(
+          _ImportOutcome.failed(
             ReceiptImportFileError(fileName: fileName, message: e.message),
-          );
-        } catch (e) {
-          return _ImportOutcome.failed(
+          ),
+        );
+      } catch (e) {
+        outcomes.add(
+          _ImportOutcome.failed(
             ReceiptImportFileError(fileName: fileName, message: e.toString()),
-          );
-        } finally {
-          completed++;
-          onProgress?.call(completed, paths.length, fileName);
-        }
-      },
-      concurrency: concurrency,
-    );
+          ),
+        );
+      } finally {
+        completed++;
+        onProgress?.call(completed, paths.length, fileName);
+      }
+    }
 
     var imported = 0;
     var skipped = 0;
