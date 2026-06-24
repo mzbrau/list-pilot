@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 
 import '../../core/providers/app_providers.dart';
+import '../../core/utils/concurrent_runner.dart';
 import '../repositories/catalog_repository.dart';
 import '../repositories/receipt_repository.dart';
 import 'ica_receipt_parser.dart';
@@ -34,6 +38,38 @@ class ReceiptEnrichedLine {
   final int sortOrder;
 }
 
+class ReceiptImportFileError {
+  const ReceiptImportFileError({
+    required this.fileName,
+    required this.message,
+  });
+
+  final String fileName;
+  final String message;
+}
+
+class ReceiptImportResult {
+  const ReceiptImportResult({
+    required this.imported,
+    required this.skipped,
+    required this.failed,
+    required this.errors,
+    this.importedReceiptIds = const [],
+  });
+
+  final int imported;
+  final int skipped;
+  final int failed;
+  final List<ReceiptImportFileError> errors;
+  final List<int> importedReceiptIds;
+}
+
+typedef ReceiptImportProgress = void Function(
+  int current,
+  int total,
+  String fileName,
+);
+
 String buildReceiptEnrichmentSystemPrompt({
   required List<String> categoryIds,
 }) {
@@ -61,23 +97,25 @@ class ReceiptItemEnrichmentService {
     required CatalogRepository catalogRepository,
     required IngredientCatalogMatcher matcher,
     HttpPost? httpPost,
-  })  : _aiConfig = aiConfig,
+  })  : _defaultAiConfig = aiConfig,
         _catalogRepository = catalogRepository,
         _matcher = matcher,
         _httpPost = httpPost ?? MealImportHttpClient().post;
 
-  final AiConfig _aiConfig;
+  final AiConfig _defaultAiConfig;
   final CatalogRepository _catalogRepository;
   final IngredientCatalogMatcher _matcher;
   final HttpPost _httpPost;
 
-  bool get isConfigured => _aiConfig.isConfigured;
+  bool get isConfigured => _defaultAiConfig.isConfigured;
 
   Future<List<ReceiptEnrichedLine>> enrichLines(
-    List<IcaReceiptLineItem> lines,
-  ) async {
-    final aiResults = _aiConfig.isConfigured
-        ? await _fetchAiTranslations(lines)
+    List<IcaReceiptLineItem> lines, {
+    AiConfig? aiConfig,
+  }) async {
+    final config = aiConfig ?? _defaultAiConfig;
+    final aiResults = config.isConfigured
+        ? await _fetchAiTranslations(lines, config)
         : <int, ({String englishName, String categoryId})>{};
 
     final enriched = <ReceiptEnrichedLine>[];
@@ -87,7 +125,10 @@ class ReceiptItemEnrichmentService {
       final englishName = ai?.englishName ?? line.description;
       final aiCategory = ai?.categoryId ?? 'other';
 
-      final match = await _matcher.matchLine(englishName);
+      final match = await _matcher.matchBest(
+        englishName,
+        fallbackName: line.description,
+      );
       final catalogItem = match.catalogItem;
       enriched.add(
         ReceiptEnrichedLine(
@@ -108,10 +149,13 @@ class ReceiptItemEnrichmentService {
   }
 
   Future<Map<int, ({String englishName, String categoryId})>>
-      _fetchAiTranslations(List<IcaReceiptLineItem> lines) async {
+      _fetchAiTranslations(
+    List<IcaReceiptLineItem> lines,
+    AiConfig aiConfig,
+  ) async {
     final categories = await _catalogRepository.getCategories();
     final categoryIds = categories.map((c) => c.id).toList();
-    final baseUri = _aiConfig.apiUri!.trim().replaceAll(RegExp(r'/+$'), '');
+    final baseUri = aiConfig.apiUri!.trim().replaceAll(RegExp(r'/+$'), '');
     final apiUri = Uri.parse('$baseUri/chat/completions');
 
     final payload = lines
@@ -126,7 +170,7 @@ class ReceiptItemEnrichmentService {
         .toList();
 
     final body = {
-      'model': _aiConfig.modelName!.trim(),
+      'model': aiConfig.modelName!.trim(),
       'messages': [
         {
           'role': 'system',
@@ -143,7 +187,7 @@ class ReceiptItemEnrichmentService {
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ${_aiConfig.apiKey!.trim()}',
+      'Authorization': 'Bearer ${aiConfig.apiKey!.trim()}',
     };
 
     var response = await _httpPost(
@@ -200,15 +244,18 @@ class ReceiptImportService {
     required ReceiptRepository repository,
     required ReceiptPdfService pdfService,
     required ReceiptItemEnrichmentService enrichmentService,
+    required Future<AiConfig> Function() resolveAiConfig,
     IcaReceiptParser? parser,
   })  : _repository = repository,
         _pdfService = pdfService,
         _enrichmentService = enrichmentService,
+        _resolveAiConfig = resolveAiConfig,
         _parser = parser ?? IcaReceiptParser();
 
   final ReceiptRepository _repository;
   final ReceiptPdfService _pdfService;
   final ReceiptItemEnrichmentService _enrichmentService;
+  final Future<AiConfig> Function() _resolveAiConfig;
   final IcaReceiptParser _parser;
 
   bool get aiConfigured => _enrichmentService.isConfigured;
@@ -217,9 +264,13 @@ class ReceiptImportService {
     required int listId,
     required String sourcePdfPath,
   }) async {
+    final aiConfig = await _resolveAiConfig();
     final text = await _pdfService.extractTextFromFile(sourcePdfPath);
     final parsed = _parser.parse(text);
-    final enriched = await _enrichmentService.enrichLines(parsed.lines);
+    final enriched = await _enrichmentService.enrichLines(
+      parsed.lines,
+      aiConfig: aiConfig,
+    );
 
     final draft = ReceiptImportDraft(
       shopName: parsed.shopName,
@@ -250,6 +301,144 @@ class ReceiptImportService {
       sourcePdfPath: sourcePdfPath,
     );
   }
+
+  Future<ReceiptImportResult> importFolder(
+    String folderPath, {
+    required int listId,
+    ReceiptImportProgress? onProgress,
+    int concurrency = 4,
+  }) async {
+    final folder = Directory(folderPath);
+    if (!await folder.exists()) {
+      throw ReceiptImportException('Folder not found: $folderPath');
+    }
+
+    final pdfFiles = await _findPdfFiles(folder);
+    final paths = pdfFiles.map((file) => file.path).toList();
+    return importPdfs(
+      paths,
+      listId: listId,
+      onProgress: onProgress,
+      concurrency: concurrency,
+    );
+  }
+
+  Future<ReceiptImportResult> importPdfs(
+    List<String> paths, {
+    required int listId,
+    ReceiptImportProgress? onProgress,
+    int concurrency = 4,
+  }) async {
+    if (paths.isEmpty) {
+      return const ReceiptImportResult(
+        imported: 0,
+        skipped: 0,
+        failed: 0,
+        errors: [],
+      );
+    }
+
+    var completed = 0;
+    final outcomes = await mapConcurrent(
+      paths,
+      (path) async {
+        final fileName = p.basename(path);
+        try {
+          final receiptId = await importPdf(
+            listId: listId,
+            sourcePdfPath: path,
+          );
+          return _ImportOutcome.imported(receiptId);
+        } on DuplicateReceiptException catch (e) {
+          return _ImportOutcome.skipped(e.existingReceiptId);
+        } on IcaReceiptParseException catch (e) {
+          return _ImportOutcome.failed(
+            ReceiptImportFileError(fileName: fileName, message: e.message),
+          );
+        } on ReceiptImportException catch (e) {
+          return _ImportOutcome.failed(
+            ReceiptImportFileError(fileName: fileName, message: e.message),
+          );
+        } catch (e) {
+          return _ImportOutcome.failed(
+            ReceiptImportFileError(fileName: fileName, message: e.toString()),
+          );
+        } finally {
+          completed++;
+          onProgress?.call(completed, paths.length, fileName);
+        }
+      },
+      concurrency: concurrency,
+    );
+
+    var imported = 0;
+    var skipped = 0;
+    var failed = 0;
+    final errors = <ReceiptImportFileError>[];
+    final importedReceiptIds = <int>[];
+
+    for (final outcome in outcomes) {
+      switch (outcome.kind) {
+        case _ImportOutcomeKind.imported:
+          imported++;
+          importedReceiptIds.add(outcome.receiptId!);
+        case _ImportOutcomeKind.skipped:
+          skipped++;
+        case _ImportOutcomeKind.failed:
+          failed++;
+          errors.add(outcome.error!);
+      }
+    }
+
+    return ReceiptImportResult(
+      imported: imported,
+      skipped: skipped,
+      failed: failed,
+      errors: errors,
+      importedReceiptIds: importedReceiptIds,
+    );
+  }
+
+  Future<List<File>> _findPdfFiles(Directory directory) async {
+    final files = <File>[];
+    await for (final entity in directory.list(recursive: true)) {
+      if (entity is File && entity.path.toLowerCase().endsWith('.pdf')) {
+        files.add(entity);
+      }
+    }
+    files.sort((a, b) => a.path.compareTo(b.path));
+    return files;
+  }
+}
+
+enum _ImportOutcomeKind { imported, skipped, failed }
+
+class _ImportOutcome {
+  const _ImportOutcome._({
+    required this.kind,
+    this.receiptId,
+    this.error,
+  });
+
+  factory _ImportOutcome.imported(int receiptId) => _ImportOutcome._(
+        kind: _ImportOutcomeKind.imported,
+        receiptId: receiptId,
+      );
+
+  factory _ImportOutcome.skipped(int existingReceiptId) => _ImportOutcome._(
+        kind: _ImportOutcomeKind.skipped,
+        receiptId: existingReceiptId,
+      );
+
+  factory _ImportOutcome.failed(ReceiptImportFileError error) =>
+      _ImportOutcome._(
+        kind: _ImportOutcomeKind.failed,
+        error: error,
+      );
+
+  final _ImportOutcomeKind kind;
+  final int? receiptId;
+  final ReceiptImportFileError? error;
 }
 
 class ReceiptImportException implements Exception {

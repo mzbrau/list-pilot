@@ -195,6 +195,21 @@ class ReceiptRepository {
     await _touchListUpdated(receipt.listId);
   }
 
+  Future<void> updateLineCatalogMatch({
+    required int lineId,
+    int? catalogItemId,
+    String? englishName,
+    String? categoryId,
+  }) async {
+    await (_db.update(_db.receiptLines)..where((t) => t.id.equals(lineId))).write(
+      ReceiptLinesCompanion(
+        catalogItemId: Value(catalogItemId),
+        englishName: englishName != null ? Value(englishName) : const Value.absent(),
+        categoryId: categoryId != null ? Value(categoryId) : const Value.absent(),
+      ),
+    );
+  }
+
   Future<String> resolvePdfPath({
     required int listId,
     required String fileName,

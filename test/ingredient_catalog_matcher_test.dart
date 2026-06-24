@@ -114,4 +114,34 @@ void main() {
     expect(result.confidence, IngredientMatchConfidence.matched);
     expect(result.catalogItem?.displayName, 'Capsicum');
   });
+
+  test('matches via prefix search on token', () async {
+    final result = await matcher.matchLine('green apple');
+    expect(result.confidence, IngredientMatchConfidence.matched);
+    expect(result.catalogItem?.displayName, 'Apples');
+  });
+
+  test('matches via contained catalog name in descriptive phrase', () async {
+    await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'cream cheese',
+            displayName: 'Cream cheese',
+            categoryId: 'other',
+            createdAt: DateTime.now(),
+          ),
+        );
+
+    final result = await matcher.matchLine('philadelphia cream cheese 200g');
+    expect(result.confidence, IngredientMatchConfidence.matched);
+    expect(result.catalogItem?.displayName, 'Cream cheese');
+  });
+
+  test('matchBest falls back to secondary name', () async {
+    final result = await matcher.matchBest(
+      'unknown english item',
+      fallbackName: 'Potatoes',
+    );
+    expect(result.confidence, IngredientMatchConfidence.matched);
+    expect(result.catalogItem?.displayName, 'Potatoes');
+  });
 }

@@ -8,9 +8,9 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import '../../core/providers/app_providers.dart';
 
 class PendingReceiptShare {
-  const PendingReceiptShare({required this.filePath});
+  const PendingReceiptShare({required this.filePaths});
 
-  final String filePath;
+  final List<String> filePaths;
 }
 
 class ReceiptShareService {
@@ -35,19 +35,23 @@ class ReceiptShareService {
   Future<void> _handleSharedFiles(List<SharedMediaFile> files) async {
     if (files.isEmpty) return;
 
-    final pdf = files.firstWhere(
-      (file) =>
-          file.path.toLowerCase().endsWith('.pdf') ||
-          file.type == SharedMediaType.file,
-      orElse: () => files.first,
-    );
-    if (!pdf.path.toLowerCase().endsWith('.pdf')) {
+    final pdfPaths = files
+        .where(
+          (file) =>
+              file.path.toLowerCase().endsWith('.pdf') ||
+              file.type == SharedMediaType.file,
+        )
+        .map((file) => file.path)
+        .where((path) => path.toLowerCase().endsWith('.pdf'))
+        .toList();
+
+    if (pdfPaths.isEmpty) {
       await resetIntent();
       return;
     }
 
     _ref.read(pendingReceiptShareProvider.notifier).state =
-        PendingReceiptShare(filePath: pdf.path);
+        PendingReceiptShare(filePaths: pdfPaths);
   }
 
   Future<void> resetIntent() async {

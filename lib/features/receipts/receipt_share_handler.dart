@@ -78,32 +78,63 @@ class _ReceiptShareHandlerState extends ConsumerState<ReceiptShareHandler> {
 
       if (listId == null || !mounted) return;
 
-      try {
-        final receiptId = await ref.read(receiptShareServiceProvider).importToList(
-              listId: listId,
-              sourcePath: pending.filePath,
-            );
-        if (!mounted) return;
-        _showSnackBar(
-          const SnackBar(content: Text('Shared receipt imported')),
-        );
-        ref.read(routerProvider).push('/receipts/$listId/receipt/$receiptId');
-      } on DuplicateReceiptException catch (e) {
-        _showSnackBar(
-          SnackBar(content: Text('Receipt already imported (#${e.existingReceiptId})')),
-        );
-        ref.read(routerProvider).push('/receipts/$listId');
-      } on IcaReceiptParseException catch (e) {
-        _showSnackBar(SnackBar(content: Text(e.message)));
-      } on ReceiptImportException catch (e) {
-        _showSnackBar(SnackBar(content: Text(e.message)));
-      } catch (e) {
-        _showSnackBar(SnackBar(content: Text('Import failed: $e')));
+      if (pending.filePaths.length == 1) {
+        await _importSingle(listId, pending.filePaths.first);
+      } else {
+        await _importBatch(listId, pending.filePaths);
       }
     } finally {
       await ref.read(receiptShareServiceProvider).resetIntent();
       ref.read(pendingReceiptShareProvider.notifier).state = null;
       _handling = false;
+    }
+  }
+
+  Future<void> _importSingle(int listId, String path) async {
+    try {
+      final receiptId =
+          await ref.read(receiptShareServiceProvider).importToList(
+                listId: listId,
+                sourcePath: path,
+              );
+      if (!mounted) return;
+      _showSnackBar(
+        const SnackBar(content: Text('Shared receipt imported')),
+      );
+      ref.read(routerProvider).push('/receipts/$listId/receipt/$receiptId');
+    } on DuplicateReceiptException catch (e) {
+      _showSnackBar(
+        SnackBar(content: Text('Receipt already imported (#${e.existingReceiptId})')),
+      );
+      ref.read(routerProvider).push('/receipts/$listId');
+    } on IcaReceiptParseException catch (e) {
+      _showSnackBar(SnackBar(content: Text(e.message)));
+    } on ReceiptImportException catch (e) {
+      _showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      _showSnackBar(SnackBar(content: Text('Import failed: $e')));
+    }
+  }
+
+  Future<void> _importBatch(int listId, List<String> paths) async {
+    try {
+      final result = await ref.read(receiptImportServiceProvider).importPdfs(
+            paths,
+            listId: listId,
+          );
+      if (!mounted) return;
+
+      final parts = <String>[
+        '${result.imported} imported',
+        if (result.skipped > 0) '${result.skipped} skipped',
+        if (result.failed > 0) '${result.failed} failed',
+      ];
+      _showSnackBar(
+        SnackBar(content: Text('Shared receipts: ${parts.join(', ')}')),
+      );
+      ref.read(routerProvider).push('/receipts/$listId');
+    } catch (e) {
+      _showSnackBar(SnackBar(content: Text('Import failed: $e')));
     }
   }
 

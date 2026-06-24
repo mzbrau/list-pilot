@@ -123,6 +123,24 @@ class IngredientCatalogMatcher {
     );
   }
 
+  /// Tries [primaryName] first, then optional [fallbackName] (e.g. Swedish original).
+  Future<IngredientMatchResult> matchBest(
+    String primaryName, {
+    String? fallbackName,
+  }) async {
+    final primary = await matchLine(primaryName);
+    if (primary.catalogItem != null) return primary;
+
+    final fallback = fallbackName?.trim();
+    if (fallback == null ||
+        fallback.isEmpty ||
+        fallback.toLowerCase() == primaryName.trim().toLowerCase()) {
+      return primary;
+    }
+
+    return matchLine(fallback);
+  }
+
   Future<List<ImportIngredientDraft>> matchAll(List<String> lines) async {
     final drafts = <ImportIngredientDraft>[];
     for (final line in lines) {
@@ -194,7 +212,60 @@ class IngredientCatalogMatcher {
       if (match != null) return match;
     }
 
+    for (var phraseLength = 3; phraseLength >= 2; phraseLength--) {
+      if (tokens.length < phraseLength) continue;
+      for (var i = 0; i <= tokens.length - phraseLength; i++) {
+        final phrase = tokens.sublist(i, i + phraseLength).join(' ');
+        final match = await _catalog.findByNameOrAlias(phrase);
+        if (match != null) return match;
+      }
+    }
+
+    for (final token in tokens) {
+      if (token.length < 3) continue;
+      final prefixMatches = await _catalog.search(token, limit: 1);
+      if (prefixMatches.isNotEmpty) return prefixMatches.first;
+    }
+
+    return _findContainedMatch(normalized);
+  }
+
+  Future<CatalogItem?> _findContainedMatch(String normalized) async {
+    final terms = await _containmentTerms();
+    for (final entry in terms) {
+      if (entry.term.length < 4) continue;
+      if (_containsWholeWord(normalized, entry.term)) {
+        final item = await _catalog.getById(entry.catalogItemId);
+        if (item != null) return item;
+      }
+    }
     return null;
+  }
+
+  List<_ContainmentTerm>? _cachedContainmentTerms;
+
+  Future<List<_ContainmentTerm>> _containmentTerms() async {
+    if (_cachedContainmentTerms != null) return _cachedContainmentTerms!;
+
+    final terms = <_ContainmentTerm>[];
+    final items = await _catalog.getAllCatalogItems();
+    for (final item in items) {
+      terms.add(_ContainmentTerm(term: item.name, catalogItemId: item.id));
+    }
+    final aliases = await _catalog.getAllAliases();
+    for (final alias in aliases) {
+      terms.add(
+        _ContainmentTerm(term: alias.alias, catalogItemId: alias.catalogItemId),
+      );
+    }
+    terms.sort((a, b) => b.term.length.compareTo(a.term.length));
+    _cachedContainmentTerms = terms;
+    return terms;
+  }
+
+  bool _containsWholeWord(String haystack, String needle) {
+    final pattern = RegExp(r'(?<!\w)' + RegExp.escape(needle) + r'(?!\w)');
+    return pattern.hasMatch(haystack);
   }
 
   List<String> _significantTokens(String normalized) {
@@ -211,4 +282,11 @@ class IngredientCatalogMatcher {
 
     return tokens;
   }
+}
+
+class _ContainmentTerm {
+  const _ContainmentTerm({required this.term, required this.catalogItemId});
+
+  final String term;
+  final int catalogItemId;
 }

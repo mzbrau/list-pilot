@@ -112,6 +112,10 @@ class _ReceiptInsightsScreenState extends ConsumerState<ReceiptInsightsScreen> {
                 category.id: category.name,
             };
             final chartColors = _chartColors(theme);
+            final categoryColors = _categoryColorMap(
+              snapshot.monthlyCategorySpend,
+              chartColors,
+            );
 
             return ListView(
               padding: const EdgeInsets.all(16),
@@ -154,6 +158,9 @@ class _ReceiptInsightsScreenState extends ConsumerState<ReceiptInsightsScreen> {
                     children: [
                       for (final entry in snapshot.categoryTotals) ...[
                         ListTile(
+                          leading: _CategoryColorDot(
+                            color: categoryColors[entry.categoryId],
+                          ),
                           title: Text(categoryNames[entry.categoryId] ?? entry.categoryId),
                           trailing: Text(formatReceiptAmount(entry.total)),
                         ),
@@ -256,6 +263,39 @@ class _ReceiptInsightsScreenState extends ConsumerState<ReceiptInsightsScreen> {
       Colors.brown,
       Colors.pink,
     ];
+  }
+}
+
+Map<String, Color> _categoryColorMap(
+  List<MonthlyCategorySpend> months,
+  List<Color> colors,
+) {
+  final categories = <String>{};
+  for (final month in months) {
+    categories.addAll(month.categoryTotals.keys);
+  }
+  final categoryList = categories.toList()..sort();
+  return {
+    for (var i = 0; i < categoryList.length; i++)
+      categoryList[i]: colors[i % colors.length],
+  };
+}
+
+class _CategoryColorDot extends StatelessWidget {
+  const _CategoryColorDot({required this.color});
+
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        color: color ?? Theme.of(context).colorScheme.outline,
+        shape: BoxShape.circle,
+      ),
+    );
   }
 }
 
@@ -365,11 +405,8 @@ class _MonthlyCategoryChart extends StatelessWidget {
       return const Center(child: Text('No monthly data'));
     }
 
-    final categories = <String>{};
-    for (final month in months) {
-      categories.addAll(month.categoryTotals.keys);
-    }
-    final categoryList = categories.toList()..sort();
+    final categoryColors = _categoryColorMap(months, colors);
+    final categoryList = categoryColors.keys.toList();
 
     final maxTotal = months
         .map((month) => month.total)
@@ -428,7 +465,7 @@ class _MonthlyCategoryChart extends StatelessWidget {
                         BarChartRodStackItem(
                           _stackFrom(months[i], categoryList, c),
                           _stackTo(months[i], categoryList, c),
-                          colors[c % colors.length],
+                          categoryColors[categoryList[c]]!,
                         ),
                   ],
                 ),

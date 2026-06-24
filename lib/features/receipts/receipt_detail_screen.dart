@@ -7,6 +7,7 @@ import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../router/navigation_helpers.dart';
 import 'receipt_formatters.dart';
+import 'widgets/receipt_line_catalog_match_sheet.dart';
 
 class ReceiptDetailScreen extends ConsumerWidget {
   const ReceiptDetailScreen({
@@ -123,42 +124,7 @@ class ReceiptDetailScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             for (final line in grouped[categoryId]!) ...[
-                              ListTile(
-                                title: Text(line.englishName),
-                                subtitle: line.originalDescription != line.englishName
-                                    ? Text(line.originalDescription)
-                                    : null,
-                                trailing: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(formatReceiptAmount(line.lineTotal)),
-                                    if (line.quantity != null)
-                                      Text(
-                                        formatReceiptQuantity(
-                                          line.quantity,
-                                          line.quantityUnit,
-                                        ),
-                                        style: theme.textTheme.bodySmall,
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              if (line.catalogItemId != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 16,
-                                    right: 16,
-                                    bottom: 8,
-                                  ),
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Chip(
-                                      label: const Text('Catalog match'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ),
-                                ),
+                              _ReceiptLineTile(line: line),
                               if (line != grouped[categoryId]!.last)
                                 const Divider(height: 1),
                             ],
@@ -173,6 +139,52 @@ class ReceiptDetailScreen extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _ReceiptLineTile extends ConsumerWidget {
+  const _ReceiptLineTile({required this.line});
+
+  final ReceiptLine line;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isMatched = line.catalogItemId != null;
+    final catalogAsync = isMatched
+        ? ref.watch(catalogItemProvider(line.catalogItemId!))
+        : null;
+    final catalogName = catalogAsync?.valueOrNull?.displayName;
+
+    return ListTile(
+      leading: IconButton(
+        icon: Icon(
+          isMatched ? Icons.link : Icons.link_off,
+          color: isMatched ? theme.colorScheme.primary : theme.colorScheme.outline,
+        ),
+        tooltip: isMatched
+            ? (catalogName != null ? 'Catalog: $catalogName' : 'Catalog match')
+            : 'Link to catalog item',
+        visualDensity: VisualDensity.compact,
+        onPressed: () => ReceiptLineCatalogMatchSheet.show(context, line: line),
+      ),
+      title: Text(line.englishName),
+      subtitle: line.originalDescription != line.englishName
+          ? Text(line.originalDescription)
+          : null,
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(formatReceiptAmount(line.lineTotal)),
+          if (line.quantity != null)
+            Text(
+              formatReceiptQuantity(line.quantity, line.quantityUnit),
+              style: theme.textTheme.bodySmall,
+            ),
+        ],
       ),
     );
   }

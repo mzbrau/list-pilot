@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,10 @@ class ReceiptsListScreen extends ConsumerStatefulWidget {
 
 class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
   bool _importing = false;
+  int _progressCurrent = 0;
+  int _progressTotal = 0;
+  String? _currentFileName;
+  ReceiptImportResult? _batchResult;
 
   Future<void> _renameList(BuildContext context, ReceiptList list) async {
     final name = await showDialog<String>(
@@ -56,6 +61,40 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
     }
   }
 
+  Future<void> _showImportOptions() async {
+    if (_importing) return;
+
+    final action = await showModalBottomSheet<_ImportAction>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.upload_file_outlined),
+              title: const Text('Add receipt'),
+              onTap: () => Navigator.pop(context, _ImportAction.single),
+            ),
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.folder_open_outlined),
+                title: const Text('Import folder'),
+                onTap: () => Navigator.pop(context, _ImportAction.folder),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _ImportAction.single:
+        await _importPdf();
+      case _ImportAction.folder:
+        await _importFolder();
+    }
+  }
+
   Future<void> _importPdf() async {
     if (_importing) return;
     final result = await FilePicker.platform.pickFiles(
@@ -67,15 +106,17 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
     final path = result.files.single.path;
     if (path == null) return;
 
-    setState(() => _importing = true);
+    setState(() {
+      _importing = true;
+      _batchResult = null;
+    });
     try {
       final receiptId = await ref.read(receiptImportServiceProvider).importPdf(
             listId: widget.listId,
             sourcePdfPath: path,
           );
       if (!mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Receipt imported')),
       );
       context.push('/receipts/${widget.listId}/receipt/$receiptId');
@@ -95,6 +136,59 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Import failed: $e')));
     } finally {
       if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  Future<void> _importFolder() async {
+    if (_importing) return;
+    final folderPath = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Choose receipts folder',
+    );
+    if (folderPath == null) return;
+
+    setState(() {
+      _importing = true;
+      _batchResult = null;
+      _progressCurrent = 0;
+      _progressTotal = 0;
+      _currentFileName = null;
+    });
+
+    try {
+      final result = await ref.read(receiptImportServiceProvider).importFolder(
+            folderPath,
+            listId: widget.listId,
+            onProgress: (current, total, fileName) {
+              if (!mounted) return;
+              setState(() {
+                _progressCurrent = current;
+                _progressTotal = total;
+                _currentFileName = fileName;
+              });
+            },
+          );
+      if (!mounted) return;
+
+      setState(() => _batchResult = result);
+
+      if (result.imported == 1 && result.failed == 0 && result.skipped == 0) {
+        context.push(
+          '/receipts/${widget.listId}/receipt/${result.importedReceiptIds.first}',
+        );
+      }
+    } on ReceiptImportException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Import failed: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _importing = false;
+          _currentFileName = null;
+        });
+      }
     }
   }
 
@@ -157,72 +251,98 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
             ),
           ],
         ),
-        body: receiptsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
-          data: (receipts) {
-            if (receipts.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 64,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No receipts yet',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Import a PDF receipt or share one from Kivra to List Pilot.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+        body: Column(
+          children: [
+            if (_importing) ...[
+              if (_progressTotal > 0)
+                LinearProgressIndicator(value: _progressCurrent / _progressTotal)
+              else
+                const LinearProgressIndicator(),
+              if (_progressTotal > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    '$_progressCurrent of $_progressTotal'
+                    '${_currentFileName != null ? ' — $_currentFileName' : ''}',
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: receipts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final receipt = receipts[index];
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
-                      child: Icon(
-                        Icons.receipt_outlined,
-                        color: theme.colorScheme.onPrimaryContainer,
+            ],
+            if (_batchResult != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: _ImportSummaryCard(result: _batchResult!),
+              ),
+            Expanded(
+              child: receiptsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Error: $e')),
+                data: (receipts) {
+                  if (receipts.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 64,
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No receipts yet',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Import a PDF receipt or share one from Kivra to List Pilot.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    title: Text(receipt.shopName),
-                    subtitle: Text(dateFormat.format(receipt.purchasedAt)),
-                    trailing: Text(
-                      formatReceiptAmount(receipt.totalAmount),
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    onTap: () => context.push(
-                      '/receipts/${widget.listId}/receipt/${receipt.id}',
-                    ),
-                    onLongPress: () => _confirmDeleteReceipt(receipt),
-                  ),
-                );
-              },
-            );
-          },
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: receipts.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final receipt = receipts[index];
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: theme.colorScheme.primaryContainer
+                                .withValues(alpha: 0.6),
+                            child: Icon(
+                              Icons.receipt_outlined,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          title: Text(receipt.shopName),
+                          subtitle: Text(dateFormat.format(receipt.purchasedAt)),
+                          trailing: Text(
+                            formatReceiptAmount(receipt.totalAmount),
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          onTap: () => context.push(
+                            '/receipts/${widget.listId}/receipt/${receipt.id}',
+                          ),
+                          onLongPress: () => _confirmDeleteReceipt(receipt),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         floatingActionButton: _importing
             ? const FloatingActionButton(
@@ -234,10 +354,54 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
                 ),
               )
             : FloatingActionButton.extended(
-                onPressed: _importPdf,
+                onPressed: _showImportOptions,
                 icon: const Icon(Icons.upload_file_outlined),
                 label: const Text('Add receipt'),
               ),
+      ),
+    );
+  }
+}
+
+enum _ImportAction { single, folder }
+
+class _ImportSummaryCard extends StatelessWidget {
+  const _ImportSummaryCard({required this.result});
+
+  final ReceiptImportResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Import complete', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Text('Imported: ${result.imported}'),
+            if (result.skipped > 0) Text('Skipped (duplicates): ${result.skipped}'),
+            if (result.failed > 0) Text('Failed: ${result.failed}'),
+            if (result.errors.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ExpansionTile(
+                title: const Text('Errors'),
+                tilePadding: EdgeInsets.zero,
+                children: [
+                  for (final error in result.errors)
+                    ListTile(
+                      dense: true,
+                      title: Text(error.fileName),
+                      subtitle: Text(error.message),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

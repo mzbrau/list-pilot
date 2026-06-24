@@ -129,6 +129,10 @@ final receiptImportServiceProvider = Provider<ReceiptImportService>((ref) {
     repository: ref.watch(receiptRepositoryProvider),
     pdfService: ref.watch(receiptPdfServiceProvider),
     enrichmentService: ref.watch(receiptItemEnrichmentServiceProvider),
+    resolveAiConfig: () async {
+      await ref.read(aiConfigProvider.notifier).ensureLoaded();
+      return ref.read(aiConfigProvider);
+    },
   );
 });
 
@@ -756,8 +760,12 @@ final aiConfigProvider =
 
 class AiConfigNotifier extends StateNotifier<AiConfig> {
   AiConfigNotifier() : super(const AiConfig()) {
-    _load();
+    _loadFuture = _load();
   }
+
+  Future<void>? _loadFuture;
+
+  Future<void> ensureLoaded() => _loadFuture ??= _load();
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
