@@ -286,6 +286,16 @@ class _ReceiptsListScreenState extends ConsumerState<ReceiptsListScreen> {
                     '${_currentFileName != null ? ' — $_currentFileName' : ''}',
                     style: theme.textTheme.bodySmall,
                   ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    ref.read(receiptImportServiceProvider).aiConfigured
+                        ? 'Translating items with AI…'
+                        : 'Importing receipt…',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
             ],
             if (_batchResult != null)
