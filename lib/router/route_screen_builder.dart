@@ -24,6 +24,7 @@ import '../features/take_away/take_away_order_plan_screen.dart';
 import '../features/todo_list/todo_completed_history_screen.dart';
 import '../features/todo_list/todo_list_screen.dart';
 import '../features/todo_list/todo_task_detail_screen.dart';
+import '../features/sync/sync_settings_screen.dart';
 
 Widget buildScreenForLocation(String location, {Object? extra}) {
   final uri = Uri.parse(location);
@@ -35,6 +36,10 @@ Widget buildScreenForLocation(String location, {Object? extra}) {
 
   if (uri.path == '/stats') {
     return const ShopStatsScreen();
+  }
+
+  if (uri.path == '/sync') {
+    return const SyncSettingsScreen();
   }
 
   if (uri.path == '/catalog') {

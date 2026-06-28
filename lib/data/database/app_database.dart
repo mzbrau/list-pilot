@@ -5,6 +5,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 import 'tables.dart';
 import '../services/ingredient_parser_service.dart';
+import '../../core/utils/sync_id_generator.dart';
 
 part 'app_database.g.dart';
 
@@ -39,6 +40,9 @@ part 'app_database.g.dart';
   ReceiptLines,
   ReceiptAiInsightRuns,
   OverviewOrderEntries,
+  SyncOutbox,
+  SyncMetadata,
+  SyncPendingOrphans,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
@@ -46,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -108,6 +112,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 12) {
             await m.addColumn(meals, meals.prepTimeMinutes);
+          }
+          if (from < 13) {
+            await _migrateToV13(m);
           }
         },
         beforeOpen: (details) async {
@@ -287,6 +294,7 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<ShoppingList>> watchAllLists() {
     return (select(shoppingLists)
+          ..where((t) => t.deletedAt.isNull())
           ..orderBy([
             (t) => OrderingTerm.desc(t.updatedAt),
           ]))
@@ -294,16 +302,115 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<ShoppingList?> getListById(int id) {
-    return (select(shoppingLists)..where((t) => t.id.equals(id)))
+    return (select(shoppingLists)
+          ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+        .getSingleOrNull();
+  }
+
+  Stream<ShoppingList?> watchListById(int id) {
+    return (select(shoppingLists)
+          ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+        .watchSingleOrNull();
+  }
+
+  Future<ShoppingList?> getListByGlobalId(String globalId) {
+    return (select(shoppingLists)..where((t) => t.globalId.equals(globalId)))
         .getSingleOrNull();
   }
 
   Stream<List<ListItem>> watchListItems(int listId) {
-    return (select(listItems)..where((t) => t.listId.equals(listId))).watch();
+    return (select(listItems)
+          ..where((t) => t.listId.equals(listId) & t.deletedAt.isNull()))
+        .watch();
   }
 
   Future<ListItem?> getListItemById(int id) {
-    return (select(listItems)..where((t) => t.id.equals(id))).getSingleOrNull();
+    return (select(listItems)
+          ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+        .getSingleOrNull();
+  }
+
+  Future<ListItem?> getListItemByGlobalId(String globalId) {
+    return (select(listItems)..where((t) => t.globalId.equals(globalId)))
+        .getSingleOrNull();
+  }
+
+  Future<List<ListItem>> getListItemsForList(int listId) {
+    return (select(listItems)
+          ..where((t) => t.listId.equals(listId) & t.deletedAt.isNull()))
+        .get();
+  }
+
+  Future<List<ShoppingList>> getSyncedShoppingLists() {
+    return (select(shoppingLists)
+          ..where((t) => t.syncEnabled.equals(true) & t.deletedAt.isNull()))
+        .get();
+  }
+
+  Future<void> enqueueSyncOutbox({
+    required String globalId,
+    required String entityType,
+    String operation = 'upsert',
+  }) async {
+    await into(syncOutbox).insert(
+      SyncOutboxCompanion.insert(
+        globalId: globalId,
+        entityType: entityType,
+        operation: Value(operation),
+        enqueuedAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
+
+  Future<List<SyncOutboxData>> getPendingOutbox({int limit = 400}) {
+    return (select(syncOutbox)
+          ..orderBy([(t) => OrderingTerm.asc(t.enqueuedAt)])
+          ..limit(limit))
+        .get();
+  }
+
+  Future<void> removeOutboxEntries(Iterable<int> ids) async {
+    if (ids.isEmpty) return;
+    await (delete(syncOutbox)..where((t) => t.id.isIn(ids.toList()))).go();
+  }
+
+  Future<void> coalesceOutboxEntry(String globalId) async {
+    final rows = await (select(syncOutbox)
+          ..where((t) => t.globalId.equals(globalId))
+          ..orderBy([(t) => OrderingTerm.desc(t.enqueuedAt)]))
+        .get();
+    if (rows.length <= 1) return;
+    final removeIds = rows.skip(1).map((r) => r.id).toList();
+    await removeOutboxEntries(removeIds);
+  }
+
+  Future<String?> getSyncMetadata(String key) async {
+    final row = await (select(syncMetadata)..where((t) => t.key.equals(key)))
+        .getSingleOrNull();
+    return row?.value;
+  }
+
+  Future<void> setSyncMetadata(String key, String value) {
+    return into(syncMetadata).insertOnConflictUpdate(
+      SyncMetadataCompanion.insert(key: key, value: value),
+    );
+  }
+
+  Future<void> addPendingOrphan(String entityJson) {
+    return into(syncPendingOrphans).insert(
+      SyncPendingOrphansCompanion.insert(
+        entityJson: entityJson,
+        receivedAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
+
+  Future<List<SyncPendingOrphan>> getPendingOrphans() {
+    return select(syncPendingOrphans).get();
+  }
+
+  Future<void> removePendingOrphan(int id) {
+    return (delete(syncPendingOrphans)..where((t) => t.id.equals(id))).go();
   }
 
   Future<int> activeItemCount(int listId) async {
@@ -831,6 +938,66 @@ class AppDatabase extends _$AppDatabase {
     return (select(overviewOrderEntries)
           ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
         .watch();
+  }
+
+  Future<void> _migrateToV13(Migrator m) async {
+    await m.addColumn(shoppingLists, shoppingLists.globalId);
+    await m.addColumn(shoppingLists, shoppingLists.deletedAt);
+    await m.addColumn(shoppingLists, shoppingLists.modifiedByDevice);
+    await m.addColumn(shoppingLists, shoppingLists.syncEnabled);
+    await m.addColumn(shoppingLists, shoppingLists.syncSpaceId);
+
+    await m.addColumn(listItems, listItems.globalId);
+    await m.addColumn(listItems, listItems.updatedAt);
+    await m.addColumn(listItems, listItems.deletedAt);
+    await m.addColumn(listItems, listItems.modifiedByDevice);
+
+    await m.addColumn(catalogItems, catalogItems.globalId);
+
+    await m.createTable(syncOutbox);
+    await m.createTable(syncMetadata);
+    await m.createTable(syncPendingOrphans);
+
+    final lists = await customSelect(
+      'SELECT id FROM shopping_lists',
+    ).get();
+    for (final row in lists) {
+      final id = row.read<int>('id');
+      await customUpdate(
+        'UPDATE shopping_lists SET global_id = ? WHERE id = ?',
+        variables: [Variable<String>(generateSyncId()), Variable<int>(id)],
+        updates: {shoppingLists},
+      );
+    }
+
+    final items = await customSelect(
+      'SELECT id, added_at FROM list_items',
+    ).get();
+    for (final row in items) {
+      final id = row.read<int>('id');
+      final addedAt = row.read<int>('added_at');
+      await customUpdate(
+        'UPDATE list_items SET global_id = ?, updated_at = ? WHERE id = ?',
+        variables: [
+          Variable<String>(generateSyncId()),
+          Variable<int>(addedAt),
+          Variable<int>(id),
+        ],
+        updates: {listItems},
+      );
+    }
+
+    final userCatalog = await customSelect(
+      "SELECT id FROM catalog_items WHERE is_user_added = 1",
+    ).get();
+    for (final row in userCatalog) {
+      final id = row.read<int>('id');
+      await customUpdate(
+        'UPDATE catalog_items SET global_id = ? WHERE id = ?',
+        variables: [Variable<String>(generateSyncId()), Variable<int>(id)],
+        updates: {catalogItems},
+      );
+    }
   }
 }
 

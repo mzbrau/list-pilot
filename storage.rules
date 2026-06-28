@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function billingDoc() {
+      return firestore.get(
+        /databases/(default)/documents/users/$(request.auth.uid)/private/billing
+      );
+    }
+
+    function isPremium() {
+      return signedIn()
+        && billingDoc.data.isPremium == true
+        && (
+          !('expiresAt' in billingDoc.data)
+          || billingDoc.data.expiresAt > request.time
+        );
+    }
+
+    function isMember(spaceId) {
+      return signedIn()
+        && request.auth.uid in firestore.get(
+          /databases/(default)/documents/syncSpaces/$(spaceId)/meta/info
+        ).data.memberUids;
+    }
+
+    match /syncSpaces/{spaceId}/{allPaths=**} {
+      allow read: if isPremium() && isMember(spaceId);
+      allow write: if isPremium()
+        && isMember(spaceId)
+        && request.resource.size < 6 * 1024 * 1024;
+    }
+  }
+}

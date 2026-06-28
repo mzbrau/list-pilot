@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/models/overview_display_item.dart';
+import '../../core/models/overview_display_item.dart';
 import '../../core/models/overview_list_entry.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/widgets/drag_handle_utils.dart';
@@ -711,6 +712,15 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               ref.read(mealPlanningEnabledProvider.notifier).setEnabled(value);
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.cloud_outlined),
+            title: const Text('Cloud sync & Premium'),
+            subtitle: const Text('Optional backup and multi-device sync'),
+            onTap: () {
+              Navigator.pop(context);
+              context.push('/sync');
+            },
+          ),
           if (mealManagerEnabled) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -991,9 +1001,31 @@ class _OverviewListCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (!isEditing) {
-      return Icon(
-        Icons.chevron_right,
-        color: theme.colorScheme.onSurfaceVariant,
+      Widget? syncIcon;
+      switch (item) {
+        case UserListDisplayItem(:final entry) when entry is ShoppingListEntry:
+          if ((entry as ShoppingListEntry).list.syncEnabled) {
+            syncIcon = Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(
+                Icons.cloud_done_outlined,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+            );
+          }
+        default:
+          break;
+      }
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (syncIcon != null) syncIcon,
+          Icon(
+            Icons.chevron_right,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
       );
     }
 

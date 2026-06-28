@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,11 @@ import '../../data/services/paprika_import_service.dart';
 import '../../data/services/recipe_page_import_service.dart';
 import '../../data/services/todo_maintenance_service.dart';
 import '../../data/services/todo_notification_service.dart';
+import '../../core/utils/device_id_service.dart';
+import '../../data/sync/sync_billing_service.dart';
+import '../../data/sync/sync_media_service.dart';
+import '../../data/sync/sync_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../router/app_router.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -153,12 +159,81 @@ final shopStatsRepositoryProvider = Provider<ShopStatsRepository>((ref) {
 });
 
 final listRepositoryProvider = Provider<ListRepository>((ref) {
+  final sync = ref.watch(syncServiceProvider);
   return ListRepository(
     ref.watch(databaseProvider),
     ref.watch(catalogRepositoryProvider),
     ref.watch(learningRepositoryProvider),
     ref.watch(shopStatsRepositoryProvider),
+    syncOutbox: sync?.outbox,
+    deviceId: ref.watch(deviceIdServiceProvider).valueOrNull,
   );
+});
+
+final deviceIdServiceProvider = FutureProvider<DeviceIdService>((ref) {
+  return DeviceIdService.create();
+});
+
+final syncServiceProvider = Provider<SyncService?>((ref) {
+  final deviceId = ref.watch(deviceIdServiceProvider).valueOrNull;
+  if (deviceId == null) return null;
+  return SyncService(
+    db: ref.watch(databaseProvider),
+    deviceId: deviceId,
+  );
+});
+
+final syncMediaServiceProvider = Provider<SyncMediaService?>((ref) {
+  final sync = ref.watch(syncServiceProvider);
+  if (sync == null) return null;
+  return SyncMediaService(sync);
+});
+
+final syncAuthStateProvider = StreamProvider<User?>((ref) {
+  ref.watch(appInitProvider);
+  final sync = ref.watch(syncServiceProvider);
+  if (sync == null) return Stream<User?>.value(null);
+  return sync.auth.authStateChanges;
+});
+
+class PremiumEntitlementNotifier
+    extends StateNotifier<AsyncValue<BillingEntitlement>> {
+  PremiumEntitlementNotifier(this._billing)
+      : super(AsyncValue.data(BillingEntitlement.free()));
+
+  final SyncBillingService? _billing;
+  StreamSubscription<BillingEntitlement>? _sub;
+  String? _uid;
+
+  void watchUid(String uid) {
+    if (_billing == null) return;
+    if (_uid == uid) return;
+    _uid = uid;
+    _sub?.cancel();
+    _sub = _billing!.watchEntitlement(uid).listen(
+          (entitlement) => state = AsyncValue.data(entitlement),
+          onError: (e, st) => state = AsyncValue.error(e, st),
+        );
+  }
+
+  Future<void> refresh() async {
+    final uid = _uid;
+    final billing = _billing;
+    if (uid == null || billing == null) return;
+    final entitlement = await billing.getEntitlement(uid);
+    state = AsyncValue.data(entitlement);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+}
+
+final premiumEntitlementProvider = StateNotifierProvider<
+    PremiumEntitlementNotifier, AsyncValue<BillingEntitlement>>((ref) {
+  return PremiumEntitlementNotifier(ref.watch(syncServiceProvider)?.billing);
 });
 
 final notificationsPluginProvider =
@@ -194,6 +269,7 @@ final databaseSeederProvider = Provider<DatabaseSeeder>((ref) {
 final appInitProvider = FutureProvider<void>((ref) async {
   final seeder = ref.watch(databaseSeederProvider);
   await seeder.seedIfNeeded();
+  await ref.watch(deviceIdServiceProvider.future);
   await ref.watch(todoMaintenanceServiceProvider).runMaintenance();
 
   if (!TodoNotificationService.isSupported) return;
@@ -424,10 +500,7 @@ class ShopStatsEnabledNotifier extends StateNotifier<bool> {
 final shoppingListProvider =
     StreamProvider.family<ShoppingList?, int>((ref, listId) {
   ref.watch(appInitProvider);
-  final db = ref.watch(databaseProvider);
-  return (db.select(db.shoppingLists)..where((t) => t.id.equals(listId)))
-      .watch()
-      .map((rows) => rows.isEmpty ? null : rows.first);
+  return ref.watch(databaseProvider).watchListById(listId);
 });
 
 final listItemsProvider =

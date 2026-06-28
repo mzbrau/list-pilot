@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
+import '../../data/sync/sync_engine.dart';
 import '../../features/learning/ordering_service.dart';
 import '../../router/navigation_helpers.dart';
 import '../shop_stats/widgets/shop_stats_ticker.dart';
@@ -12,6 +13,7 @@ import 'widgets/categorized_item_list.dart';
 import 'widgets/completed_items_section.dart';
 import 'widgets/item_autocomplete_field.dart';
 import 'widgets/list_progress_title.dart';
+import 'widgets/list_sync_settings_tile.dart';
 
 class ShoppingListScreen extends ConsumerStatefulWidget {
   const ShoppingListScreen({super.key, required this.listId});
@@ -25,6 +27,37 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 
 class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
   final _orderingService = OrderingService();
+  SyncEngine? _syncEngine;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncEngine = ref.read(syncServiceProvider)?.engine;
+      _attachRealtimeSync();
+    });
+  }
+
+  Future<void> _attachRealtimeSync() async {
+    final list = await ref.read(listRepositoryProvider).getListById(widget.listId);
+    if (list?.syncEnabled != true) return;
+
+    final listGlobalId = list?.globalId;
+    final sync = ref.read(syncServiceProvider);
+    if (listGlobalId == null || sync == null) return;
+
+    final premium = ref.read(premiumEntitlementProvider).valueOrNull;
+    if (premium?.isPremium != true) return;
+
+    await sync.startIfEligible(isPremium: true);
+    await sync.engine.enableListRealtime(listGlobalId);
+  }
+
+  @override
+  void dispose() {
+    _syncEngine?.disableListRealtime();
+    super.dispose();
+  }
 
   PreferredSizeWidget _buildAppBar(
     BuildContext context, {
@@ -68,9 +101,15 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                 onSelected: (value) async {
                   if (value == 'reset') {
                     await _resetLearnedOrder(context);
+                  } else if (value == 'sync') {
+                    await _showSyncSheet(context, list);
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'sync',
+                    child: Text('Cloud sync settings'),
+                  ),
                   const PopupMenuItem(
                     value: 'reset',
                     child: Text('Reset learned order'),
@@ -351,5 +390,16 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     if (confirmed == true) {
       await ref.read(listRepositoryProvider).resetLearnedOrder(widget.listId);
     }
+  }
+
+  Future<void> _showSyncSheet(BuildContext context, ShoppingList list) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListSyncSettingsTile(list: list),
+      ),
+    );
+    await _attachRealtimeSync();
   }
 }

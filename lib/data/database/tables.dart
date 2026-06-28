@@ -11,6 +11,7 @@ class Categories extends Table {
 
 class CatalogItems extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get globalId => text().unique().nullable()();
   TextColumn get name => text()();
   TextColumn get displayName => text()();
   TextColumn get categoryId => text().references(Categories, #id)();
@@ -37,9 +38,15 @@ class CatalogItemExclusions extends Table {
 
 class ShoppingLists extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get globalId => text().unique().nullable()();
   TextColumn get name => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  TextColumn get modifiedByDevice => text().nullable()();
+  BoolColumn get syncEnabled =>
+      boolean().withDefault(const Constant(false))();
+  TextColumn get syncSpaceId => text().nullable()();
   DateTimeColumn get lastCheckOffAt => dateTime().nullable()();
   IntColumn get currentTripId => integer().withDefault(const Constant(0))();
   IntColumn get currentTripSequence =>
@@ -57,6 +64,7 @@ class ShopStatsRecords extends Table {
 
 class ListItems extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get globalId => text().unique().nullable()();
   IntColumn get listId => integer().references(ShoppingLists, #id)();
   IntColumn get catalogItemId =>
       integer().nullable().references(CatalogItems, #id)();
@@ -68,6 +76,9 @@ class ListItems extends Table {
       boolean().withDefault(const Constant(false))();
   DateTimeColumn get completedAt => dateTime().nullable()();
   DateTimeColumn get addedAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  TextColumn get modifiedByDevice => text().nullable()();
 }
 
 class CheckOffEvents extends Table {
@@ -302,4 +313,27 @@ class OverviewOrderEntries extends Table {
 
   @override
   Set<Column> get primaryKey => {itemKey};
+}
+
+class SyncOutbox extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get globalId => text()();
+  TextColumn get entityType => text()();
+  TextColumn get operation =>
+      text().withDefault(const Constant('upsert'))();
+  DateTimeColumn get enqueuedAt => dateTime()();
+}
+
+class SyncMetadata extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {key};
+}
+
+class SyncPendingOrphans extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get entityJson => text()();
+  DateTimeColumn get receivedAt => dateTime()();
 }
