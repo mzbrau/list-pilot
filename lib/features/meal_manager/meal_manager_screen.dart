@@ -91,6 +91,7 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Added "${meal.displayName}" to meal plan'),
+        duration: const Duration(seconds: 5),
         action: SnackBarAction(
           label: 'View',
           onPressed: () => context.push('/meals'),
