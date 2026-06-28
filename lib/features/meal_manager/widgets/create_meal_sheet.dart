@@ -26,16 +26,15 @@ class CreateMealSheet extends ConsumerWidget {
           title: const Text('Create manually'),
           subtitle: const Text('Start with a blank recipe'),
           onTap: () async {
+            final router = GoRouter.of(context);
             Navigator.pop(context);
             final meal = await ref.read(mealRepositoryProvider).createMeal(
                   displayName: 'New meal',
                 );
-            if (context.mounted) {
-              context.push(
-                '/meal-manager/${meal.id}',
-                extra: true,
-              );
-            }
+            router.push(
+              '/meal-manager/${meal.id}',
+              extra: true,
+            );
           },
         ),
         ListTile(
@@ -43,8 +42,9 @@ class CreateMealSheet extends ConsumerWidget {
           title: const Text('Import from webpage'),
           subtitle: const Text('Extract recipe from page data'),
           onTap: () {
+            final router = GoRouter.of(context);
             Navigator.pop(context);
-            context.push('/meal-manager/import/extract');
+            router.push('/meal-manager/import/extract');
           },
         ),
         if (aiConfigured) ...[
@@ -53,8 +53,9 @@ class CreateMealSheet extends ConsumerWidget {
             title: const Text('Import with AI'),
             subtitle: const Text('Extract recipe using AI'),
             onTap: () {
+              final router = GoRouter.of(context);
               Navigator.pop(context);
-              context.push('/meal-manager/import');
+              router.push('/meal-manager/import');
             },
           ),
           ListTile(
@@ -62,8 +63,9 @@ class CreateMealSheet extends ConsumerWidget {
             title: const Text('Import from photo'),
             subtitle: const Text('Extract recipe from a photo using AI'),
             onTap: () {
+              final router = GoRouter.of(context);
               Navigator.pop(context);
-              context.push('/meal-manager/import/photo');
+              router.push('/meal-manager/import/photo');
             },
           ),
         ],

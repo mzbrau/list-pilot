@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/services/ingredient_catalog_matcher.dart';
 import '../../data/services/meal_import_service.dart';
+import '../../router/navigation_helpers.dart';
 import '../meal_planning/widgets/meal_detail_header.dart';
 import '../meal_planning/widgets/meal_detail_other_tab.dart';
 import '../meal_planning/widgets/meal_detail_steps_tab.dart';
@@ -35,6 +36,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
   final _ingredientController = TextEditingController();
   late TabController _tabController;
   bool _importing = false;
+  bool _saving = false;
   bool _hasPreview = false;
   List<ImportIngredientDraft> _ingredientDrafts = [];
   List<String> _steps = [];
@@ -197,73 +199,87 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty || _saving) return;
 
-    var drafts = _ingredientDrafts;
-    final hasUnmatched = drafts.any(
-      (d) => d.confidence == IngredientMatchConfidence.unmatched,
-    );
-    if (hasUnmatched) {
-      final reviewed = await ImportIngredientReviewSheet.show(
-        context,
-        drafts: drafts,
+    setState(() => _saving = true);
+    try {
+      var drafts = _ingredientDrafts;
+      final hasUnmatched = drafts.any(
+        (d) => d.confidence == IngredientMatchConfidence.unmatched,
       );
-      if (reviewed == null || !mounted) return;
-      drafts = reviewed;
-    }
-
-    final portions =
-        int.tryParse(_portionsController.text.trim())?.clamp(1, 99) ?? 4;
-    final prepTimeText = _prepTimeController.text.trim();
-    final prepTime = int.tryParse(prepTimeText);
-
-    final meal = await ref.read(mealRepositoryProvider).createMeal(
-          displayName: name,
-          notes: _notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim(),
-          portions: portions,
-          prepTimeMinutes: prepTime,
-          recipeLink: _recipeController.text.trim().isEmpty
-              ? null
-              : _recipeController.text.trim(),
-          ingredients: drafts.map((d) => d.toInput()).toList(),
-          steps: _steps,
-          tags: _tags,
+      if (hasUnmatched) {
+        final reviewed = await ImportIngredientReviewSheet.show(
+          context,
+          drafts: drafts,
         );
+        if (reviewed == null || !mounted) return;
+        drafts = reviewed;
+      }
 
-    if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-      final saved = await ref.read(mealPhotoServiceProvider).downloadAndSavePhoto(
-            meal.id,
-            _imageUrl!,
-            referer: _recipeController.text.trim().isEmpty
+      final portions =
+          int.tryParse(_portionsController.text.trim())?.clamp(1, 99) ?? 4;
+      final prepTimeText = _prepTimeController.text.trim();
+      final prepTime = int.tryParse(prepTimeText);
+
+      final meal = await ref.read(mealRepositoryProvider).createMeal(
+            displayName: name,
+            notes: _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+            portions: portions,
+            prepTimeMinutes: prepTime,
+            recipeLink: _recipeController.text.trim().isEmpty
                 ? null
                 : _recipeController.text.trim(),
+            ingredients: drafts.map((d) => d.toInput()).toList(),
+            steps: _steps,
+            tags: _tags,
           );
-      if (!saved && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Recipe saved, but the photo could not be downloaded.'),
-          ),
-        );
-      }
-    } else if (_pickedPhotoFile != null) {
-      final saved = await ref.read(mealPhotoServiceProvider).savePhotoFromPath(
-            meal.id,
-            _pickedPhotoFile!.path,
-          );
-      if (!saved && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Recipe saved, but the photo could not be saved.'),
-          ),
-        );
-      }
-    }
 
-    if (mounted) {
-      context.pop();
-      context.push('/meal-manager/${meal.id}');
+      if (_imageUrl != null && _imageUrl!.isNotEmpty) {
+        final saved =
+            await ref.read(mealPhotoServiceProvider).downloadAndSavePhoto(
+                  meal.id,
+                  _imageUrl!,
+                  referer: _recipeController.text.trim().isEmpty
+                      ? null
+                      : _recipeController.text.trim(),
+                );
+        if (!saved && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Recipe saved, but the photo could not be downloaded.',
+              ),
+            ),
+          );
+        }
+      } else if (_pickedPhotoFile != null) {
+        final saved = await ref.read(mealPhotoServiceProvider).savePhotoFromPath(
+              meal.id,
+              _pickedPhotoFile!.path,
+            );
+        if (!saved && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Recipe saved, but the photo could not be saved.'),
+            ),
+          );
+        }
+      }
+
+      if (mounted) {
+        context.pop();
+        context.push('/meal-manager/${meal.id}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -316,7 +332,11 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     ];
   }
 
-  Widget _buildIngredientsTab(ThemeData theme, {required bool nestedScroll}) {
+  Widget _buildIngredientsTab(
+    ThemeData theme, {
+    required bool nestedScroll,
+    BuildContext? scrollContext,
+  }) {
     final children = _ingredientTabChildren(theme);
 
     if (!nestedScroll) {
@@ -326,11 +346,12 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
       );
     }
 
+    final nestedContext = scrollContext ?? context;
     return CustomScrollView(
       key: const PageStorageKey('meal-import-ingredients'),
       slivers: [
         SliverOverlapInjector(
-          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(nestedContext),
         ),
         SliverPadding(
           padding: const EdgeInsets.all(16),
@@ -537,7 +558,13 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
         controller: _tabController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          _buildIngredientsTab(theme, nestedScroll: true),
+          Builder(
+            builder: (scrollContext) => _buildIngredientsTab(
+              theme,
+              nestedScroll: true,
+              scrollContext: scrollContext,
+            ),
+          ),
           MealDetailStepsTab(
             mealId: null,
             isEditing: true,
@@ -580,24 +607,32 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
     final theme = Theme.of(context);
     final importLanguage = ref.watch(recipeImportLanguageProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_appBarTitle),
-        actions: [
-          if (_hasPreview && _isPhotoMode)
-            IconButton(
-              icon: const Icon(Icons.photo_library_outlined),
-              tooltip: 'Change photo',
-              onPressed: _importing ? null : _changePhotoFromReview,
-            ),
-          if (_hasPreview)
-            TextButton(
-              onPressed: _save,
-              child: const Text('Save'),
-            ),
-        ],
-      ),
-      body: _hasPreview
+    return popOrGoHomeScope(
+      child: Scaffold(
+        appBar: AppBar(
+          leading: overviewBackButton(context),
+          title: Text(_appBarTitle),
+          actions: [
+            if (_hasPreview && _isPhotoMode)
+              IconButton(
+                icon: const Icon(Icons.photo_library_outlined),
+                tooltip: 'Change photo',
+                onPressed: _importing ? null : _changePhotoFromReview,
+              ),
+            if (_hasPreview)
+              TextButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+          ],
+        ),
+        body: _hasPreview
           ? Column(
               children: [
                 if (!_isPhotoMode) ...[
@@ -631,6 +666,7 @@ class _MealImportScreenState extends ConsumerState<MealImportScreen>
                     ),
                   ],
                 ),
+      ),
     );
   }
 }
