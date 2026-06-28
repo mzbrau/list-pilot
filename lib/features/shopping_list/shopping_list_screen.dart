@@ -6,6 +6,7 @@ import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../features/learning/ordering_service.dart';
 import '../../router/navigation_helpers.dart';
+import '../lists/widgets/quick_list_switcher.dart';
 import '../shop_stats/widgets/shop_stats_ticker.dart';
 import '../shop_stats/widgets/shop_summary_sheet.dart';
 import 'widgets/categorized_item_list.dart';
@@ -138,6 +139,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
           ),
           body: Column(
             children: [
+              QuickListSwitcher(
+                current: QuickListDestination.shopping,
+                listId: widget.listId,
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: ItemAutocompleteField(

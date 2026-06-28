@@ -8,6 +8,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../router/navigation_helpers.dart';
+import '../lists/widgets/quick_list_switcher.dart';
 import 'widgets/create_meal_sheet.dart';
 import 'widgets/meal_manager_grid_tile.dart';
 import 'widgets/meal_manager_list_tile.dart';
@@ -134,6 +135,7 @@ class _MealManagerScreenState extends ConsumerState<MealManagerScreen> {
       ),
       body: Column(
         children: [
+          const QuickListSwitcher(current: QuickListDestination.recipes),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(

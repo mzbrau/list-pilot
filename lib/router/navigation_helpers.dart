@@ -12,6 +12,10 @@ bool _canPop(BuildContext context) {
   return Navigator.canPop(context);
 }
 
+void navigateToQuickList(BuildContext context, String route) {
+  context.go(route);
+}
+
 void popOrGoHome(BuildContext context) {
   final router = GoRouter.maybeOf(context);
   if (router != null) {

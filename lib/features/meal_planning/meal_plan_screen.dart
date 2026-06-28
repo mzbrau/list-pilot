@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/app_providers.dart';
 import '../../data/database/app_database.dart';
 import '../../router/navigation_helpers.dart';
+import '../lists/widgets/quick_list_switcher.dart';
 import 'widgets/add_ingredients_dialog.dart';
 import 'widgets/ai_meal_suggest_options_dialog.dart';
 import 'widgets/completed_meals_section.dart';
@@ -36,28 +37,21 @@ class MealPlanScreen extends ConsumerWidget {
             tooltip: 'Calendar',
             onPressed: () => context.push('/meals/calendar'),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'export') {
-                await _exportMeals(context, ref);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'export',
-                child: ListTile(
-                  leading: Icon(Icons.download_outlined),
-                  title: Text('Export meals'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
       body: planAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const Column(
+          children: [
+            QuickListSwitcher(current: QuickListDestination.planning),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
+        ),
+        error: (e, _) => Column(
+          children: [
+            const QuickListSwitcher(current: QuickListDestination.planning),
+            Expanded(child: Center(child: Text('Error: $e'))),
+          ],
+        ),
         data: (entries) {
           final active = entries.where((e) => !e.planItem.isCompleted).toList();
           final completed =
@@ -65,6 +59,7 @@ class MealPlanScreen extends ConsumerWidget {
 
           return Column(
             children: [
+              const QuickListSwitcher(current: QuickListDestination.planning),
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: MealAutocompleteField(),
@@ -223,29 +218,6 @@ class MealPlanScreen extends ConsumerWidget {
     final options = await AiMealSuggestOptionsDialog.show(context, ref);
     if (options == null || !context.mounted) return;
     context.push('/meals/suggest', extra: options);
-  }
-
-  Future<void> _exportMeals(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final result =
-          await ref.read(mealExportServiceProvider).exportToFile();
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Exported ${result.mealCount} meals and '
-            '${result.checkOffCount} history entries to '
-            '${result.displayLocation}',
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
-    }
   }
 }
 
