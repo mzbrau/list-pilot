@@ -90,6 +90,15 @@ class ReceiptRepository {
     );
   }
 
+  Future<void> updateListBackgroundColor(int id, int? backgroundColor) async {
+    await (_db.update(_db.receiptLists)..where((t) => t.id.equals(id))).write(
+      ReceiptListsCompanion(
+        backgroundColor: Value(backgroundColor),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> deleteList(int id) async {
     final receipts = await (_db.select(_db.receipts)
           ..where((t) => t.listId.equals(id)))

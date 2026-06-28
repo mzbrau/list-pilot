@@ -36,6 +36,15 @@ class TodoRepository {
     );
   }
 
+  Future<void> updateListBackgroundColor(int id, int? backgroundColor) async {
+    await (_db.update(_db.todoLists)..where((t) => t.id.equals(id))).write(
+      TodoListsCompanion(
+        backgroundColor: Value(backgroundColor),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> deleteList(int id) async {
     final items = await (_db.select(_db.todoItems)
           ..where((t) => t.listId.equals(id)))

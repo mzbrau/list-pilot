@@ -10,6 +10,7 @@ import '../../core/widgets/drag_handle_utils.dart';
 import '../../data/database/app_database.dart';
 import '../../data/services/openai_models_service.dart';
 import '../../router/route_utils.dart';
+import 'widgets/list_background_color_picker.dart';
 import 'widgets/reorderable_overview_list.dart';
 
 class ListsOverviewScreen extends ConsumerStatefulWidget {
@@ -931,7 +932,9 @@ class _OverviewListCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
-      color: isSelected ? theme.colorScheme.secondaryContainer : null,
+      color: isSelected
+          ? theme.colorScheme.secondaryContainer
+          : item.cardBackgroundColor(context),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: isEditing && !forFeedback
@@ -1053,6 +1056,11 @@ Future<void> _showListOptions(
               onTap: () => Navigator.pop(context, 'rename'),
             ),
             ListTile(
+              leading: const Icon(Icons.palette_outlined),
+              title: const Text('Background color'),
+              onTap: () => Navigator.pop(context, 'color'),
+            ),
+            ListTile(
               leading: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
               title: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
               onTap: () => Navigator.pop(context, 'delete'),
@@ -1080,6 +1088,32 @@ Future<void> _showListOptions(
         } else {
           await ref.read(todoRepositoryProvider).renameList(entry.id, name);
         }
+      }
+    } else if (action == 'color') {
+      if (!context.mounted) return;
+      final choice = await showListBackgroundColorPicker(
+        context,
+        currentColor: entry.backgroundColor,
+      );
+      if (choice == null || !context.mounted) return;
+
+      final colorValue = choice.colorValue;
+      if (entry is ShoppingListEntry) {
+        await ref
+            .read(listRepositoryProvider)
+            .updateListBackgroundColor(entry.id, colorValue);
+      } else if (entry is TakeAwayListEntry) {
+        await ref
+            .read(takeAwayRepositoryProvider)
+            .updateListBackgroundColor(entry.id, colorValue);
+      } else if (entry is ReceiptListEntry) {
+        await ref
+            .read(receiptRepositoryProvider)
+            .updateListBackgroundColor(entry.id, colorValue);
+      } else {
+        await ref
+            .read(todoRepositoryProvider)
+            .updateListBackgroundColor(entry.id, colorValue);
       }
     } else if (action == 'delete') {
       final confirmed = await showDialog<bool>(

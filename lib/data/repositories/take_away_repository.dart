@@ -45,6 +45,15 @@ class TakeAwayRepository {
     );
   }
 
+  Future<void> updateListBackgroundColor(int id, int? backgroundColor) async {
+    await (_db.update(_db.takeAwayLists)..where((t) => t.id.equals(id))).write(
+      TakeAwayListsCompanion(
+        backgroundColor: Value(backgroundColor),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> deleteList(int id) async {
     final menus = await (_db.select(_db.takeAwayMenus)
           ..where((t) => t.listId.equals(id)))

@@ -1059,6 +1059,12 @@ class $ShoppingListsTable extends ShoppingLists
   late final GeneratedColumn<DateTime> activeShopStartedAt =
       GeneratedColumn<DateTime>('active_shop_started_at', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _backgroundColorMeta =
+      const VerificationMeta('backgroundColor');
+  @override
+  late final GeneratedColumn<int> backgroundColor = GeneratedColumn<int>(
+      'background_color', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1068,7 +1074,8 @@ class $ShoppingListsTable extends ShoppingLists
         lastCheckOffAt,
         currentTripId,
         currentTripSequence,
-        activeShopStartedAt
+        activeShopStartedAt,
+        backgroundColor
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1125,6 +1132,12 @@ class $ShoppingListsTable extends ShoppingLists
           activeShopStartedAt.isAcceptableOrUnknown(
               data['active_shop_started_at']!, _activeShopStartedAtMeta));
     }
+    if (data.containsKey('background_color')) {
+      context.handle(
+          _backgroundColorMeta,
+          backgroundColor.isAcceptableOrUnknown(
+              data['background_color']!, _backgroundColorMeta));
+    }
     return context;
   }
 
@@ -1151,6 +1164,8 @@ class $ShoppingListsTable extends ShoppingLists
       activeShopStartedAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime,
           data['${effectivePrefix}active_shop_started_at']),
+      backgroundColor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}background_color']),
     );
   }
 
@@ -1169,6 +1184,7 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
   final int currentTripId;
   final int currentTripSequence;
   final DateTime? activeShopStartedAt;
+  final int? backgroundColor;
   const ShoppingList(
       {required this.id,
       required this.name,
@@ -1177,7 +1193,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       this.lastCheckOffAt,
       required this.currentTripId,
       required this.currentTripSequence,
-      this.activeShopStartedAt});
+      this.activeShopStartedAt,
+      this.backgroundColor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1192,6 +1209,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
     map['current_trip_sequence'] = Variable<int>(currentTripSequence);
     if (!nullToAbsent || activeShopStartedAt != null) {
       map['active_shop_started_at'] = Variable<DateTime>(activeShopStartedAt);
+    }
+    if (!nullToAbsent || backgroundColor != null) {
+      map['background_color'] = Variable<int>(backgroundColor);
     }
     return map;
   }
@@ -1210,6 +1230,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       activeShopStartedAt: activeShopStartedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(activeShopStartedAt),
+      backgroundColor: backgroundColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backgroundColor),
     );
   }
 
@@ -1227,6 +1250,7 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           serializer.fromJson<int>(json['currentTripSequence']),
       activeShopStartedAt:
           serializer.fromJson<DateTime?>(json['activeShopStartedAt']),
+      backgroundColor: serializer.fromJson<int?>(json['backgroundColor']),
     );
   }
   @override
@@ -1241,6 +1265,7 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       'currentTripId': serializer.toJson<int>(currentTripId),
       'currentTripSequence': serializer.toJson<int>(currentTripSequence),
       'activeShopStartedAt': serializer.toJson<DateTime?>(activeShopStartedAt),
+      'backgroundColor': serializer.toJson<int?>(backgroundColor),
     };
   }
 
@@ -1252,7 +1277,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           Value<DateTime?> lastCheckOffAt = const Value.absent(),
           int? currentTripId,
           int? currentTripSequence,
-          Value<DateTime?> activeShopStartedAt = const Value.absent()}) =>
+          Value<DateTime?> activeShopStartedAt = const Value.absent(),
+          Value<int?> backgroundColor = const Value.absent()}) =>
       ShoppingList(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -1265,6 +1291,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
         activeShopStartedAt: activeShopStartedAt.present
             ? activeShopStartedAt.value
             : this.activeShopStartedAt,
+        backgroundColor: backgroundColor.present
+            ? backgroundColor.value
+            : this.backgroundColor,
       );
   ShoppingList copyWithCompanion(ShoppingListsCompanion data) {
     return ShoppingList(
@@ -1284,6 +1313,9 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
       activeShopStartedAt: data.activeShopStartedAt.present
           ? data.activeShopStartedAt.value
           : this.activeShopStartedAt,
+      backgroundColor: data.backgroundColor.present
+          ? data.backgroundColor.value
+          : this.backgroundColor,
     );
   }
 
@@ -1297,14 +1329,23 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           ..write('lastCheckOffAt: $lastCheckOffAt, ')
           ..write('currentTripId: $currentTripId, ')
           ..write('currentTripSequence: $currentTripSequence, ')
-          ..write('activeShopStartedAt: $activeShopStartedAt')
+          ..write('activeShopStartedAt: $activeShopStartedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt, updatedAt,
-      lastCheckOffAt, currentTripId, currentTripSequence, activeShopStartedAt);
+  int get hashCode => Object.hash(
+      id,
+      name,
+      createdAt,
+      updatedAt,
+      lastCheckOffAt,
+      currentTripId,
+      currentTripSequence,
+      activeShopStartedAt,
+      backgroundColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1316,7 +1357,8 @@ class ShoppingList extends DataClass implements Insertable<ShoppingList> {
           other.lastCheckOffAt == this.lastCheckOffAt &&
           other.currentTripId == this.currentTripId &&
           other.currentTripSequence == this.currentTripSequence &&
-          other.activeShopStartedAt == this.activeShopStartedAt);
+          other.activeShopStartedAt == this.activeShopStartedAt &&
+          other.backgroundColor == this.backgroundColor);
 }
 
 class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
@@ -1328,6 +1370,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
   final Value<int> currentTripId;
   final Value<int> currentTripSequence;
   final Value<DateTime?> activeShopStartedAt;
+  final Value<int?> backgroundColor;
   const ShoppingListsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1337,6 +1380,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     this.currentTripId = const Value.absent(),
     this.currentTripSequence = const Value.absent(),
     this.activeShopStartedAt = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
   });
   ShoppingListsCompanion.insert({
     this.id = const Value.absent(),
@@ -1347,6 +1391,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     this.currentTripId = const Value.absent(),
     this.currentTripSequence = const Value.absent(),
     this.activeShopStartedAt = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
   })  : name = Value(name),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
@@ -1359,6 +1404,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
     Expression<int>? currentTripId,
     Expression<int>? currentTripSequence,
     Expression<DateTime>? activeShopStartedAt,
+    Expression<int>? backgroundColor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1371,6 +1417,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
         'current_trip_sequence': currentTripSequence,
       if (activeShopStartedAt != null)
         'active_shop_started_at': activeShopStartedAt,
+      if (backgroundColor != null) 'background_color': backgroundColor,
     });
   }
 
@@ -1382,7 +1429,8 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
       Value<DateTime?>? lastCheckOffAt,
       Value<int>? currentTripId,
       Value<int>? currentTripSequence,
-      Value<DateTime?>? activeShopStartedAt}) {
+      Value<DateTime?>? activeShopStartedAt,
+      Value<int?>? backgroundColor}) {
     return ShoppingListsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -1392,6 +1440,7 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
       currentTripId: currentTripId ?? this.currentTripId,
       currentTripSequence: currentTripSequence ?? this.currentTripSequence,
       activeShopStartedAt: activeShopStartedAt ?? this.activeShopStartedAt,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
     );
   }
 
@@ -1423,6 +1472,9 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
       map['active_shop_started_at'] =
           Variable<DateTime>(activeShopStartedAt.value);
     }
+    if (backgroundColor.present) {
+      map['background_color'] = Variable<int>(backgroundColor.value);
+    }
     return map;
   }
 
@@ -1436,7 +1488,8 @@ class ShoppingListsCompanion extends UpdateCompanion<ShoppingList> {
           ..write('lastCheckOffAt: $lastCheckOffAt, ')
           ..write('currentTripId: $currentTripId, ')
           ..write('currentTripSequence: $currentTripSequence, ')
-          ..write('activeShopStartedAt: $activeShopStartedAt')
+          ..write('activeShopStartedAt: $activeShopStartedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
@@ -5718,8 +5771,15 @@ class $TodoListsTable extends TodoLists
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _backgroundColorMeta =
+      const VerificationMeta('backgroundColor');
   @override
-  List<GeneratedColumn> get $columns => [id, name, createdAt, updatedAt];
+  late final GeneratedColumn<int> backgroundColor = GeneratedColumn<int>(
+      'background_color', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, createdAt, updatedAt, backgroundColor];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5751,6 +5811,12 @@ class $TodoListsTable extends TodoLists
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('background_color')) {
+      context.handle(
+          _backgroundColorMeta,
+          backgroundColor.isAcceptableOrUnknown(
+              data['background_color']!, _backgroundColorMeta));
+    }
     return context;
   }
 
@@ -5768,6 +5834,8 @@ class $TodoListsTable extends TodoLists
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      backgroundColor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}background_color']),
     );
   }
 
@@ -5782,11 +5850,13 @@ class TodoList extends DataClass implements Insertable<TodoList> {
   final String name;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? backgroundColor;
   const TodoList(
       {required this.id,
       required this.name,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.backgroundColor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -5794,6 +5864,9 @@ class TodoList extends DataClass implements Insertable<TodoList> {
     map['name'] = Variable<String>(name);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || backgroundColor != null) {
+      map['background_color'] = Variable<int>(backgroundColor);
+    }
     return map;
   }
 
@@ -5803,6 +5876,9 @@ class TodoList extends DataClass implements Insertable<TodoList> {
       name: Value(name),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      backgroundColor: backgroundColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backgroundColor),
     );
   }
 
@@ -5814,6 +5890,7 @@ class TodoList extends DataClass implements Insertable<TodoList> {
       name: serializer.fromJson<String>(json['name']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      backgroundColor: serializer.fromJson<int?>(json['backgroundColor']),
     );
   }
   @override
@@ -5824,16 +5901,24 @@ class TodoList extends DataClass implements Insertable<TodoList> {
       'name': serializer.toJson<String>(name),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'backgroundColor': serializer.toJson<int?>(backgroundColor),
     };
   }
 
   TodoList copyWith(
-          {int? id, String? name, DateTime? createdAt, DateTime? updatedAt}) =>
+          {int? id,
+          String? name,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<int?> backgroundColor = const Value.absent()}) =>
       TodoList(
         id: id ?? this.id,
         name: name ?? this.name,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        backgroundColor: backgroundColor.present
+            ? backgroundColor.value
+            : this.backgroundColor,
       );
   TodoList copyWithCompanion(TodoListsCompanion data) {
     return TodoList(
@@ -5841,6 +5926,9 @@ class TodoList extends DataClass implements Insertable<TodoList> {
       name: data.name.present ? data.name.value : this.name,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      backgroundColor: data.backgroundColor.present
+          ? data.backgroundColor.value
+          : this.backgroundColor,
     );
   }
 
@@ -5850,13 +5938,15 @@ class TodoList extends DataClass implements Insertable<TodoList> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(id, name, createdAt, updatedAt, backgroundColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5864,7 +5954,8 @@ class TodoList extends DataClass implements Insertable<TodoList> {
           other.id == this.id &&
           other.name == this.name &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.backgroundColor == this.backgroundColor);
 }
 
 class TodoListsCompanion extends UpdateCompanion<TodoList> {
@@ -5872,17 +5963,20 @@ class TodoListsCompanion extends UpdateCompanion<TodoList> {
   final Value<String> name;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<int?> backgroundColor;
   const TodoListsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
   });
   TodoListsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.backgroundColor = const Value.absent(),
   })  : name = Value(name),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
@@ -5891,12 +5985,14 @@ class TodoListsCompanion extends UpdateCompanion<TodoList> {
     Expression<String>? name,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<int>? backgroundColor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (backgroundColor != null) 'background_color': backgroundColor,
     });
   }
 
@@ -5904,12 +6000,14 @@ class TodoListsCompanion extends UpdateCompanion<TodoList> {
       {Value<int>? id,
       Value<String>? name,
       Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt}) {
+      Value<DateTime>? updatedAt,
+      Value<int?>? backgroundColor}) {
     return TodoListsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
     );
   }
 
@@ -5928,6 +6026,9 @@ class TodoListsCompanion extends UpdateCompanion<TodoList> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (backgroundColor.present) {
+      map['background_color'] = Variable<int>(backgroundColor.value);
+    }
     return map;
   }
 
@@ -5937,7 +6038,8 @@ class TodoListsCompanion extends UpdateCompanion<TodoList> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
@@ -6876,8 +6978,15 @@ class $TakeAwayListsTable extends TakeAwayLists
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _backgroundColorMeta =
+      const VerificationMeta('backgroundColor');
   @override
-  List<GeneratedColumn> get $columns => [id, name, createdAt, updatedAt];
+  late final GeneratedColumn<int> backgroundColor = GeneratedColumn<int>(
+      'background_color', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, createdAt, updatedAt, backgroundColor];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -6909,6 +7018,12 @@ class $TakeAwayListsTable extends TakeAwayLists
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('background_color')) {
+      context.handle(
+          _backgroundColorMeta,
+          backgroundColor.isAcceptableOrUnknown(
+              data['background_color']!, _backgroundColorMeta));
+    }
     return context;
   }
 
@@ -6926,6 +7041,8 @@ class $TakeAwayListsTable extends TakeAwayLists
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      backgroundColor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}background_color']),
     );
   }
 
@@ -6940,11 +7057,13 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
   final String name;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? backgroundColor;
   const TakeAwayList(
       {required this.id,
       required this.name,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.backgroundColor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -6952,6 +7071,9 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
     map['name'] = Variable<String>(name);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || backgroundColor != null) {
+      map['background_color'] = Variable<int>(backgroundColor);
+    }
     return map;
   }
 
@@ -6961,6 +7083,9 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
       name: Value(name),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      backgroundColor: backgroundColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backgroundColor),
     );
   }
 
@@ -6972,6 +7097,7 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
       name: serializer.fromJson<String>(json['name']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      backgroundColor: serializer.fromJson<int?>(json['backgroundColor']),
     );
   }
   @override
@@ -6982,16 +7108,24 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
       'name': serializer.toJson<String>(name),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'backgroundColor': serializer.toJson<int?>(backgroundColor),
     };
   }
 
   TakeAwayList copyWith(
-          {int? id, String? name, DateTime? createdAt, DateTime? updatedAt}) =>
+          {int? id,
+          String? name,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<int?> backgroundColor = const Value.absent()}) =>
       TakeAwayList(
         id: id ?? this.id,
         name: name ?? this.name,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        backgroundColor: backgroundColor.present
+            ? backgroundColor.value
+            : this.backgroundColor,
       );
   TakeAwayList copyWithCompanion(TakeAwayListsCompanion data) {
     return TakeAwayList(
@@ -6999,6 +7133,9 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
       name: data.name.present ? data.name.value : this.name,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      backgroundColor: data.backgroundColor.present
+          ? data.backgroundColor.value
+          : this.backgroundColor,
     );
   }
 
@@ -7008,13 +7145,15 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(id, name, createdAt, updatedAt, backgroundColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7022,7 +7161,8 @@ class TakeAwayList extends DataClass implements Insertable<TakeAwayList> {
           other.id == this.id &&
           other.name == this.name &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.backgroundColor == this.backgroundColor);
 }
 
 class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
@@ -7030,17 +7170,20 @@ class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
   final Value<String> name;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<int?> backgroundColor;
   const TakeAwayListsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
   });
   TakeAwayListsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.backgroundColor = const Value.absent(),
   })  : name = Value(name),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
@@ -7049,12 +7192,14 @@ class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
     Expression<String>? name,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<int>? backgroundColor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (backgroundColor != null) 'background_color': backgroundColor,
     });
   }
 
@@ -7062,12 +7207,14 @@ class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
       {Value<int>? id,
       Value<String>? name,
       Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt}) {
+      Value<DateTime>? updatedAt,
+      Value<int?>? backgroundColor}) {
     return TakeAwayListsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
     );
   }
 
@@ -7086,6 +7233,9 @@ class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (backgroundColor.present) {
+      map['background_color'] = Variable<int>(backgroundColor.value);
+    }
     return map;
   }
 
@@ -7095,7 +7245,8 @@ class TakeAwayListsCompanion extends UpdateCompanion<TakeAwayList> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
@@ -8578,8 +8729,15 @@ class $ReceiptListsTable extends ReceiptLists
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _backgroundColorMeta =
+      const VerificationMeta('backgroundColor');
   @override
-  List<GeneratedColumn> get $columns => [id, name, createdAt, updatedAt];
+  late final GeneratedColumn<int> backgroundColor = GeneratedColumn<int>(
+      'background_color', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, createdAt, updatedAt, backgroundColor];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -8611,6 +8769,12 @@ class $ReceiptListsTable extends ReceiptLists
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('background_color')) {
+      context.handle(
+          _backgroundColorMeta,
+          backgroundColor.isAcceptableOrUnknown(
+              data['background_color']!, _backgroundColorMeta));
+    }
     return context;
   }
 
@@ -8628,6 +8792,8 @@ class $ReceiptListsTable extends ReceiptLists
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      backgroundColor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}background_color']),
     );
   }
 
@@ -8642,11 +8808,13 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
   final String name;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? backgroundColor;
   const ReceiptList(
       {required this.id,
       required this.name,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.backgroundColor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -8654,6 +8822,9 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
     map['name'] = Variable<String>(name);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || backgroundColor != null) {
+      map['background_color'] = Variable<int>(backgroundColor);
+    }
     return map;
   }
 
@@ -8663,6 +8834,9 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
       name: Value(name),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      backgroundColor: backgroundColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backgroundColor),
     );
   }
 
@@ -8674,6 +8848,7 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
       name: serializer.fromJson<String>(json['name']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      backgroundColor: serializer.fromJson<int?>(json['backgroundColor']),
     );
   }
   @override
@@ -8684,16 +8859,24 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
       'name': serializer.toJson<String>(name),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'backgroundColor': serializer.toJson<int?>(backgroundColor),
     };
   }
 
   ReceiptList copyWith(
-          {int? id, String? name, DateTime? createdAt, DateTime? updatedAt}) =>
+          {int? id,
+          String? name,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<int?> backgroundColor = const Value.absent()}) =>
       ReceiptList(
         id: id ?? this.id,
         name: name ?? this.name,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        backgroundColor: backgroundColor.present
+            ? backgroundColor.value
+            : this.backgroundColor,
       );
   ReceiptList copyWithCompanion(ReceiptListsCompanion data) {
     return ReceiptList(
@@ -8701,6 +8884,9 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
       name: data.name.present ? data.name.value : this.name,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      backgroundColor: data.backgroundColor.present
+          ? data.backgroundColor.value
+          : this.backgroundColor,
     );
   }
 
@@ -8710,13 +8896,15 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(id, name, createdAt, updatedAt, backgroundColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8724,7 +8912,8 @@ class ReceiptList extends DataClass implements Insertable<ReceiptList> {
           other.id == this.id &&
           other.name == this.name &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.backgroundColor == this.backgroundColor);
 }
 
 class ReceiptListsCompanion extends UpdateCompanion<ReceiptList> {
@@ -8732,17 +8921,20 @@ class ReceiptListsCompanion extends UpdateCompanion<ReceiptList> {
   final Value<String> name;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<int?> backgroundColor;
   const ReceiptListsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
   });
   ReceiptListsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.backgroundColor = const Value.absent(),
   })  : name = Value(name),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
@@ -8751,12 +8943,14 @@ class ReceiptListsCompanion extends UpdateCompanion<ReceiptList> {
     Expression<String>? name,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<int>? backgroundColor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (backgroundColor != null) 'background_color': backgroundColor,
     });
   }
 
@@ -8764,12 +8958,14 @@ class ReceiptListsCompanion extends UpdateCompanion<ReceiptList> {
       {Value<int>? id,
       Value<String>? name,
       Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt}) {
+      Value<DateTime>? updatedAt,
+      Value<int?>? backgroundColor}) {
     return ReceiptListsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
     );
   }
 
@@ -8788,6 +8984,9 @@ class ReceiptListsCompanion extends UpdateCompanion<ReceiptList> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (backgroundColor.present) {
+      map['background_color'] = Variable<int>(backgroundColor.value);
+    }
     return map;
   }
 
@@ -8797,7 +8996,8 @@ class ReceiptListsCompanion extends UpdateCompanion<ReceiptList> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('backgroundColor: $backgroundColor')
           ..write(')'))
         .toString();
   }
@@ -11028,6 +11228,7 @@ typedef $$ShoppingListsTableCreateCompanionBuilder = ShoppingListsCompanion
   Value<int> currentTripId,
   Value<int> currentTripSequence,
   Value<DateTime?> activeShopStartedAt,
+  Value<int?> backgroundColor,
 });
 typedef $$ShoppingListsTableUpdateCompanionBuilder = ShoppingListsCompanion
     Function({
@@ -11039,6 +11240,7 @@ typedef $$ShoppingListsTableUpdateCompanionBuilder = ShoppingListsCompanion
   Value<int> currentTripId,
   Value<int> currentTripSequence,
   Value<DateTime?> activeShopStartedAt,
+  Value<int?> backgroundColor,
 });
 
 class $$ShoppingListsTableFilterComposer
@@ -11075,6 +11277,10 @@ class $$ShoppingListsTableFilterComposer
 
   ColumnFilters<DateTime> get activeShopStartedAt => $composableBuilder(
       column: $table.activeShopStartedAt,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -11114,6 +11320,10 @@ class $$ShoppingListsTableOrderingComposer
   ColumnOrderings<DateTime> get activeShopStartedAt => $composableBuilder(
       column: $table.activeShopStartedAt,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$ShoppingListsTableAnnotationComposer
@@ -11148,6 +11358,9 @@ class $$ShoppingListsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get activeShopStartedAt => $composableBuilder(
       column: $table.activeShopStartedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor, builder: (column) => column);
 }
 
 class $$ShoppingListsTableTableManager extends RootTableManager<
@@ -11184,6 +11397,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             Value<int> currentTripId = const Value.absent(),
             Value<int> currentTripSequence = const Value.absent(),
             Value<DateTime?> activeShopStartedAt = const Value.absent(),
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               ShoppingListsCompanion(
             id: id,
@@ -11194,6 +11408,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             currentTripId: currentTripId,
             currentTripSequence: currentTripSequence,
             activeShopStartedAt: activeShopStartedAt,
+            backgroundColor: backgroundColor,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -11204,6 +11419,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             Value<int> currentTripId = const Value.absent(),
             Value<int> currentTripSequence = const Value.absent(),
             Value<DateTime?> activeShopStartedAt = const Value.absent(),
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               ShoppingListsCompanion.insert(
             id: id,
@@ -11214,6 +11430,7 @@ class $$ShoppingListsTableTableManager extends RootTableManager<
             currentTripId: currentTripId,
             currentTripSequence: currentTripSequence,
             activeShopStartedAt: activeShopStartedAt,
+            backgroundColor: backgroundColor,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -13437,12 +13654,14 @@ typedef $$TodoListsTableCreateCompanionBuilder = TodoListsCompanion Function({
   required String name,
   required DateTime createdAt,
   required DateTime updatedAt,
+  Value<int?> backgroundColor,
 });
 typedef $$TodoListsTableUpdateCompanionBuilder = TodoListsCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<int?> backgroundColor,
 });
 
 class $$TodoListsTableFilterComposer
@@ -13465,6 +13684,10 @@ class $$TodoListsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TodoListsTableOrderingComposer
@@ -13487,6 +13710,10 @@ class $$TodoListsTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TodoListsTableAnnotationComposer
@@ -13509,6 +13736,9 @@ class $$TodoListsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor, builder: (column) => column);
 }
 
 class $$TodoListsTableTableManager extends RootTableManager<
@@ -13538,24 +13768,28 @@ class $$TodoListsTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               TodoListsCompanion(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            backgroundColor: backgroundColor,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required DateTime createdAt,
             required DateTime updatedAt,
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               TodoListsCompanion.insert(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            backgroundColor: backgroundColor,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -14021,6 +14255,7 @@ typedef $$TakeAwayListsTableCreateCompanionBuilder = TakeAwayListsCompanion
   required String name,
   required DateTime createdAt,
   required DateTime updatedAt,
+  Value<int?> backgroundColor,
 });
 typedef $$TakeAwayListsTableUpdateCompanionBuilder = TakeAwayListsCompanion
     Function({
@@ -14028,6 +14263,7 @@ typedef $$TakeAwayListsTableUpdateCompanionBuilder = TakeAwayListsCompanion
   Value<String> name,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<int?> backgroundColor,
 });
 
 class $$TakeAwayListsTableFilterComposer
@@ -14050,6 +14286,10 @@ class $$TakeAwayListsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TakeAwayListsTableOrderingComposer
@@ -14072,6 +14312,10 @@ class $$TakeAwayListsTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TakeAwayListsTableAnnotationComposer
@@ -14094,6 +14338,9 @@ class $$TakeAwayListsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor, builder: (column) => column);
 }
 
 class $$TakeAwayListsTableTableManager extends RootTableManager<
@@ -14126,24 +14373,28 @@ class $$TakeAwayListsTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               TakeAwayListsCompanion(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            backgroundColor: backgroundColor,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required DateTime createdAt,
             required DateTime updatedAt,
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               TakeAwayListsCompanion.insert(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            backgroundColor: backgroundColor,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -14939,6 +15190,7 @@ typedef $$ReceiptListsTableCreateCompanionBuilder = ReceiptListsCompanion
   required String name,
   required DateTime createdAt,
   required DateTime updatedAt,
+  Value<int?> backgroundColor,
 });
 typedef $$ReceiptListsTableUpdateCompanionBuilder = ReceiptListsCompanion
     Function({
@@ -14946,6 +15198,7 @@ typedef $$ReceiptListsTableUpdateCompanionBuilder = ReceiptListsCompanion
   Value<String> name,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<int?> backgroundColor,
 });
 
 class $$ReceiptListsTableFilterComposer
@@ -14968,6 +15221,10 @@ class $$ReceiptListsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$ReceiptListsTableOrderingComposer
@@ -14990,6 +15247,10 @@ class $$ReceiptListsTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$ReceiptListsTableAnnotationComposer
@@ -15012,6 +15273,9 @@ class $$ReceiptListsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get backgroundColor => $composableBuilder(
+      column: $table.backgroundColor, builder: (column) => column);
 }
 
 class $$ReceiptListsTableTableManager extends RootTableManager<
@@ -15044,24 +15308,28 @@ class $$ReceiptListsTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               ReceiptListsCompanion(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            backgroundColor: backgroundColor,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required DateTime createdAt,
             required DateTime updatedAt,
+            Value<int?> backgroundColor = const Value.absent(),
           }) =>
               ReceiptListsCompanion.insert(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            backgroundColor: backgroundColor,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

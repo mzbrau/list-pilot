@@ -42,6 +42,15 @@ class ListRepository {
     );
   }
 
+  Future<void> updateListBackgroundColor(int id, int? backgroundColor) async {
+    await (_db.update(_db.shoppingLists)..where((t) => t.id.equals(id))).write(
+      ShoppingListsCompanion(
+        backgroundColor: Value(backgroundColor),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> deleteList(int id) async {
     await (_db.delete(_db.checkOffEvents)..where((t) => t.listId.equals(id)))
         .go();

@@ -12,6 +12,7 @@ sealed class OverviewDisplayItem {
   String get title;
   String get subtitle;
   String get route;
+  Color? cardBackgroundColor(BuildContext context) => null;
 }
 
 class MealManagerDisplayItem extends OverviewDisplayItem {
@@ -105,6 +106,13 @@ class UserListDisplayItem extends OverviewDisplayItem {
   @override
   Color avatarForegroundColor(BuildContext context) =>
       Theme.of(context).colorScheme.onPrimaryContainer;
+
+  @override
+  Color? cardBackgroundColor(BuildContext context) {
+    final colorValue = entry.backgroundColor;
+    if (colorValue == null) return null;
+    return Color(colorValue);
+  }
 
   @override
   String get title => entry.name;

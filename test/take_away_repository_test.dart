@@ -170,4 +170,15 @@ void main() {
     await repo.finalizeMenu(menuId);
     expect((await repo.getMenuById(menuId))?.isFinalized, isTrue);
   });
+
+  test('updateListBackgroundColor sets and clears color', () async {
+    final listId = await repo.createList('Colored list');
+    const colorValue = 0xFFBBDEFB;
+
+    await repo.updateListBackgroundColor(listId, colorValue);
+    expect((await repo.getListById(listId))?.backgroundColor, colorValue);
+
+    await repo.updateListBackgroundColor(listId, null);
+    expect((await repo.getListById(listId))?.backgroundColor, isNull);
+  });
 }

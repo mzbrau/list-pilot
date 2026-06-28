@@ -6,6 +6,7 @@ sealed class OverviewListEntry {
   int get id;
   String get name;
   DateTime get updatedAt;
+  int? get backgroundColor;
 }
 
 class ShoppingListEntry extends OverviewListEntry {
@@ -21,6 +22,9 @@ class ShoppingListEntry extends OverviewListEntry {
 
   @override
   DateTime get updatedAt => list.updatedAt;
+
+  @override
+  int? get backgroundColor => list.backgroundColor;
 }
 
 class TodoListEntry extends OverviewListEntry {
@@ -36,6 +40,9 @@ class TodoListEntry extends OverviewListEntry {
 
   @override
   DateTime get updatedAt => list.updatedAt;
+
+  @override
+  int? get backgroundColor => list.backgroundColor;
 }
 
 class TakeAwayListEntry extends OverviewListEntry {
@@ -51,6 +58,9 @@ class TakeAwayListEntry extends OverviewListEntry {
 
   @override
   DateTime get updatedAt => list.updatedAt;
+
+  @override
+  int? get backgroundColor => list.backgroundColor;
 }
 
 class ReceiptListEntry extends OverviewListEntry {
@@ -66,6 +76,9 @@ class ReceiptListEntry extends OverviewListEntry {
 
   @override
   DateTime get updatedAt => list.updatedAt;
+
+  @override
+  int? get backgroundColor => list.backgroundColor;
 }
 
 enum ListCreateType { shopping, todo, takeAway, receipts }

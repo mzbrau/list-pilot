@@ -45,6 +45,7 @@ class ShoppingLists extends Table {
   IntColumn get currentTripSequence =>
       integer().withDefault(const Constant(0))();
   DateTimeColumn get activeShopStartedAt => dateTime().nullable()();
+  IntColumn get backgroundColor => integer().nullable()();
 }
 
 class ShopStatsRecords extends Table {
@@ -178,6 +179,7 @@ class TodoLists extends Table {
   TextColumn get name => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  IntColumn get backgroundColor => integer().nullable()();
 }
 
 class TodoItems extends Table {
@@ -209,6 +211,7 @@ class TakeAwayLists extends Table {
   TextColumn get name => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  IntColumn get backgroundColor => integer().nullable()();
 }
 
 @DataClassName('TakeAwayMenu')
@@ -258,6 +261,7 @@ class ReceiptLists extends Table {
   TextColumn get name => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  IntColumn get backgroundColor => integer().nullable()();
 }
 
 class Receipts extends Table {

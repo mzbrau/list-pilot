@@ -1,10 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:list_pilot/core/models/overview_display_item.dart';
 import 'package:list_pilot/core/models/overview_list_entry.dart';
 import 'package:list_pilot/data/database/app_database.dart';
 
-ShoppingList _shoppingList(int id, DateTime updatedAt) {
+ShoppingList _shoppingList(int id, DateTime updatedAt, {int? backgroundColor}) {
   return ShoppingList(
     id: id,
     name: 'Shopping $id',
@@ -14,6 +15,7 @@ ShoppingList _shoppingList(int id, DateTime updatedAt) {
     currentTripId: 0,
     currentTripSequence: 0,
     activeShopStartedAt: null,
+    backgroundColor: backgroundColor,
   );
 }
 
@@ -33,6 +35,7 @@ void main() {
               name: 'Todo',
               createdAt: newer,
               updatedAt: newer,
+              backgroundColor: null,
             ),
           ),
         ],
@@ -67,6 +70,51 @@ void main() {
 
       expect(sorted[0], isA<UserListDisplayItem>());
       expect(sorted[1], isA<MealManagerDisplayItem>());
+    });
+  });
+
+  group('UserListDisplayItem.cardBackgroundColor', () {
+    testWidgets('returns null when no color is set', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              final item = UserListDisplayItem(
+                entry: ShoppingListEntry(
+                  _shoppingList(1, DateTime(2026, 1, 1)),
+                ),
+                subtitle: 'Updated',
+              );
+              expect(item.cardBackgroundColor(context), isNull);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+    });
+
+    testWidgets('returns color when background color is set', (tester) async {
+      const colorValue = 0xFFBBDEFB;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              final item = UserListDisplayItem(
+                entry: ShoppingListEntry(
+                  _shoppingList(
+                    1,
+                    DateTime(2026, 1, 1),
+                    backgroundColor: colorValue,
+                  ),
+                ),
+                subtitle: 'Updated',
+              );
+              expect(item.cardBackgroundColor(context), const Color(colorValue));
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
     });
   });
 }
