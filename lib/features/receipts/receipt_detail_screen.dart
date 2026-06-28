@@ -9,7 +9,7 @@ import '../../router/navigation_helpers.dart';
 import 'receipt_formatters.dart';
 import 'widgets/receipt_line_catalog_match_sheet.dart';
 
-class ReceiptDetailScreen extends ConsumerWidget {
+class ReceiptDetailScreen extends ConsumerStatefulWidget {
   const ReceiptDetailScreen({
     super.key,
     required this.listId,
@@ -19,23 +19,56 @@ class ReceiptDetailScreen extends ConsumerWidget {
   final int listId;
   final int receiptId;
 
-  Future<void> _openPdf(WidgetRef ref) async {
-    final receipt = await ref.read(receiptRepositoryProvider).getReceiptById(receiptId);
+  @override
+  ConsumerState<ReceiptDetailScreen> createState() => _ReceiptDetailScreenState();
+}
+
+class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
+  final _filterController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filterController.addListener(_onFilterChanged);
+  }
+
+  @override
+  void dispose() {
+    _filterController.removeListener(_onFilterChanged);
+    _filterController.dispose();
+    super.dispose();
+  }
+
+  void _onFilterChanged() => setState(() {});
+
+  Future<void> _openPdf() async {
+    final receipt =
+        await ref.read(receiptRepositoryProvider).getReceiptById(widget.receiptId);
     if (receipt == null) return;
     final path = await ref.read(receiptRepositoryProvider).resolvePdfPath(
-          listId: listId,
+          listId: widget.listId,
           fileName: receipt.pdfFileName,
         );
     await OpenFilex.open(path);
   }
 
+  List<ReceiptLine> _filterLines(List<ReceiptLine> lines, String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return lines;
+    return lines.where((line) {
+      return line.englishName.toLowerCase().contains(q) ||
+          line.originalDescription.toLowerCase().contains(q);
+    }).toList();
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final receiptAsync = ref.watch(receiptProvider(receiptId));
-    final linesAsync = ref.watch(receiptLinesProvider(receiptId));
+  Widget build(BuildContext context) {
+    final receiptAsync = ref.watch(receiptProvider(widget.receiptId));
+    final linesAsync = ref.watch(receiptLinesProvider(widget.receiptId));
     final categoriesAsync = ref.watch(categoriesProvider);
     final theme = Theme.of(context);
     final dateFormat = DateFormat.yMMMd().add_Hm();
+    final filterQuery = _filterController.text;
 
     return popOrGoHomeScope(
       child: Scaffold(
@@ -50,7 +83,7 @@ class ReceiptDetailScreen extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.picture_as_pdf_outlined),
               tooltip: 'Open PDF',
-              onPressed: () => _openPdf(ref),
+              onPressed: _openPdf,
             ),
           ],
         ),
@@ -71,8 +104,10 @@ class ReceiptDetailScreen extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (lines) {
+                final filteredLines = _filterLines(lines, filterQuery);
+
                 final grouped = <String, List<ReceiptLine>>{};
-                for (final line in lines) {
+                for (final line in filteredLines) {
                   grouped.putIfAbsent(line.categoryId, () => []).add(line);
                 }
 
@@ -80,6 +115,9 @@ class ReceiptDetailScreen extends ConsumerWidget {
                   ..sort(
                     (a, b) => (categoryNames[a] ?? a).compareTo(categoryNames[b] ?? b),
                   );
+
+                final showEmptyFilterState =
+                    filteredLines.isEmpty && lines.isNotEmpty && filterQuery.trim().isNotEmpty;
 
                 return ListView(
                   padding: const EdgeInsets.all(16),
@@ -112,27 +150,54 @@ class ReceiptDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    for (final categoryId in sortedCategoryIds) ...[
+                    TextField(
+                      controller: _filterController,
+                      decoration: InputDecoration(
+                        hintText: 'Filter items…',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _filterController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () => _filterController.clear(),
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (showEmptyFilterState)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          categoryNames[categoryId] ?? categoryId,
-                          style: theme.textTheme.titleMedium,
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text(
+                            'No items match your filter',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ),
-                      ),
-                      Card(
-                        child: Column(
-                          children: [
-                            for (final line in grouped[categoryId]!) ...[
-                              _ReceiptLineTile(line: line),
-                              if (line != grouped[categoryId]!.last)
-                                const Divider(height: 1),
+                      )
+                    else
+                      for (final categoryId in sortedCategoryIds) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            categoryNames[categoryId] ?? categoryId,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        Card(
+                          child: Column(
+                            children: [
+                              for (final line in grouped[categoryId]!) ...[
+                                _ReceiptLineTile(line: line),
+                                if (line != grouped[categoryId]!.last)
+                                  const Divider(height: 1),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                        const SizedBox(height: 16),
+                      ],
                   ],
                 );
               },
