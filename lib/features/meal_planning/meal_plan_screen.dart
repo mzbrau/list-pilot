@@ -100,6 +100,11 @@ class MealPlanScreen extends ConsumerWidget {
                                     entry,
                                     scale,
                                   ),
+                                  onLongPress: () => _confirmRemoveFromPlan(
+                                    context,
+                                    ref,
+                                    entry,
+                                  ),
                                 );
                               },
                               childCount: active.length,
@@ -153,6 +158,36 @@ class MealPlanScreen extends ConsumerWidget {
     await ref.read(mealRepositoryProvider).updatePlanItemScale(
           entry.planItem.id,
           scaleFactor,
+        );
+  }
+
+  Future<void> _confirmRemoveFromPlan(
+    BuildContext context,
+    WidgetRef ref,
+    MealPlanItemWithMeal entry,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove from plan?'),
+        content: Text(
+          'Remove "${entry.meal.displayName}" from your meal plan?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(mealRepositoryProvider).deleteMealFromPlan(
+          entry.planItem.id,
         );
   }
 

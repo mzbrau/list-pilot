@@ -17,6 +17,7 @@ class MealPlanTile extends ConsumerWidget {
     required this.onTap,
     required this.onAddIngredients,
     required this.onScaleChanged,
+    this.onLongPress,
   });
 
   final MealPlanItemWithMeal entry;
@@ -25,6 +26,7 @@ class MealPlanTile extends ConsumerWidget {
   final VoidCallback onTap;
   final VoidCallback onAddIngredients;
   final ValueChanged<double> onScaleChanged;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,11 +42,14 @@ class MealPlanTile extends ConsumerWidget {
         opacity: completed ? 0.55 : 1,
         child: Card(
           margin: const EdgeInsets.symmetric(vertical: 4),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onLongPress: onLongPress,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Checkbox(
                   value: completed,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -113,6 +118,7 @@ class MealPlanTile extends ConsumerWidget {
                   onPressed: onAddIngredients,
                 ),
               ],
+            ),
             ),
           ),
         ),
