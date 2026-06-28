@@ -201,13 +201,14 @@ class AppDatabase extends _$AppDatabase {
       return searchCatalog(query, limit: limit);
     }
 
+    final likePattern = '%$normalized%';
+
     final byName = await (select(catalogItems)
-          ..where((t) => t.name.like('$normalized%'))
-          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
+          ..where((t) => t.name.like(likePattern)))
         .get();
 
     final aliasRows = await (select(catalogItemAliases)
-          ..where((t) => t.alias.like('$normalized%')))
+          ..where((t) => t.alias.like(likePattern)))
         .get();
 
     final aliasItemIds = aliasRows.map((row) => row.catalogItemId).toSet();
@@ -217,6 +218,18 @@ class AppDatabase extends _$AppDatabase {
               ..where((t) => t.id.isIn(aliasItemIds.toList())))
             .get();
 
+    final matchIndexById = <int, int>{};
+    for (final item in byName) {
+      matchIndexById[item.id] = item.name.indexOf(normalized);
+    }
+    for (final aliasRow in aliasRows) {
+      final aliasIndex = aliasRow.alias.indexOf(normalized);
+      final existing = matchIndexById[aliasRow.catalogItemId];
+      if (existing == null || aliasIndex < existing) {
+        matchIndexById[aliasRow.catalogItemId] = aliasIndex;
+      }
+    }
+
     final seenIds = <int>{};
     final results = <CatalogItem>[];
     for (final item in [...byName, ...aliasItems]) {
@@ -225,7 +238,12 @@ class AppDatabase extends _$AppDatabase {
       }
     }
 
-    results.sort((a, b) => a.displayName.compareTo(b.displayName));
+    results.sort((a, b) {
+      final indexCompare =
+          matchIndexById[a.id]!.compareTo(matchIndexById[b.id]!);
+      if (indexCompare != 0) return indexCompare;
+      return a.displayName.compareTo(b.displayName);
+    });
     if (results.length > limit) {
       return results.sublist(0, limit);
     }

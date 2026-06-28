@@ -117,4 +117,61 @@ void main() {
     final listItems = await db.watchListItems(listId).first;
     expect(listItems.single.catalogItemId, isNull);
   });
+
+  group('search', () {
+    Future<void> insertItem({
+      required String name,
+      required String displayName,
+    }) async {
+      await db.into(db.catalogItems).insert(
+            CatalogItemsCompanion.insert(
+              name: name,
+              displayName: displayName,
+              categoryId: 'fruit_veg',
+              createdAt: DateTime.now(),
+            ),
+          );
+    }
+
+    test('finds substring matches in name', () async {
+      await insertItem(name: 'beef mince', displayName: 'Beef mince');
+
+      final results = await catalogRepo.search('min');
+
+      expect(results.map((item) => item.displayName), contains('Beef mince'));
+    });
+
+    test('finds prefix matches', () async {
+      await insertItem(name: 'milk', displayName: 'Milk');
+
+      final results = await catalogRepo.search('mi');
+
+      expect(results, hasLength(1));
+      expect(results.first.displayName, 'Milk');
+    });
+
+    test('ranks prefix name matches before later substring matches', () async {
+      await insertItem(name: 'chicken breast', displayName: 'Chicken breast');
+      await insertItem(name: 'apple chicken', displayName: 'Apple chicken');
+
+      final results = await catalogRepo.search('chicken');
+
+      expect(results, hasLength(2));
+      expect(results.first.displayName, 'Chicken breast');
+      expect(results.last.displayName, 'Apple chicken');
+    });
+
+    test('finds substring matches via alias', () async {
+      final item = (await catalogRepo.getAllCatalogItems()).single;
+
+      await catalogRepo.addAlias(
+        catalogItemId: item.id,
+        alias: 'ground mince',
+      );
+
+      final results = await catalogRepo.search('min');
+
+      expect(results.map((entry) => entry.displayName), contains('Capsicum'));
+    });
+  });
 }
