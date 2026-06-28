@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/models/overview_display_item.dart';
 import '../../core/models/overview_list_entry.dart';
 import '../../core/providers/app_providers.dart';
+import '../../core/utils/list_background_color_utils.dart';
 import '../../core/widgets/drag_handle_utils.dart';
 import '../../data/database/app_database.dart';
 import '../../data/services/openai_models_service.dart';
@@ -928,13 +929,15 @@ class _OverviewListCard extends StatelessWidget {
     bool forFeedback = false,
   }) {
     final theme = Theme.of(context);
+    final cardBackground = isSelected
+        ? theme.colorScheme.secondaryContainer
+        : item.cardBackgroundColor(context);
+    final useCustomForeground = !isSelected && cardBackground != null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
-      color: isSelected
-          ? theme.colorScheme.secondaryContainer
-          : item.cardBackgroundColor(context),
+      color: cardBackground,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: isEditing && !forFeedback
@@ -962,13 +965,18 @@ class _OverviewListCard extends StatelessWidget {
                       item.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: useCustomForeground
+                            ? listBackgroundTitleColor(cardBackground)
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       item.subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: useCustomForeground
+                            ? listBackgroundSubtitleColor(cardBackground)
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -978,6 +986,7 @@ class _OverviewListCard extends StatelessWidget {
                 context,
                 cardWidth: cardWidth,
                 forFeedback: forFeedback,
+                cardBackground: useCustomForeground ? cardBackground : null,
               ),
             ],
           ),
@@ -990,21 +999,25 @@ class _OverviewListCard extends StatelessWidget {
     BuildContext context, {
     required double cardWidth,
     bool forFeedback = false,
+    Color? cardBackground,
   }) {
     final theme = Theme.of(context);
+    final iconColor = cardBackground != null
+        ? listBackgroundIconColor(cardBackground)
+        : theme.colorScheme.onSurfaceVariant;
 
     if (!isEditing) {
       return Icon(
         Icons.chevron_right,
-        color: theme.colorScheme.onSurfaceVariant,
+        color: iconColor,
       );
     }
 
     final handle = forFeedback
-        ? const Icon(Icons.drag_handle, size: 20)
-        : const MouseRegion(
+        ? Icon(Icons.drag_handle, size: 20, color: iconColor)
+        : MouseRegion(
             cursor: SystemMouseCursors.grab,
-            child: Icon(Icons.drag_handle, size: 20),
+            child: Icon(Icons.drag_handle, size: 20, color: iconColor),
           );
 
     if (forFeedback) {

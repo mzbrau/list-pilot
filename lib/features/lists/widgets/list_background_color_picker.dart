@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Curated pastel palette for list card backgrounds (Material shade 100–200).
+import '../../../core/utils/list_background_color_utils.dart';
+
+/// Curated pastel palette for list card backgrounds (Material shade 100).
 const listBackgroundPalette = <Color>[
   Color(0xFFFFCDD2), // red 100
   Color(0xFFF8BBD0), // pink 100
@@ -14,6 +16,22 @@ const listBackgroundPalette = <Color>[
   Color(0xFFFFF9C4), // yellow 100
   Color(0xFFFFE0B2), // orange 100
   Color(0xFFD7CCC8), // brown 100
+];
+
+/// Dark palette for list card backgrounds (Material shade 700–800).
+const listBackgroundDarkPalette = <Color>[
+  Color(0xFFD32F2F), // red 700
+  Color(0xFFC2185B), // pink 700
+  Color(0xFF7B1FA2), // purple 700
+  Color(0xFF303F9F), // indigo 700
+  Color(0xFF1976D2), // blue 700
+  Color(0xFF0097A7), // cyan 700
+  Color(0xFF00796B), // teal 700
+  Color(0xFF388E3C), // green 700
+  Color(0xFF689F38), // light green 700
+  Color(0xFFFBC02D), // yellow 700
+  Color(0xFFF57C00), // orange 700
+  Color(0xFF455A64), // blue grey 700
 ];
 
 /// Result of an explicit color choice (including clearing to none).
@@ -34,6 +52,7 @@ Future<ListBackgroundColorChoice?> showListBackgroundColorPicker(
 }) {
   return showModalBottomSheet<ListBackgroundColorChoice>(
     context: context,
+    isScrollControlled: true,
     builder: (context) => _ListBackgroundColorPickerSheet(
       currentColor: currentColor,
     ),
@@ -50,7 +69,7 @@ class _ListBackgroundColorPickerSheet extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -98,8 +117,23 @@ class _ListBackgroundColorPickerSheet extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Light',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
                 for (final color in listBackgroundPalette)
                   _ColorSwatch(
+                    swatchColor: color,
                     isSelected: currentColor == color.toARGB32(),
                     onTap: () => Navigator.pop(
                       context,
@@ -112,7 +146,43 @@ class _ListBackgroundColorPickerSheet extends StatelessWidget {
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Dark',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final color in listBackgroundDarkPalette)
+                  _ColorSwatch(
+                    swatchColor: color,
+                    isSelected: currentColor == color.toARGB32(),
+                    onTap: () => Navigator.pop(
+                      context,
+                      ListBackgroundColorChoice(color.toARGB32()),
+                    ),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.3),
                         ),
                       ),
                     ),
@@ -132,16 +202,23 @@ class _ColorSwatch extends StatelessWidget {
     required this.onTap,
     required this.child,
     this.label,
+    this.swatchColor,
   });
 
   final bool isSelected;
   final VoidCallback onTap;
   final Widget child;
   final String? label;
+  final Color? swatchColor;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final checkColor = swatchColor != null
+        ? listBackgroundTitleColor(swatchColor!)
+        : Theme.of(context).colorScheme.primary;
+    final borderColor = swatchColor != null
+        ? listBackgroundTitleColor(swatchColor!)
+        : Theme.of(context).colorScheme.primary;
 
     return Semantics(
       button: true,
@@ -161,13 +238,13 @@ class _ColorSwatch extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: theme.colorScheme.primary,
+                    color: borderColor,
                     width: 3,
                   ),
                 ),
                 child: Icon(
                   Icons.check,
-                  color: theme.colorScheme.primary,
+                  color: checkColor,
                   size: 22,
                 ),
               ),
