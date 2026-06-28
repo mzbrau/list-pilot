@@ -182,4 +182,86 @@ void main() {
     expect(updated.quantityValue, isNull);
     expect(updated.quantityUnit, isNull);
   });
+
+  testWidgets(
+      'MealIngredientEditSheet saves custom name as unknown when not linked to catalog',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    final mealRepo = MealRepository(db);
+    final catalogRepo = CatalogRepository(db);
+    final chicken = await catalogRepo.getOrCreate(
+      displayName: 'Chicken',
+      categoryId: 'meat',
+      isUserAdded: true,
+    );
+
+    final meal = await mealRepo.createMeal(
+      displayName: 'Roast Dinner',
+      ingredients: [
+        MealIngredientInput(
+          displayName: 'Chicken',
+          catalogItemId: chicken.id,
+        ),
+      ],
+    );
+    final ingredient = (await mealRepo.getIngredientsForMeal(meal.id)).single;
+
+    final container = ProviderContainer(
+      overrides: [
+        appInitProvider.overrideWith((ref) async {}),
+        databaseProvider.overrideWithValue(db),
+        mealRepositoryProvider.overrideWithValue(mealRepo),
+        catalogRepositoryProvider.overrideWithValue(catalogRepo),
+        ingredientCatalogMatcherProvider.overrideWithValue(
+          IngredientCatalogMatcher(
+            catalogRepo,
+            const IngredientParserService(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return FilledButton(
+                  onPressed: () {
+                    MealIngredientEditSheet.show(
+                      context,
+                      ingredient: ingredient,
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    const customName = 'Chicken thighs, bone-in';
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Ingredient name'),
+      customName,
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final updated = (await mealRepo.getIngredientsForMeal(meal.id)).single;
+    expect(updated.displayName, customName);
+    expect(updated.catalogItemId, isNull);
+  });
 }

@@ -169,7 +169,6 @@ class _MealIngredientEditSheetState
     }
 
     final catalogRepo = ref.read(catalogRepositoryProvider);
-    final matcher = ref.read(ingredientCatalogMatcherProvider);
     CatalogItem? catalogItem = _selectedCatalogItem;
 
     if (catalogItem == null && _addToCatalog) {
@@ -178,15 +177,12 @@ class _MealIngredientEditSheetState
         categoryId: _categoryId,
         isUserAdded: true,
       );
-    } else if (catalogItem == null) {
-      final match = await matcher.matchLine(name);
-      catalogItem = match.catalogItem;
     }
 
     final mealRepo = ref.read(mealRepositoryProvider);
     await mealRepo.updateIngredient(
       id: widget.ingredient.id,
-      displayName: catalogItem?.displayName ?? name,
+      displayName: name,
       catalogItemId: catalogItem?.id,
       clearCatalogItem: catalogItem == null,
       quantityValue: quantityValue,
