@@ -14,6 +14,9 @@ import 'package:list_pilot/data/services/paprika_recipe_parser.dart';
 
 void main() {
   final referenceRecipes = 'Reference/My Recipes/Recipes';
+  final hasPaprikaReference = Directory('Reference/My Recipes').existsSync();
+  final skipPaprikaReference =
+      hasPaprikaReference ? false : 'Reference/My Recipes data not available in CI';
   final parser = PaprikaRecipeParser();
 
   group('parsePaprikaPortions', () {
@@ -82,7 +85,7 @@ void main() {
       expect(recipe.notes, contains('Nutrition'));
       expect(recipe.notes, contains('protein'));
     });
-  });
+  }, skip: skipPaprikaReference);
 
   group('PaprikaImportService', () {
     late AppDatabase db;
@@ -124,7 +127,7 @@ void main() {
       final result = await service.importFolder('Reference/My Recipes');
       expect(result.imported, greaterThan(100));
       expect(result.failed, 0);
-    });
+    }, skip: skipPaprikaReference);
 
     test('skips duplicate recipes by name', () async {
       await mealRepo.createMeal(displayName: 'Bruschetta');
@@ -135,6 +138,6 @@ void main() {
 
       expect(result.skipped, greaterThan(0));
       expect(result.errors.where((e) => e.fileName == 'Bruschetta.html'), isEmpty);
-    });
+    }, skip: skipPaprikaReference);
   });
 }

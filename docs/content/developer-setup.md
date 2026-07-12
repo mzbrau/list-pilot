@@ -32,6 +32,43 @@ flutter run
 flutter test
 ```
 
+## Continuous integration
+
+Pushes to `main` and pull requests run [`.github/workflows/ci.yml`](https://github.com/mzbrau/list-pilot/blob/main/.github/workflows/ci.yml), which:
+
+- Runs `flutter analyze` (build diagnostics)
+- Runs `flutter test --coverage` with JUnit XML output for [Actions Insights](https://www.ghactionsinsights.com/)
+- Publishes test reports as PR comments, workflow summaries, GitHub Checks, and an HTML artifact
+
+Tests that depend on local-only `Reference/` data are skipped in CI when that folder is absent.
+
+### Actions Insights history dashboard (one-time setup)
+
+The CI workflow can push trend data to a dedicated history repository. Complete these steps once before history appears on the dashboard:
+
+1. **Initialize the history repository** (creates `mzbrau/actions-insights-history`):
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/mzbrau/actions-insights/main/scripts/init-history-repo.sh | bash -s -- init
+   ```
+
+   Or with the GitHub CLI extension:
+
+   ```bash
+   gh extension install mzbrau/gh-actions-insights
+   gh actions-insights init
+   ```
+
+2. **Create a PAT** with `contents: write` scoped to `mzbrau/actions-insights-history` only.
+
+3. **Add the secret** to this repository (`mzbrau/list-pilot`):
+   - Name: `ACTIONS_INSIGHTS_HISTORY_TOKEN`
+   - Value: the PAT from step 2
+
+4. **Register this repo** in the history repository config (covered by the init script/docs).
+
+History push is skipped on fork PRs (secrets are unavailable). After setup, push to `main` and confirm the Test Coverage and Build Insights tabs on the history dashboard.
+
 ## Project structure
 
 ```

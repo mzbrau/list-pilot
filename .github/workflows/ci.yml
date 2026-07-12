@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate Drift code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        run: flutter analyze 2>&1 | tee analyze.log
+
+      - name: Run tests
+        run: |
+          set -o pipefail
+          dart pub global activate junitreport
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          flutter test --coverage --machine | tojunit > test-results.xml
+
+      - name: Publish test report
+        uses: mzbrau/actions-insights@v1
+        if: always()
+        continue-on-error: true
+        with:
+          test-results: test-results.xml
+          coverage-enabled: true
+          coverage-files: coverage/lcov.info
+          diagnostics-enabled: true
+          diagnostics-files: analyze.log
+          history-enabled: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          history-repository: mzbrau/mzbrau-actions-insights
+          history-token: ${{ secrets.ACTIONS_INSIGHTS_HISTORY_TOKEN }}
