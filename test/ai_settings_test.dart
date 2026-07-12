@@ -53,6 +53,11 @@ void main() {
     );
     addTearDown(container.dispose);
 
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -163,7 +168,7 @@ void main() {
 
     expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
     expect(find.text('gpt-4o-mini'), findsWidgets);
-    expect(find.byTooltip('Refresh models'), findsOneWidget);
+    expect(find.byTooltip('Refresh models'), findsNWidgets(2));
     expect(find.text('Save AI settings'), findsOneWidget);
   });
 
@@ -204,11 +209,11 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.byTooltip('Refresh models'),
+      find.byTooltip('Refresh models').first,
       100,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byTooltip('Refresh models'));
+    await tester.tap(find.byTooltip('Refresh models').first);
     await tester.pumpAndSettle();
 
     expect(fetchCount, 1);

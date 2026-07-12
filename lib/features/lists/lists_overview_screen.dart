@@ -456,6 +456,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
       children: [
         Expanded(
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             value: selectedModel,
             decoration: InputDecoration(
               labelText: 'Model',
@@ -521,6 +522,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
       children: [
         Expanded(
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             value: selectedModel,
             decoration: InputDecoration(
               labelText: 'Photo import model',
