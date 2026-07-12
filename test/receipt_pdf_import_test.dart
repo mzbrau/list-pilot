@@ -7,6 +7,10 @@ import 'package:list_pilot/data/services/receipt_pdf_service.dart';
 import 'pdfrx_setup.dart';
 
 void main() {
+  final hasReferenceData = Directory('Reference').existsSync();
+  final skipReference =
+      hasReferenceData ? false : 'Reference/ data not available in CI';
+
   late ReceiptPdfService pdfService;
   late IcaReceiptParser parser;
 
@@ -26,7 +30,7 @@ void main() {
 
     expect(result.totalAmount, 2027.91);
     expect(result.lines.length, greaterThanOrEqualTo(50));
-  });
+  }, skip: skipReference);
 
   test('parses small May receipt from Reference PDF', () async {
     final pdf = File('Reference/Maxi ICA Stormarknad Kungälv 2026-05-27.pdf');
@@ -35,7 +39,7 @@ void main() {
 
     expect(result.totalAmount, 55.90);
     expect(result.lines, hasLength(2));
-  });
+  }, skip: skipReference);
 
   test('parses all Reference PDFs with product lines', () async {
     final referenceDir = Directory('Reference');
@@ -59,5 +63,5 @@ void main() {
       );
       expect(result.totalAmount, greaterThan(0));
     }
-  });
+  }, skip: skipReference);
 }

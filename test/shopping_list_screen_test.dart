@@ -159,6 +159,11 @@ void main() {
 
   testWidgets('Shopping list back button returns home when stack has no parent route',
       (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final db = AppDatabase.forTesting(NativeDatabase.memory());
 
     final listId = await db.into(db.shoppingLists).insert(

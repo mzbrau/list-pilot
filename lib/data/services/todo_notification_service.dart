@@ -149,12 +149,12 @@ class TodoNotificationService {
   }) async {
     if (!isSupported) return;
 
-    await _ensureInitialized();
-
     if (reminderAt.isBefore(DateTime.now())) {
       await cancelReminder(taskId);
       return;
     }
+
+    await _ensureInitialized();
 
     final payload = jsonEncode({'listId': listId, 'taskId': taskId});
     final scheduled = _toScheduledTime(reminderAt);

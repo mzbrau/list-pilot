@@ -6,6 +6,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:list_pilot/data/services/todo_notification_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   setUpAll(() {
     tz_data.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('UTC'));
