@@ -24,6 +24,8 @@ class AppConstants {
 
   static const String themeModeKey = 'theme_mode';
   static const String shopStatsEnabledKey = 'shop_stats_enabled';
+  static const String orderingDiagnosticsEnabledKey =
+      'ordering_diagnostics_enabled';
   static const String defaultShoppingListIdKey = 'default_shopping_list_id';
   static const String mealManagerEnabledKey = 'meal_manager_enabled';
   static const String mealPlanningEnabledKey = 'meal_planning_enabled';

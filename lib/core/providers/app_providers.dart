@@ -664,6 +664,29 @@ final mealsEatenOnDateProvider =
   return ref.watch(mealRepositoryProvider).watchMealsEatenOnDate(date);
 });
 
+final orderingDiagnosticsEnabledProvider =
+    StateNotifierProvider<OrderingDiagnosticsEnabledNotifier, bool>((ref) {
+  return OrderingDiagnosticsEnabledNotifier();
+});
+
+class OrderingDiagnosticsEnabledNotifier extends StateNotifier<bool> {
+  OrderingDiagnosticsEnabledNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state =
+        prefs.getBool(AppConstants.orderingDiagnosticsEnabledKey) ?? false;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.orderingDiagnosticsEnabledKey, enabled);
+  }
+}
+
 final mealManagerEnabledProvider =
     StateNotifierProvider<MealManagerEnabledNotifier, bool>((ref) {
   return MealManagerEnabledNotifier();

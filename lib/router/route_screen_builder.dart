@@ -16,6 +16,7 @@ import '../features/receipts/receipt_detail_screen.dart';
 import '../features/receipts/receipt_insights_screen.dart';
 import '../features/receipts/receipts_list_screen.dart';
 import '../features/shop_stats/shop_stats_screen.dart';
+import '../features/learning/learned_ranks_screen.dart';
 import '../features/shopping_list/shopping_list_screen.dart';
 import '../features/take_away/take_away_list_screen.dart';
 import '../features/take_away/take_away_menu_import_screen.dart';
@@ -102,6 +103,9 @@ Widget buildScreenForLocation(String location, {Object? extra}) {
     final listId = int.parse(segments[1]);
     if (segments.length == 2) {
       return ShoppingListScreen(listId: listId);
+    }
+    if (segments.length == 3 && segments[2] == 'learned-ranks') {
+      return LearnedRanksScreen(listId: listId);
     }
     if (segments.length == 4 && segments[2] == 'item') {
       final itemId = int.parse(segments[3]);

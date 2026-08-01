@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/database/app_database.dart';
+import '../../learning/ordering_service.dart';
 import 'completed_items_section.dart';
 
 class ListItemTile extends StatelessWidget {
@@ -10,12 +11,14 @@ class ListItemTile extends StatelessWidget {
     required this.completed,
     required this.onToggle,
     required this.onTap,
+    this.diagnostics,
   });
 
   final ListItem item;
   final bool completed;
   final ValueChanged<bool> onToggle;
   final VoidCallback onTap;
+  final ItemSortDiagnostics? diagnostics;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +48,15 @@ class ListItemTile extends StatelessWidget {
                   )
                 : theme.textTheme.bodyLarge,
           ),
+          subtitle: diagnostics == null
+              ? null
+              : Text(
+                  _diagnosticsCaption(diagnostics!),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontFamily: 'monospace',
+                  ),
+                ),
           trailing: quantity.isNotEmpty
               ? Container(
                   padding:
@@ -66,4 +78,23 @@ class ListItemTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _diagnosticsCaption(ItemSortDiagnostics d) {
+  final itemLabel = d.usingDefaultItem
+      ? 'item default'
+      : 'item ${_fmt(d.itemRank)}'
+          '${d.itemOverridden ? ' ov' : ''}'
+          '${d.itemSampleCount != null ? ' n=${d.itemSampleCount}' : ''}';
+  final catLabel = d.usingDefaultCategory
+      ? 'cat default'
+      : 'cat ${_fmt(d.categoryRank)}'
+          '${d.categoryOverridden ? ' ov' : ''}'
+          '${d.categorySampleCount != null ? ' n=${d.categorySampleCount}' : ''}';
+  return '$catLabel · $itemLabel · key ${_fmt(d.sortKey)}';
+}
+
+String _fmt(double value) {
+  if (value == value.roundToDouble()) return value.toInt().toString();
+  return value.toStringAsFixed(1);
 }

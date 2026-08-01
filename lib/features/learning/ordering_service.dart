@@ -27,7 +27,52 @@ class ItemRankResult {
   final int sampleCount;
 }
 
+/// Breakdown of the sort key components for an active list item.
+class ItemSortDiagnostics {
+  const ItemSortDiagnostics({
+    required this.categoryRank,
+    required this.itemRank,
+    required this.nameTie,
+    required this.sortKey,
+    required this.categoryOverridden,
+    required this.itemOverridden,
+    required this.categorySampleCount,
+    required this.itemSampleCount,
+    required this.usingDefaultCategory,
+    required this.usingDefaultItem,
+  });
+
+  final double categoryRank;
+  final double itemRank;
+  final double nameTie;
+  final double sortKey;
+  final bool categoryOverridden;
+  final bool itemOverridden;
+  final int? categorySampleCount;
+  final int? itemSampleCount;
+  final bool usingDefaultCategory;
+  final bool usingDefaultItem;
+
+  double get categoryContribution => categoryRank * 10000;
+  double get itemContribution => itemRank * 100;
+}
+
 class OrderingService {
+  /// Effective rank: override if set, else learned median when sample threshold
+  /// is met, else [fallback].
+  static double effectiveRank({
+    required double? overrideRank,
+    required double medianRank,
+    required int sampleCount,
+    required double fallback,
+  }) {
+    if (overrideRank != null) return overrideRank;
+    if (sampleCount >= AppConstants.minSamplesForLearnedOrder) {
+      return medianRank;
+    }
+    return fallback;
+  }
+
   List<CategoryRankResult> computeCategoryRanks({
     required List<CheckOffEvent> events,
     required List<String> defaultCategoryOrder,
@@ -97,7 +142,7 @@ class OrderingService {
     }).toList();
   }
 
-  double sortKeyForItem({
+  ItemSortDiagnostics diagnosticsForItem({
     required ListItem item,
     required Map<String, int> defaultCategoryOrder,
     required Map<String, CategoryRankStat> categoryStats,
@@ -107,22 +152,68 @@ class OrderingService {
         defaultCategoryOrder[item.categoryId]?.toDouble() ?? 999.0;
 
     final catStat = categoryStats[item.categoryId];
-    final categoryRank = (catStat != null &&
-            catStat.sampleCount >= AppConstants.minSamplesForLearnedOrder)
-        ? catStat.medianRank
-        : defaultCatRank;
+    final categoryOverridden = catStat?.overrideRank != null;
+    final usingDefaultCategory = catStat == null ||
+        (!categoryOverridden &&
+            catStat.sampleCount < AppConstants.minSamplesForLearnedOrder);
+    final categoryRank = catStat == null
+        ? defaultCatRank
+        : effectiveRank(
+            overrideRank: catStat.overrideRank,
+            medianRank: catStat.medianRank,
+            sampleCount: catStat.sampleCount,
+            fallback: defaultCatRank,
+          );
 
     double itemRank = 999.0;
+    var itemOverridden = false;
+    var usingDefaultItem = true;
+    int? itemSampleCount;
     if (item.catalogItemId != null) {
       final itemStat = itemStats[item.catalogItemId!];
-      if (itemStat != null &&
-          itemStat.sampleCount >= AppConstants.minSamplesForLearnedOrder) {
-        itemRank = itemStat.medianRank;
+      if (itemStat != null) {
+        itemSampleCount = itemStat.sampleCount;
+        itemOverridden = itemStat.overrideRank != null;
+        usingDefaultItem = !itemOverridden &&
+            itemStat.sampleCount < AppConstants.minSamplesForLearnedOrder;
+        itemRank = effectiveRank(
+          overrideRank: itemStat.overrideRank,
+          medianRank: itemStat.medianRank,
+          sampleCount: itemStat.sampleCount,
+          fallback: 999.0,
+        );
       }
     }
 
     final nameTie = item.displayName.toLowerCase().hashCode % 100 / 100.0;
-    return categoryRank * 10000 + itemRank * 100 + nameTie;
+    final sortKey = categoryRank * 10000 + itemRank * 100 + nameTie;
+
+    return ItemSortDiagnostics(
+      categoryRank: categoryRank,
+      itemRank: itemRank,
+      nameTie: nameTie,
+      sortKey: sortKey,
+      categoryOverridden: categoryOverridden,
+      itemOverridden: itemOverridden,
+      categorySampleCount: catStat?.sampleCount,
+      itemSampleCount: itemSampleCount,
+      usingDefaultCategory: usingDefaultCategory,
+      usingDefaultItem: usingDefaultItem,
+    );
+  }
+
+  double sortKeyForItem({
+    required ListItem item,
+    required Map<String, int> defaultCategoryOrder,
+    required Map<String, CategoryRankStat> categoryStats,
+    required Map<int, ItemRankStat> itemStats,
+  }) {
+    return diagnosticsForItem(
+      item: item,
+      defaultCategoryOrder: defaultCategoryOrder,
+      categoryStats: categoryStats,
+      itemStats: itemStats,
+    ).sortKey;
   }
 
   Map<String, int> buildDefaultCategoryOrder(List<Category> categories) {

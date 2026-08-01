@@ -138,6 +138,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                   extra: state.extra,
                 ),
               ),
+              GoRoute(
+                path: 'learned-ranks',
+                builder: (context, state) => buildScreenForLocation(
+                  state.uri.toString(),
+                  extra: state.extra,
+                ),
+              ),
             ],
           ),
           GoRoute(

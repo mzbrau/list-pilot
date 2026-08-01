@@ -151,4 +151,50 @@ class LearningRepository {
     final stats = await _db.getItemRankStats(listId);
     return {for (final s in stats) s.catalogItemId: s.medianRank};
   }
+
+  Future<void> setCategoryRankOverride({
+    required int listId,
+    required String categoryId,
+    required double rank,
+  }) {
+    return _db.setCategoryRankOverride(
+      listId: listId,
+      categoryId: categoryId,
+      overrideRank: rank,
+    );
+  }
+
+  Future<void> clearCategoryRankOverride({
+    required int listId,
+    required String categoryId,
+  }) {
+    return _db.clearCategoryRankOverride(
+      listId: listId,
+      categoryId: categoryId,
+    );
+  }
+
+  Future<void> setItemRankOverride({
+    required int listId,
+    required int catalogItemId,
+    required String categoryId,
+    required double rank,
+  }) {
+    return _db.setItemRankOverride(
+      listId: listId,
+      catalogItemId: catalogItemId,
+      categoryId: categoryId,
+      overrideRank: rank,
+    );
+  }
+
+  Future<void> clearItemRankOverride({
+    required int listId,
+    required int catalogItemId,
+  }) {
+    return _db.clearItemRankOverride(
+      listId: listId,
+      catalogItemId: catalogItemId,
+    );
+  }
 }

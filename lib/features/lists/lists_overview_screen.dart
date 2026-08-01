@@ -632,6 +632,8 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   Widget build(BuildContext context) {
     final versionAsync = ref.watch(appVersionProvider);
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
+    final orderingDiagnosticsEnabled =
+        ref.watch(orderingDiagnosticsEnabledProvider);
     final mealManagerEnabled = ref.watch(mealManagerEnabledProvider);
     final mealPlanningEnabled = ref.watch(mealPlanningEnabledProvider);
     final aiConfig = ref.watch(aiConfigProvider);
@@ -695,6 +697,19 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             value: shopStatsEnabled,
             onChanged: (value) {
               ref.read(shopStatsEnabledProvider.notifier).setEnabled(value);
+            },
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.bug_report_outlined),
+            title: const Text('Ordering diagnostics'),
+            subtitle: const Text(
+              'Show ranks and sort keys on shopping lists',
+            ),
+            value: orderingDiagnosticsEnabled,
+            onChanged: (value) {
+              ref
+                  .read(orderingDiagnosticsEnabledProvider.notifier)
+                  .setEnabled(value);
             },
           ),
           SwitchListTile(

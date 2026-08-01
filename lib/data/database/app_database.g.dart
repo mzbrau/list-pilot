@@ -2534,9 +2534,15 @@ class $CategoryRankStatsTable extends CategoryRankStats
   late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
       'last_updated', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _overrideRankMeta =
+      const VerificationMeta('overrideRank');
+  @override
+  late final GeneratedColumn<double> overrideRank = GeneratedColumn<double>(
+      'override_rank', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [listId, categoryId, medianRank, sampleCount, lastUpdated];
+      [listId, categoryId, medianRank, sampleCount, lastUpdated, overrideRank];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2585,6 +2591,12 @@ class $CategoryRankStatsTable extends CategoryRankStats
     } else if (isInserting) {
       context.missing(_lastUpdatedMeta);
     }
+    if (data.containsKey('override_rank')) {
+      context.handle(
+          _overrideRankMeta,
+          overrideRank.isAcceptableOrUnknown(
+              data['override_rank']!, _overrideRankMeta));
+    }
     return context;
   }
 
@@ -2604,6 +2616,8 @@ class $CategoryRankStatsTable extends CategoryRankStats
           .read(DriftSqlType.int, data['${effectivePrefix}sample_count'])!,
       lastUpdated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      overrideRank: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}override_rank']),
     );
   }
 
@@ -2620,12 +2634,14 @@ class CategoryRankStat extends DataClass
   final double medianRank;
   final int sampleCount;
   final DateTime lastUpdated;
+  final double? overrideRank;
   const CategoryRankStat(
       {required this.listId,
       required this.categoryId,
       required this.medianRank,
       required this.sampleCount,
-      required this.lastUpdated});
+      required this.lastUpdated,
+      this.overrideRank});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2634,6 +2650,9 @@ class CategoryRankStat extends DataClass
     map['median_rank'] = Variable<double>(medianRank);
     map['sample_count'] = Variable<int>(sampleCount);
     map['last_updated'] = Variable<DateTime>(lastUpdated);
+    if (!nullToAbsent || overrideRank != null) {
+      map['override_rank'] = Variable<double>(overrideRank);
+    }
     return map;
   }
 
@@ -2644,6 +2663,9 @@ class CategoryRankStat extends DataClass
       medianRank: Value(medianRank),
       sampleCount: Value(sampleCount),
       lastUpdated: Value(lastUpdated),
+      overrideRank: overrideRank == null && nullToAbsent
+          ? const Value.absent()
+          : Value(overrideRank),
     );
   }
 
@@ -2656,6 +2678,7 @@ class CategoryRankStat extends DataClass
       medianRank: serializer.fromJson<double>(json['medianRank']),
       sampleCount: serializer.fromJson<int>(json['sampleCount']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      overrideRank: serializer.fromJson<double?>(json['overrideRank']),
     );
   }
   @override
@@ -2667,6 +2690,7 @@ class CategoryRankStat extends DataClass
       'medianRank': serializer.toJson<double>(medianRank),
       'sampleCount': serializer.toJson<int>(sampleCount),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'overrideRank': serializer.toJson<double?>(overrideRank),
     };
   }
 
@@ -2675,13 +2699,16 @@ class CategoryRankStat extends DataClass
           String? categoryId,
           double? medianRank,
           int? sampleCount,
-          DateTime? lastUpdated}) =>
+          DateTime? lastUpdated,
+          Value<double?> overrideRank = const Value.absent()}) =>
       CategoryRankStat(
         listId: listId ?? this.listId,
         categoryId: categoryId ?? this.categoryId,
         medianRank: medianRank ?? this.medianRank,
         sampleCount: sampleCount ?? this.sampleCount,
         lastUpdated: lastUpdated ?? this.lastUpdated,
+        overrideRank:
+            overrideRank.present ? overrideRank.value : this.overrideRank,
       );
   CategoryRankStat copyWithCompanion(CategoryRankStatsCompanion data) {
     return CategoryRankStat(
@@ -2694,6 +2721,9 @@ class CategoryRankStat extends DataClass
           data.sampleCount.present ? data.sampleCount.value : this.sampleCount,
       lastUpdated:
           data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      overrideRank: data.overrideRank.present
+          ? data.overrideRank.value
+          : this.overrideRank,
     );
   }
 
@@ -2704,14 +2734,15 @@ class CategoryRankStat extends DataClass
           ..write('categoryId: $categoryId, ')
           ..write('medianRank: $medianRank, ')
           ..write('sampleCount: $sampleCount, ')
-          ..write('lastUpdated: $lastUpdated')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('overrideRank: $overrideRank')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(listId, categoryId, medianRank, sampleCount, lastUpdated);
+  int get hashCode => Object.hash(
+      listId, categoryId, medianRank, sampleCount, lastUpdated, overrideRank);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2720,7 +2751,8 @@ class CategoryRankStat extends DataClass
           other.categoryId == this.categoryId &&
           other.medianRank == this.medianRank &&
           other.sampleCount == this.sampleCount &&
-          other.lastUpdated == this.lastUpdated);
+          other.lastUpdated == this.lastUpdated &&
+          other.overrideRank == this.overrideRank);
 }
 
 class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
@@ -2729,6 +2761,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
   final Value<double> medianRank;
   final Value<int> sampleCount;
   final Value<DateTime> lastUpdated;
+  final Value<double?> overrideRank;
   final Value<int> rowid;
   const CategoryRankStatsCompanion({
     this.listId = const Value.absent(),
@@ -2736,6 +2769,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
     this.medianRank = const Value.absent(),
     this.sampleCount = const Value.absent(),
     this.lastUpdated = const Value.absent(),
+    this.overrideRank = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CategoryRankStatsCompanion.insert({
@@ -2744,6 +2778,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
     required double medianRank,
     required int sampleCount,
     required DateTime lastUpdated,
+    this.overrideRank = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : listId = Value(listId),
         categoryId = Value(categoryId),
@@ -2756,6 +2791,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
     Expression<double>? medianRank,
     Expression<int>? sampleCount,
     Expression<DateTime>? lastUpdated,
+    Expression<double>? overrideRank,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2764,6 +2800,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
       if (medianRank != null) 'median_rank': medianRank,
       if (sampleCount != null) 'sample_count': sampleCount,
       if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (overrideRank != null) 'override_rank': overrideRank,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2774,6 +2811,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
       Value<double>? medianRank,
       Value<int>? sampleCount,
       Value<DateTime>? lastUpdated,
+      Value<double?>? overrideRank,
       Value<int>? rowid}) {
     return CategoryRankStatsCompanion(
       listId: listId ?? this.listId,
@@ -2781,6 +2819,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
       medianRank: medianRank ?? this.medianRank,
       sampleCount: sampleCount ?? this.sampleCount,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      overrideRank: overrideRank ?? this.overrideRank,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2803,6 +2842,9 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
     if (lastUpdated.present) {
       map['last_updated'] = Variable<DateTime>(lastUpdated.value);
     }
+    if (overrideRank.present) {
+      map['override_rank'] = Variable<double>(overrideRank.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2817,6 +2859,7 @@ class CategoryRankStatsCompanion extends UpdateCompanion<CategoryRankStat> {
           ..write('medianRank: $medianRank, ')
           ..write('sampleCount: $sampleCount, ')
           ..write('lastUpdated: $lastUpdated, ')
+          ..write('overrideRank: $overrideRank, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2864,9 +2907,22 @@ class $ItemRankStatsTable extends ItemRankStats
   late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
       'last_updated', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _overrideRankMeta =
+      const VerificationMeta('overrideRank');
   @override
-  List<GeneratedColumn> get $columns =>
-      [listId, catalogItemId, categoryId, medianRank, sampleCount, lastUpdated];
+  late final GeneratedColumn<double> overrideRank = GeneratedColumn<double>(
+      'override_rank', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        listId,
+        catalogItemId,
+        categoryId,
+        medianRank,
+        sampleCount,
+        lastUpdated,
+        overrideRank
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2923,6 +2979,12 @@ class $ItemRankStatsTable extends ItemRankStats
     } else if (isInserting) {
       context.missing(_lastUpdatedMeta);
     }
+    if (data.containsKey('override_rank')) {
+      context.handle(
+          _overrideRankMeta,
+          overrideRank.isAcceptableOrUnknown(
+              data['override_rank']!, _overrideRankMeta));
+    }
     return context;
   }
 
@@ -2944,6 +3006,8 @@ class $ItemRankStatsTable extends ItemRankStats
           .read(DriftSqlType.int, data['${effectivePrefix}sample_count'])!,
       lastUpdated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      overrideRank: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}override_rank']),
     );
   }
 
@@ -2960,13 +3024,15 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
   final double medianRank;
   final int sampleCount;
   final DateTime lastUpdated;
+  final double? overrideRank;
   const ItemRankStat(
       {required this.listId,
       required this.catalogItemId,
       required this.categoryId,
       required this.medianRank,
       required this.sampleCount,
-      required this.lastUpdated});
+      required this.lastUpdated,
+      this.overrideRank});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2976,6 +3042,9 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
     map['median_rank'] = Variable<double>(medianRank);
     map['sample_count'] = Variable<int>(sampleCount);
     map['last_updated'] = Variable<DateTime>(lastUpdated);
+    if (!nullToAbsent || overrideRank != null) {
+      map['override_rank'] = Variable<double>(overrideRank);
+    }
     return map;
   }
 
@@ -2987,6 +3056,9 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
       medianRank: Value(medianRank),
       sampleCount: Value(sampleCount),
       lastUpdated: Value(lastUpdated),
+      overrideRank: overrideRank == null && nullToAbsent
+          ? const Value.absent()
+          : Value(overrideRank),
     );
   }
 
@@ -3000,6 +3072,7 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
       medianRank: serializer.fromJson<double>(json['medianRank']),
       sampleCount: serializer.fromJson<int>(json['sampleCount']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      overrideRank: serializer.fromJson<double?>(json['overrideRank']),
     );
   }
   @override
@@ -3012,6 +3085,7 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
       'medianRank': serializer.toJson<double>(medianRank),
       'sampleCount': serializer.toJson<int>(sampleCount),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'overrideRank': serializer.toJson<double?>(overrideRank),
     };
   }
 
@@ -3021,7 +3095,8 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
           String? categoryId,
           double? medianRank,
           int? sampleCount,
-          DateTime? lastUpdated}) =>
+          DateTime? lastUpdated,
+          Value<double?> overrideRank = const Value.absent()}) =>
       ItemRankStat(
         listId: listId ?? this.listId,
         catalogItemId: catalogItemId ?? this.catalogItemId,
@@ -3029,6 +3104,8 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
         medianRank: medianRank ?? this.medianRank,
         sampleCount: sampleCount ?? this.sampleCount,
         lastUpdated: lastUpdated ?? this.lastUpdated,
+        overrideRank:
+            overrideRank.present ? overrideRank.value : this.overrideRank,
       );
   ItemRankStat copyWithCompanion(ItemRankStatsCompanion data) {
     return ItemRankStat(
@@ -3044,6 +3121,9 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
           data.sampleCount.present ? data.sampleCount.value : this.sampleCount,
       lastUpdated:
           data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      overrideRank: data.overrideRank.present
+          ? data.overrideRank.value
+          : this.overrideRank,
     );
   }
 
@@ -3055,14 +3135,15 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
           ..write('categoryId: $categoryId, ')
           ..write('medianRank: $medianRank, ')
           ..write('sampleCount: $sampleCount, ')
-          ..write('lastUpdated: $lastUpdated')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('overrideRank: $overrideRank')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      listId, catalogItemId, categoryId, medianRank, sampleCount, lastUpdated);
+  int get hashCode => Object.hash(listId, catalogItemId, categoryId, medianRank,
+      sampleCount, lastUpdated, overrideRank);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3072,7 +3153,8 @@ class ItemRankStat extends DataClass implements Insertable<ItemRankStat> {
           other.categoryId == this.categoryId &&
           other.medianRank == this.medianRank &&
           other.sampleCount == this.sampleCount &&
-          other.lastUpdated == this.lastUpdated);
+          other.lastUpdated == this.lastUpdated &&
+          other.overrideRank == this.overrideRank);
 }
 
 class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
@@ -3082,6 +3164,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
   final Value<double> medianRank;
   final Value<int> sampleCount;
   final Value<DateTime> lastUpdated;
+  final Value<double?> overrideRank;
   final Value<int> rowid;
   const ItemRankStatsCompanion({
     this.listId = const Value.absent(),
@@ -3090,6 +3173,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
     this.medianRank = const Value.absent(),
     this.sampleCount = const Value.absent(),
     this.lastUpdated = const Value.absent(),
+    this.overrideRank = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ItemRankStatsCompanion.insert({
@@ -3099,6 +3183,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
     required double medianRank,
     required int sampleCount,
     required DateTime lastUpdated,
+    this.overrideRank = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : listId = Value(listId),
         catalogItemId = Value(catalogItemId),
@@ -3113,6 +3198,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
     Expression<double>? medianRank,
     Expression<int>? sampleCount,
     Expression<DateTime>? lastUpdated,
+    Expression<double>? overrideRank,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3122,6 +3208,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
       if (medianRank != null) 'median_rank': medianRank,
       if (sampleCount != null) 'sample_count': sampleCount,
       if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (overrideRank != null) 'override_rank': overrideRank,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3133,6 +3220,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
       Value<double>? medianRank,
       Value<int>? sampleCount,
       Value<DateTime>? lastUpdated,
+      Value<double?>? overrideRank,
       Value<int>? rowid}) {
     return ItemRankStatsCompanion(
       listId: listId ?? this.listId,
@@ -3141,6 +3229,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
       medianRank: medianRank ?? this.medianRank,
       sampleCount: sampleCount ?? this.sampleCount,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      overrideRank: overrideRank ?? this.overrideRank,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3166,6 +3255,9 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
     if (lastUpdated.present) {
       map['last_updated'] = Variable<DateTime>(lastUpdated.value);
     }
+    if (overrideRank.present) {
+      map['override_rank'] = Variable<double>(overrideRank.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3181,6 +3273,7 @@ class ItemRankStatsCompanion extends UpdateCompanion<ItemRankStat> {
           ..write('medianRank: $medianRank, ')
           ..write('sampleCount: $sampleCount, ')
           ..write('lastUpdated: $lastUpdated, ')
+          ..write('overrideRank: $overrideRank, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -11928,6 +12021,7 @@ typedef $$CategoryRankStatsTableCreateCompanionBuilder
   required double medianRank,
   required int sampleCount,
   required DateTime lastUpdated,
+  Value<double?> overrideRank,
   Value<int> rowid,
 });
 typedef $$CategoryRankStatsTableUpdateCompanionBuilder
@@ -11937,6 +12031,7 @@ typedef $$CategoryRankStatsTableUpdateCompanionBuilder
   Value<double> medianRank,
   Value<int> sampleCount,
   Value<DateTime> lastUpdated,
+  Value<double?> overrideRank,
   Value<int> rowid,
 });
 
@@ -11963,6 +12058,9 @@ class $$CategoryRankStatsTableFilterComposer
 
   ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get overrideRank => $composableBuilder(
+      column: $table.overrideRank, builder: (column) => ColumnFilters(column));
 }
 
 class $$CategoryRankStatsTableOrderingComposer
@@ -11988,6 +12086,10 @@ class $$CategoryRankStatsTableOrderingComposer
 
   ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get overrideRank => $composableBuilder(
+      column: $table.overrideRank,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$CategoryRankStatsTableAnnotationComposer
@@ -12013,6 +12115,9 @@ class $$CategoryRankStatsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => column);
+
+  GeneratedColumn<double> get overrideRank => $composableBuilder(
+      column: $table.overrideRank, builder: (column) => column);
 }
 
 class $$CategoryRankStatsTableTableManager extends RootTableManager<
@@ -12048,6 +12153,7 @@ class $$CategoryRankStatsTableTableManager extends RootTableManager<
             Value<double> medianRank = const Value.absent(),
             Value<int> sampleCount = const Value.absent(),
             Value<DateTime> lastUpdated = const Value.absent(),
+            Value<double?> overrideRank = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               CategoryRankStatsCompanion(
@@ -12056,6 +12162,7 @@ class $$CategoryRankStatsTableTableManager extends RootTableManager<
             medianRank: medianRank,
             sampleCount: sampleCount,
             lastUpdated: lastUpdated,
+            overrideRank: overrideRank,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -12064,6 +12171,7 @@ class $$CategoryRankStatsTableTableManager extends RootTableManager<
             required double medianRank,
             required int sampleCount,
             required DateTime lastUpdated,
+            Value<double?> overrideRank = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               CategoryRankStatsCompanion.insert(
@@ -12072,6 +12180,7 @@ class $$CategoryRankStatsTableTableManager extends RootTableManager<
             medianRank: medianRank,
             sampleCount: sampleCount,
             lastUpdated: lastUpdated,
+            overrideRank: overrideRank,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -12104,6 +12213,7 @@ typedef $$ItemRankStatsTableCreateCompanionBuilder = ItemRankStatsCompanion
   required double medianRank,
   required int sampleCount,
   required DateTime lastUpdated,
+  Value<double?> overrideRank,
   Value<int> rowid,
 });
 typedef $$ItemRankStatsTableUpdateCompanionBuilder = ItemRankStatsCompanion
@@ -12114,6 +12224,7 @@ typedef $$ItemRankStatsTableUpdateCompanionBuilder = ItemRankStatsCompanion
   Value<double> medianRank,
   Value<int> sampleCount,
   Value<DateTime> lastUpdated,
+  Value<double?> overrideRank,
   Value<int> rowid,
 });
 
@@ -12143,6 +12254,9 @@ class $$ItemRankStatsTableFilterComposer
 
   ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get overrideRank => $composableBuilder(
+      column: $table.overrideRank, builder: (column) => ColumnFilters(column));
 }
 
 class $$ItemRankStatsTableOrderingComposer
@@ -12172,6 +12286,10 @@ class $$ItemRankStatsTableOrderingComposer
 
   ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get overrideRank => $composableBuilder(
+      column: $table.overrideRank,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$ItemRankStatsTableAnnotationComposer
@@ -12200,6 +12318,9 @@ class $$ItemRankStatsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => column);
+
+  GeneratedColumn<double> get overrideRank => $composableBuilder(
+      column: $table.overrideRank, builder: (column) => column);
 }
 
 class $$ItemRankStatsTableTableManager extends RootTableManager<
@@ -12234,6 +12355,7 @@ class $$ItemRankStatsTableTableManager extends RootTableManager<
             Value<double> medianRank = const Value.absent(),
             Value<int> sampleCount = const Value.absent(),
             Value<DateTime> lastUpdated = const Value.absent(),
+            Value<double?> overrideRank = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ItemRankStatsCompanion(
@@ -12243,6 +12365,7 @@ class $$ItemRankStatsTableTableManager extends RootTableManager<
             medianRank: medianRank,
             sampleCount: sampleCount,
             lastUpdated: lastUpdated,
+            overrideRank: overrideRank,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -12252,6 +12375,7 @@ class $$ItemRankStatsTableTableManager extends RootTableManager<
             required double medianRank,
             required int sampleCount,
             required DateTime lastUpdated,
+            Value<double?> overrideRank = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ItemRankStatsCompanion.insert(
@@ -12261,6 +12385,7 @@ class $$ItemRankStatsTableTableManager extends RootTableManager<
             medianRank: medianRank,
             sampleCount: sampleCount,
             lastUpdated: lastUpdated,
+            overrideRank: overrideRank,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

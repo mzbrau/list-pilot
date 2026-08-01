@@ -67,11 +67,17 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
               ),
               PopupMenuButton<String>(
                 onSelected: (value) async {
-                  if (value == 'reset') {
+                  if (value == 'learned-ranks') {
+                    context.push('/list/${widget.listId}/learned-ranks');
+                  } else if (value == 'reset') {
                     await _resetLearnedOrder(context);
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'learned-ranks',
+                    child: Text('See learned ranks'),
+                  ),
                   const PopupMenuItem(
                     value: 'reset',
                     child: Text('Reset learned order'),
@@ -91,6 +97,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final total = items.length;
     final completedCount = total - remaining;
     final shopStatsEnabled = ref.watch(shopStatsEnabledProvider);
+    final orderingDiagnosticsEnabled =
+        ref.watch(orderingDiagnosticsEnabledProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final categoryStatsAsync =
         ref.watch(categoryRankStatsProvider(widget.listId));
@@ -173,6 +181,41 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                         final completed =
                             _orderingService.sortCompletedItems(items);
 
+                        Map<int, ItemSortDiagnostics>? diagnosticsByItemId;
+                        Map<String, ItemSortDiagnostics>?
+                            categoryDiagnosticsByName;
+                        if (orderingDiagnosticsEnabled) {
+                          final defaultOrder = _orderingService
+                              .buildDefaultCategoryOrder(categories);
+                          final catStatsMap = {
+                            for (final s in categoryStats) s.categoryId: s,
+                          };
+                          final itemStatsMap = {
+                            for (final s in itemStats) s.catalogItemId: s,
+                          };
+                          final categoryNames = {
+                            for (final c in categories) c.id: c.name,
+                          };
+                          diagnosticsByItemId = {};
+                          categoryDiagnosticsByName = {};
+                          for (final item in items.where((i) => !i.isCompleted)) {
+                            final diag = _orderingService.diagnosticsForItem(
+                              item: item,
+                              defaultCategoryOrder: defaultOrder,
+                              categoryStats: catStatsMap,
+                              itemStats: itemStatsMap,
+                            );
+                            diagnosticsByItemId[item.id] = diag;
+                            final header =
+                                categoryNames[item.categoryId] ??
+                                    item.categoryId;
+                            categoryDiagnosticsByName.putIfAbsent(
+                              header,
+                              () => diag,
+                            );
+                          }
+                        }
+
                         if (items.isEmpty) {
                           return Center(
                             child: Padding(
@@ -207,6 +250,9 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                                 onTapItem: (item) => context.push(
                                   '/list/${widget.listId}/item/${item.id}',
                                 ),
+                                diagnosticsByItemId: diagnosticsByItemId,
+                                categoryDiagnosticsByName:
+                                    categoryDiagnosticsByName,
                               ),
                             CompletedItemsSection(
                               items: completed,

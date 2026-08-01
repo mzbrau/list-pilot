@@ -35,29 +35,43 @@ void main() {
     });
 
     test('applies learned order when sample count threshold met', () {
-      final item = ListItem(
-        id: 1,
-        listId: 1,
-        catalogItemId: 10,
-        displayName: 'Milk',
-        categoryId: 'dairy',
-        quantityValue: null,
-        quantityUnit: null,
-        isCompleted: false,
-        completedAt: null,
-        addedAt: DateTime.now(),
-      );
+      final item = _listItem();
 
       final key = service.sortKeyForItem(
         item: item,
         defaultCategoryOrder: {'dairy': 3, 'cleaning': 9},
         categoryStats: {
+          'dairy': _categoryStat(
+            medianRank: 1,
+            sampleCount: 3,
+          ),
+        },
+        itemStats: {
+          10: _itemStat(
+            medianRank: 0,
+            sampleCount: 3,
+          ),
+        },
+      );
+
+      expect(key, lessThan(20000));
+    });
+
+    test('override rank bypasses sample count threshold', () {
+      final item = _listItem();
+      final now = DateTime.now();
+
+      final diag = service.diagnosticsForItem(
+        item: item,
+        defaultCategoryOrder: {'dairy': 3},
+        categoryStats: {
           'dairy': CategoryRankStat(
             listId: 1,
             categoryId: 'dairy',
-            medianRank: 1,
-            sampleCount: 3,
-            lastUpdated: DateTime.now(),
+            medianRank: 5,
+            sampleCount: 1,
+            lastUpdated: now,
+            overrideRank: 0,
           ),
         },
         itemStats: {
@@ -65,14 +79,72 @@ void main() {
             listId: 1,
             catalogItemId: 10,
             categoryId: 'dairy',
-            medianRank: 0,
-            sampleCount: 3,
-            lastUpdated: DateTime.now(),
+            medianRank: 8,
+            sampleCount: 1,
+            lastUpdated: now,
+            overrideRank: 1,
           ),
         },
       );
 
-      expect(key, lessThan(20000));
+      expect(diag.categoryRank, 0);
+      expect(diag.itemRank, 1);
+      expect(diag.categoryOverridden, isTrue);
+      expect(diag.itemOverridden, isTrue);
+      expect(diag.usingDefaultCategory, isFalse);
+      expect(diag.usingDefaultItem, isFalse);
+      expect(diag.sortKey, closeTo(100, 1));
+    });
+
+    test('falls back to defaults when samples below threshold and no override',
+        () {
+      final item = _listItem();
+
+      final diag = service.diagnosticsForItem(
+        item: item,
+        defaultCategoryOrder: {'dairy': 3},
+        categoryStats: {
+          'dairy': _categoryStat(medianRank: 0, sampleCount: 2),
+        },
+        itemStats: {
+          10: _itemStat(medianRank: 0, sampleCount: 2),
+        },
+      );
+
+      expect(diag.categoryRank, 3);
+      expect(diag.itemRank, 999);
+      expect(diag.usingDefaultCategory, isTrue);
+      expect(diag.usingDefaultItem, isTrue);
+    });
+
+    test('effectiveRank prefers override over median', () {
+      expect(
+        OrderingService.effectiveRank(
+          overrideRank: 2,
+          medianRank: 10,
+          sampleCount: 10,
+          fallback: 99,
+        ),
+        2,
+      );
+      expect(
+        OrderingService.effectiveRank(
+          overrideRank: null,
+          medianRank: 10,
+          sampleCount: 10,
+          fallback: 99,
+        ),
+        10,
+      );
+      expect(
+        OrderingService.effectiveRank(
+          overrideRank: null,
+          medianRank: 10,
+          sampleCount: 1,
+          fallback: 99,
+        ),
+        99,
+      );
     });
   });
 
@@ -125,6 +197,52 @@ void main() {
       expect(first.id, second.id);
     });
   });
+}
+
+ListItem _listItem() {
+  return ListItem(
+    id: 1,
+    listId: 1,
+    catalogItemId: 10,
+    displayName: 'Milk',
+    categoryId: 'dairy',
+    quantityValue: null,
+    quantityUnit: null,
+    isCompleted: false,
+    completedAt: null,
+    addedAt: DateTime.now(),
+  );
+}
+
+CategoryRankStat _categoryStat({
+  required double medianRank,
+  required int sampleCount,
+  double? overrideRank,
+}) {
+  return CategoryRankStat(
+    listId: 1,
+    categoryId: 'dairy',
+    medianRank: medianRank,
+    sampleCount: sampleCount,
+    lastUpdated: DateTime.now(),
+    overrideRank: overrideRank,
+  );
+}
+
+ItemRankStat _itemStat({
+  required double medianRank,
+  required int sampleCount,
+  double? overrideRank,
+}) {
+  return ItemRankStat(
+    listId: 1,
+    catalogItemId: 10,
+    categoryId: 'dairy',
+    medianRank: medianRank,
+    sampleCount: sampleCount,
+    lastUpdated: DateTime.now(),
+    overrideRank: overrideRank,
+  );
 }
 
 CheckOffEvent _event({

@@ -89,6 +89,7 @@ class CategoryRankStats extends Table {
   RealColumn get medianRank => real()();
   IntColumn get sampleCount => integer()();
   DateTimeColumn get lastUpdated => dateTime()();
+  RealColumn get overrideRank => real().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {listId, categoryId};
@@ -101,6 +102,7 @@ class ItemRankStats extends Table {
   RealColumn get medianRank => real()();
   IntColumn get sampleCount => integer()();
   DateTimeColumn get lastUpdated => dateTime()();
+  RealColumn get overrideRank => real().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {listId, catalogItemId};
