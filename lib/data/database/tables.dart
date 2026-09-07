@@ -74,7 +74,9 @@ class ListItems extends Table {
 class CheckOffEvents extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get listId => integer().references(ShoppingLists, #id)();
-  IntColumn get listItemId => integer().references(ListItems, #id)();
+  IntColumn get listItemId => integer()
+      .nullable()
+      .references(ListItems, #id, onDelete: KeyAction.setNull)();
   TextColumn get categoryId => text()();
   IntColumn get catalogItemId => integer().nullable()();
   DateTimeColumn get checkedAt => dateTime()();
@@ -138,8 +140,9 @@ class MealIngredients extends Table {
 class MealCheckOffEvents extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get mealId => integer().references(Meals, #id)();
-  IntColumn get mealPlanItemId =>
-      integer().nullable().references(MealPlanItems, #id)();
+  IntColumn get mealPlanItemId => integer()
+      .nullable()
+      .references(MealPlanItems, #id, onDelete: KeyAction.setNull)();
   DateTimeColumn get checkedAt => dateTime()();
 }
 

@@ -162,17 +162,25 @@ class OrderingService {
     final categoryNames = {for (final c in categories) c.id: c.name};
 
     active.sort((a, b) {
-      final keyA = sortKeyForItem(
+      final catA = categoryOrder[a.categoryId] ?? 999;
+      final catB = categoryOrder[b.categoryId] ?? 999;
+      final catCmp = catA.compareTo(catB);
+      if (catCmp != 0) return catCmp;
+
+      // Category order wins; only compare item ranks within the same aisle.
+      final diagA = diagnosticsForItem(
         item: a,
         categoryOrder: categoryOrder,
         itemStats: itemStatsMap,
       );
-      final keyB = sortKeyForItem(
+      final diagB = diagnosticsForItem(
         item: b,
         categoryOrder: categoryOrder,
         itemStats: itemStatsMap,
       );
-      return keyA.compareTo(keyB);
+      final withinA = diagA.itemContribution + diagA.nameTie;
+      final withinB = diagB.itemContribution + diagB.nameTie;
+      return withinA.compareTo(withinB);
     });
 
     final grouped = <String, List<ListItem>>{};
