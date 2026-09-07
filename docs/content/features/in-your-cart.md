@@ -25,5 +25,5 @@ Tap the **In your cart** header to expand or collapse the section. This helps fo
 When you've finished shopping, tap **Clear all** in the In your cart header to remove all completed items at once and start fresh for your next trip.
 
 :::tip Bulk checkout
-Checking off several items quickly at checkout (within about 2 seconds of each other) is detected as bulk checkout. These events still count for learning but are weighted less heavily so they don't skew your aisle-by-aisle order.
+Checking off several items quickly at checkout (within about 2 seconds of each other) is detected as bulk checkout. These events still count for learning but are weighted less heavily so they don't skew within-category item order.
 :::

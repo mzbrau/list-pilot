@@ -76,11 +76,11 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'learned-ranks',
-                    child: Text('See learned ranks'),
+                    child: Text('See learned item ranks'),
                   ),
                   const PopupMenuItem(
                     value: 'reset',
-                    child: Text('Reset learned order'),
+                    child: Text('Reset learned item order'),
                   ),
                 ],
               ),
@@ -100,8 +100,6 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final orderingDiagnosticsEnabled =
         ref.watch(orderingDiagnosticsEnabledProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
-    final categoryStatsAsync =
-        ref.watch(categoryRankStatsProvider(widget.listId));
     final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
 
     return popOrGoHomeScope(
@@ -168,14 +166,11 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                           const Center(child: CircularProgressIndicator()),
                       error: (e, _) => Center(child: Text('Error: $e')),
                       data: (categories) {
-                        final categoryStats =
-                            categoryStatsAsync.valueOrNull ?? [];
                         final itemStats = itemStatsAsync.valueOrNull ?? [];
 
                         final grouped = _orderingService.groupActiveItems(
                           items: items,
                           categories: categories,
-                          categoryRankStats: categoryStats,
                           itemRankStats: itemStats,
                         );
                         final completed =
@@ -185,11 +180,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                         Map<String, ItemSortDiagnostics>?
                             categoryDiagnosticsByName;
                         if (orderingDiagnosticsEnabled) {
-                          final defaultOrder = _orderingService
-                              .buildDefaultCategoryOrder(categories);
-                          final catStatsMap = {
-                            for (final s in categoryStats) s.categoryId: s,
-                          };
+                          final categoryOrder = _orderingService
+                              .buildCategoryOrder(categories);
                           final itemStatsMap = {
                             for (final s in itemStats) s.catalogItemId: s,
                           };
@@ -201,8 +193,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                           for (final item in items.where((i) => !i.isCompleted)) {
                             final diag = _orderingService.diagnosticsForItem(
                               item: item,
-                              defaultCategoryOrder: defaultOrder,
-                              categoryStats: catStatsMap,
+                              categoryOrder: categoryOrder,
                               itemStats: itemStatsMap,
                             );
                             diagnosticsByItemId[item.id] = diag;
@@ -382,9 +373,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset learned order?'),
+        title: const Text('Reset learned item order?'),
         content: const Text(
-          'This will forget the shopping order learned for this list.',
+          'This will forget the within-category item order learned for this list. '
+          'Category aisle order is unchanged.',
         ),
         actions: [
           TextButton(

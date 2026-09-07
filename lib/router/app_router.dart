@@ -2,16 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/providers/app_providers.dart';
 import 'route_screen_builder.dart';
 import 'tablet_layout.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final refresh = ValueNotifier<int>(0);
+  ref.listen<bool?>(categoryOrderOnboardingCompleteProvider, (_, __) {
+    refresh.value++;
+  });
+  ref.onDispose(refresh.dispose);
+
   final router = GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      final complete = ref.read(categoryOrderOnboardingCompleteProvider);
+      if (complete == null) return null;
+
+      final onOnboarding =
+          state.matchedLocation == '/onboarding/category-order';
+      if (!complete && !onOnboarding) {
+        return '/onboarding/category-order';
+      }
+      if (complete && onOnboarding) {
+        return '/';
+      }
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/onboarding/category-order',
+        builder: (context, state) => buildScreenForLocation(
+          state.uri.toString(),
+          extra: state.extra,
+        ),
+      ),
       ShellRoute(
         builder: (context, state, child) => TabletSplitShell(
           location: state.uri.toString(),
@@ -20,6 +49,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
+            builder: (context, state) => buildScreenForLocation(
+              state.uri.toString(),
+              extra: state.extra,
+            ),
+          ),
+          GoRoute(
+            path: '/category-order',
             builder: (context, state) => buildScreenForLocation(
               state.uri.toString(),
               extra: state.extra,

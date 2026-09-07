@@ -86,12 +86,7 @@ String _diagnosticsCaption(ItemSortDiagnostics d) {
       : 'item ${_fmt(d.itemRank)}'
           '${d.itemOverridden ? ' ov' : ''}'
           '${d.itemSampleCount != null ? ' n=${d.itemSampleCount}' : ''}';
-  final catLabel = d.usingDefaultCategory
-      ? 'cat default'
-      : 'cat ${_fmt(d.categoryRank)}'
-          '${d.categoryOverridden ? ' ov' : ''}'
-          '${d.categorySampleCount != null ? ' n=${d.categorySampleCount}' : ''}';
-  return '$catLabel · $itemLabel · key ${_fmt(d.sortKey)}';
+  return 'cat ${_fmt(d.categoryRank)} · $itemLabel · key ${_fmt(d.sortKey)}';
 }
 
 String _fmt(double value) {

@@ -44,6 +44,8 @@ class AppConstants {
       'meal_plan_ai_offer_alternatives';
   static const String mealPlanAiSuggestionCountKey =
       'meal_plan_ai_suggestion_count';
+  static const String categoryOrderOnboardingCompleteKey =
+      'category_order_onboarding_complete';
 }
 
 class QuantityUnits {

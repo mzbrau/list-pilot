@@ -858,6 +858,15 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.reorder),
+            title: const Text('Reorder categories'),
+            subtitle: const Text('Set your usual path through the shop'),
+            onTap: () {
+              Navigator.pop(context);
+              context.push('/category-order');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
             title: const Text('Manage shopping catalog'),
             subtitle: const Text('Browse, edit, and add aliases'),

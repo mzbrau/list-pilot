@@ -12,7 +12,7 @@ Once you have List Pilot installed from a GitHub Release:
 
 1. Download the latest `list-pilot-X.Y.Z.apk` from [Releases](https://github.com/mzbrau/list-pilot/releases).
 2. Open the APK on your phone.
-3. Install over the existing app — **your data is preserved** (lists, custom catalog, learned order).
+3. Install over the existing app — **your data is preserved** (lists, custom catalog, learned item order). After upgrading you may be asked to set or confirm category aisle order once.
 
 :::tip No uninstall needed
 In-place upgrades keep your SQLite database intact. You should never need to uninstall between normal releases.

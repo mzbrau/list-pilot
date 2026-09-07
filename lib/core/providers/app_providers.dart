@@ -318,9 +318,9 @@ final overviewDisplayItemsProvider =
   );
 });
 
-final categoriesProvider = FutureProvider<List<Category>>((ref) async {
+final categoriesProvider = StreamProvider<List<Category>>((ref) {
   ref.watch(appInitProvider);
-  return ref.watch(catalogRepositoryProvider).getCategories();
+  return ref.watch(catalogRepositoryProvider).watchCategories();
 });
 
 class CatalogOverviewData {
@@ -545,15 +545,6 @@ final receiptInsightsSnapshotProvider =
       );
 });
 
-final categoryRankStatsProvider =
-    StreamProvider.family<List<CategoryRankStat>, int>((ref, listId) {
-  ref.watch(appInitProvider);
-  final db = ref.watch(databaseProvider);
-  return (db.select(db.categoryRankStats)
-        ..where((t) => t.listId.equals(listId)))
-      .watch();
-});
-
 final itemRankStatsProvider =
     StreamProvider.family<List<ItemRankStat>, int>((ref, listId) {
   ref.watch(appInitProvider);
@@ -684,6 +675,34 @@ class OrderingDiagnosticsEnabledNotifier extends StateNotifier<bool> {
     state = enabled;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConstants.orderingDiagnosticsEnabledKey, enabled);
+  }
+}
+
+/// `null` while loading prefs; `false` until the user finishes aisle-order setup.
+final categoryOrderOnboardingCompleteProvider = StateNotifierProvider<
+    CategoryOrderOnboardingNotifier, bool?>((ref) {
+  return CategoryOrderOnboardingNotifier();
+});
+
+class CategoryOrderOnboardingNotifier extends StateNotifier<bool?> {
+  CategoryOrderOnboardingNotifier() : super(null) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state =
+        prefs.getBool(AppConstants.categoryOrderOnboardingCompleteKey) ??
+            false;
+  }
+
+  Future<void> markComplete() async {
+    state = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(
+      AppConstants.categoryOrderOnboardingCompleteKey,
+      true,
+    );
   }
 }
 

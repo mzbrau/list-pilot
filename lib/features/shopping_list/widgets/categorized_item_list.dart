@@ -40,8 +40,7 @@ class CategorizedItemList extends StatelessWidget {
               final catDiag = categoryDiagnosticsByName?[entry.key];
               final headerLabel = showDiagnostics && catDiag != null
                   ? '${entry.key} (${entry.value.length})  ·  '
-                      'cat ${_fmt(catDiag.categoryRank)}'
-                      '${catDiag.categoryOverridden ? ' (override)' : ''}  ·  '
+                      'cat ${_fmt(catDiag.categoryRank)}  ·  '
                       'Σ ${_fmt(catDiag.categoryContribution)}'
                   : '${entry.key} (${entry.value.length})';
 

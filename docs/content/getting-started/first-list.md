@@ -6,6 +6,10 @@ sidebar_position: 2
 
 Getting started with List Pilot takes just a few taps.
 
+## Set your shop path
+
+On first launch, drag grocery categories into the order you usually walk through the shop, then tap **Done**. You can change this anytime in **Settings → Reorder categories**.
+
 ## Create a list
 
 1. Open List Pilot — you'll see the main lists overview.
@@ -33,5 +37,5 @@ The app bar shows your progress as a count (e.g. **8/10**) and a thin progress b
 
 - [Multiple lists](/docs/features/multiple-lists) — manage lists for different stores
 - [Adding items](/docs/features/adding-items) — catalog autocomplete in detail
-- [Smart ordering](/docs/features/smart-ordering) — how the app learns your route
+- [Smart ordering](/docs/features/smart-ordering) — aisle order and within-category learning
 - [Shop Stats](/docs/features/shop-stats) — optional shopping pace tracking

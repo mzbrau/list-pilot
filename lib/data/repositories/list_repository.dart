@@ -54,8 +54,6 @@ class ListRepository {
   Future<void> deleteList(int id) async {
     await (_db.delete(_db.checkOffEvents)..where((t) => t.listId.equals(id)))
         .go();
-    await (_db.delete(_db.categoryRankStats)..where((t) => t.listId.equals(id)))
-        .go();
     await (_db.delete(_db.itemRankStats)..where((t) => t.listId.equals(id)))
         .go();
     await _shopStats.deleteRecordsForList(id);

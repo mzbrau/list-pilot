@@ -101,29 +101,9 @@ class LearningRepository {
 
   Future<void> recomputeRanks(int listId) async {
     final events = await _db.getCheckOffEventsForList(listId);
-    final categories = await _db.getAllCategories();
-    final categoryOrder = categories.map((c) => c.id).toList();
-
-    final categoryStats = _ordering.computeCategoryRanks(
-      events: events,
-      defaultCategoryOrder: categoryOrder,
-    );
-
     final itemStats = _ordering.computeItemRanks(events: events);
 
     final now = DateTime.now();
-    for (final stat in categoryStats) {
-      await _db.upsertCategoryRankStat(
-        CategoryRankStatsCompanion.insert(
-          listId: listId,
-          categoryId: stat.categoryId,
-          medianRank: stat.medianRank,
-          sampleCount: stat.sampleCount,
-          lastUpdated: now,
-        ),
-      );
-    }
-
     for (final stat in itemStats) {
       await _db.upsertItemRankStat(
         ItemRankStatsCompanion.insert(
@@ -139,39 +119,12 @@ class LearningRepository {
   }
 
   Future<void> resetLearnedOrder(int listId) async {
-    await _db.clearRankStatsForList(listId);
-  }
-
-  Future<Map<String, double>> getCategoryRanks(int listId) async {
-    final stats = await _db.getCategoryRankStats(listId);
-    return {for (final s in stats) s.categoryId: s.medianRank};
+    await _db.clearItemRankStatsForList(listId);
   }
 
   Future<Map<int, double>> getItemRanks(int listId) async {
     final stats = await _db.getItemRankStats(listId);
     return {for (final s in stats) s.catalogItemId: s.medianRank};
-  }
-
-  Future<void> setCategoryRankOverride({
-    required int listId,
-    required String categoryId,
-    required double rank,
-  }) {
-    return _db.setCategoryRankOverride(
-      listId: listId,
-      categoryId: categoryId,
-      overrideRank: rank,
-    );
-  }
-
-  Future<void> clearCategoryRankOverride({
-    required int listId,
-    required String categoryId,
-  }) {
-    return _db.clearCategoryRankOverride(
-      listId: listId,
-      categoryId: categoryId,
-    );
   }
 
   Future<void> setItemRankOverride({

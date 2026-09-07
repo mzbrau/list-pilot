@@ -16,7 +16,6 @@ part 'app_database.g.dart';
   ShoppingLists,
   ListItems,
   CheckOffEvents,
-  CategoryRankStats,
   ItemRankStats,
   ShopStatsRecords,
   Meals,
@@ -46,7 +45,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -116,11 +115,17 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(receiptLists, receiptLists.backgroundColor);
           }
           if (from < 14) {
-            await m.addColumn(
-              categoryRankStats,
-              categoryRankStats.overrideRank,
+            // CategoryRankStats was dropped in v15; only add override if table
+            // still exists (upgrading from <14 before the drop).
+            await customStatement(
+              'ALTER TABLE category_rank_stats ADD COLUMN override_rank REAL',
             );
             await m.addColumn(itemRankStats, itemRankStats.overrideRank);
+          }
+          if (from < 15) {
+            await customStatement(
+              'DROP TABLE IF EXISTS category_rank_stats',
+            );
           }
         },
         beforeOpen: (details) async {
@@ -359,29 +364,8 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
-  Future<List<CategoryRankStat>> getCategoryRankStats(int listId) {
-    return (select(categoryRankStats)
-          ..where((t) => t.listId.equals(listId)))
-        .get();
-  }
-
   Future<List<ItemRankStat>> getItemRankStats(int listId) {
     return (select(itemRankStats)..where((t) => t.listId.equals(listId))).get();
-  }
-
-  /// Upserts computed rank fields only — preserves [overrideRank] on conflict.
-  Future<void> upsertCategoryRankStat(CategoryRankStatsCompanion stat) {
-    return into(categoryRankStats).insert(
-      stat,
-      onConflict: DoUpdate(
-        (old) => CategoryRankStatsCompanion(
-          medianRank: stat.medianRank,
-          sampleCount: stat.sampleCount,
-          lastUpdated: stat.lastUpdated,
-        ),
-        target: [categoryRankStats.listId, categoryRankStats.categoryId],
-      ),
-    );
   }
 
   /// Upserts computed rank fields only — preserves [overrideRank] on conflict.
@@ -400,17 +384,6 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<CategoryRankStat?> getCategoryRankStat(
-    int listId,
-    String categoryId,
-  ) {
-    return (select(categoryRankStats)
-          ..where(
-            (t) => t.listId.equals(listId) & t.categoryId.equals(categoryId),
-          ))
-        .getSingleOrNull();
-  }
-
   Future<ItemRankStat?> getItemRankStat(int listId, int catalogItemId) {
     return (select(itemRankStats)
           ..where(
@@ -419,47 +392,6 @@ class AppDatabase extends _$AppDatabase {
                 t.catalogItemId.equals(catalogItemId),
           ))
         .getSingleOrNull();
-  }
-
-  Future<void> setCategoryRankOverride({
-    required int listId,
-    required String categoryId,
-    required double overrideRank,
-  }) async {
-    final existing = await getCategoryRankStat(listId, categoryId);
-    final now = DateTime.now();
-    if (existing == null) {
-      await into(categoryRankStats).insert(
-        CategoryRankStatsCompanion.insert(
-          listId: listId,
-          categoryId: categoryId,
-          medianRank: overrideRank,
-          sampleCount: 0,
-          lastUpdated: now,
-          overrideRank: Value(overrideRank),
-        ),
-      );
-    } else {
-      await (update(categoryRankStats)
-            ..where(
-              (t) =>
-                  t.listId.equals(listId) & t.categoryId.equals(categoryId),
-            ))
-          .write(
-        CategoryRankStatsCompanion(overrideRank: Value(overrideRank)),
-      );
-    }
-  }
-
-  Future<void> clearCategoryRankOverride({
-    required int listId,
-    required String categoryId,
-  }) async {
-    await (update(categoryRankStats)
-          ..where(
-            (t) => t.listId.equals(listId) & t.categoryId.equals(categoryId),
-          ))
-        .write(const CategoryRankStatsCompanion(overrideRank: Value(null)));
   }
 
   Future<void> setItemRankOverride({
@@ -506,10 +438,18 @@ class AppDatabase extends _$AppDatabase {
         .write(const ItemRankStatsCompanion(overrideRank: Value(null)));
   }
 
-  Future<void> clearRankStatsForList(int listId) async {
-    await (delete(categoryRankStats)..where((t) => t.listId.equals(listId)))
-        .go();
+  Future<void> clearItemRankStatsForList(int listId) async {
     await (delete(itemRankStats)..where((t) => t.listId.equals(listId))).go();
+  }
+
+  Future<void> updateCategorySortOrders(List<String> categoryIdsInOrder) async {
+    await transaction(() async {
+      for (var i = 0; i < categoryIdsInOrder.length; i++) {
+        await (update(categories)
+              ..where((t) => t.id.equals(categoryIdsInOrder[i])))
+            .write(CategoriesCompanion(sortOrder: Value(i)));
+      }
+    });
   }
 
   Future<List<Meal>> searchMeals(String query, {int limit = 8}) async {

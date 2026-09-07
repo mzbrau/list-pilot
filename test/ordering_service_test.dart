@@ -13,39 +13,26 @@ void main() {
       service = OrderingService();
     });
 
-    test('computes median category first-rank across trips', () {
-      final events = [
-        _event(tripId: 1, seq: 0, categoryId: 'cleaning', catalogId: 1),
-        _event(tripId: 1, seq: 1, categoryId: 'dairy', catalogId: 2),
-        _event(tripId: 2, seq: 0, categoryId: 'dairy', catalogId: 2),
-        _event(tripId: 2, seq: 1, categoryId: 'cleaning', catalogId: 1),
-      ];
+    test('category rank comes only from user sortOrder', () {
+      final item = _listItem();
 
-      final results = service.computeCategoryRanks(
-        events: events,
-        defaultCategoryOrder: ['dairy', 'cleaning'],
+      final diag = service.diagnosticsForItem(
+        item: item,
+        categoryOrder: {'dairy': 3, 'cleaning': 9},
+        itemStats: {},
       );
 
-      final cleaning = results.firstWhere((r) => r.categoryId == 'cleaning');
-      final dairy = results.firstWhere((r) => r.categoryId == 'dairy');
-
-      expect(cleaning.medianRank, 0.5);
-      expect(dairy.medianRank, 0.5);
-      expect(cleaning.sampleCount, 2);
+      expect(diag.categoryRank, 3);
+      expect(diag.itemRank, 999);
+      expect(diag.usingDefaultItem, isTrue);
     });
 
-    test('applies learned order when sample count threshold met', () {
+    test('applies learned item order when sample count threshold met', () {
       final item = _listItem();
 
       final key = service.sortKeyForItem(
         item: item,
-        defaultCategoryOrder: {'dairy': 3, 'cleaning': 9},
-        categoryStats: {
-          'dairy': _categoryStat(
-            medianRank: 1,
-            sampleCount: 3,
-          ),
-        },
+        categoryOrder: {'dairy': 3, 'cleaning': 9},
         itemStats: {
           10: _itemStat(
             medianRank: 0,
@@ -54,26 +41,18 @@ void main() {
         },
       );
 
-      expect(key, lessThan(20000));
+      // category 3 * 10000 + item 0 * 100 + nameTie
+      expect(key, greaterThanOrEqualTo(30000));
+      expect(key, lessThan(30100));
     });
 
-    test('override rank bypasses sample count threshold', () {
+    test('item override rank bypasses sample count threshold', () {
       final item = _listItem();
       final now = DateTime.now();
 
       final diag = service.diagnosticsForItem(
         item: item,
-        defaultCategoryOrder: {'dairy': 3},
-        categoryStats: {
-          'dairy': CategoryRankStat(
-            listId: 1,
-            categoryId: 'dairy',
-            medianRank: 5,
-            sampleCount: 1,
-            lastUpdated: now,
-            overrideRank: 0,
-          ),
-        },
+        categoryOrder: {'dairy': 3},
         itemStats: {
           10: ItemRankStat(
             listId: 1,
@@ -87,25 +66,19 @@ void main() {
         },
       );
 
-      expect(diag.categoryRank, 0);
+      expect(diag.categoryRank, 3);
       expect(diag.itemRank, 1);
-      expect(diag.categoryOverridden, isTrue);
       expect(diag.itemOverridden, isTrue);
-      expect(diag.usingDefaultCategory, isFalse);
       expect(diag.usingDefaultItem, isFalse);
-      expect(diag.sortKey, closeTo(100, 1));
+      expect(diag.sortKey, closeTo(30100, 1));
     });
 
-    test('falls back to defaults when samples below threshold and no override',
-        () {
+    test('falls back to default item rank when samples below threshold', () {
       final item = _listItem();
 
       final diag = service.diagnosticsForItem(
         item: item,
-        defaultCategoryOrder: {'dairy': 3},
-        categoryStats: {
-          'dairy': _categoryStat(medianRank: 0, sampleCount: 2),
-        },
+        categoryOrder: {'dairy': 3},
         itemStats: {
           10: _itemStat(medianRank: 0, sampleCount: 2),
         },
@@ -113,8 +86,66 @@ void main() {
 
       expect(diag.categoryRank, 3);
       expect(diag.itemRank, 999);
-      expect(diag.usingDefaultCategory, isTrue);
       expect(diag.usingDefaultItem, isTrue);
+    });
+
+    test('groups active items by category sortOrder', () {
+      final now = DateTime.now();
+      final items = [
+        ListItem(
+          id: 1,
+          listId: 1,
+          catalogItemId: 1,
+          displayName: 'Milk',
+          categoryId: 'dairy',
+          quantityValue: null,
+          quantityUnit: null,
+          isCompleted: false,
+          completedAt: null,
+          addedAt: now,
+        ),
+        ListItem(
+          id: 2,
+          listId: 1,
+          catalogItemId: 2,
+          displayName: 'Apples',
+          categoryId: 'fruit_veg',
+          quantityValue: null,
+          quantityUnit: null,
+          isCompleted: false,
+          completedAt: null,
+          addedAt: now,
+        ),
+      ];
+      final categories = [
+        Category(id: 'dairy', name: 'Dairy', sortOrder: 1),
+        Category(id: 'fruit_veg', name: 'Fruit & Veg', sortOrder: 0),
+      ];
+
+      final grouped = service.groupActiveItems(
+        items: items,
+        categories: categories,
+        itemRankStats: const [],
+      );
+
+      expect(grouped.keys.toList(), ['Fruit & Veg', 'Dairy']);
+    });
+
+    test('computes median item ranks within category across trips', () {
+      final events = [
+        _event(tripId: 1, seq: 0, categoryId: 'dairy', catalogId: 10),
+        _event(tripId: 1, seq: 1, categoryId: 'dairy', catalogId: 11),
+        _event(tripId: 2, seq: 0, categoryId: 'dairy', catalogId: 11),
+        _event(tripId: 2, seq: 1, categoryId: 'dairy', catalogId: 10),
+      ];
+
+      final results = service.computeItemRanks(events: events);
+      final milk = results.firstWhere((r) => r.catalogItemId == 10);
+      final cheese = results.firstWhere((r) => r.catalogItemId == 11);
+
+      expect(milk.medianRank, 0.5);
+      expect(cheese.medianRank, 0.5);
+      expect(milk.sampleCount, 2);
     });
 
     test('effectiveRank prefers override over median', () {
@@ -161,6 +192,13 @@ void main() {
               sortOrder: 0,
             ),
           );
+      await db.into(db.categories).insert(
+            CategoriesCompanion.insert(
+              id: 'fruit_veg',
+              name: 'Fruit & Veg',
+              sortOrder: 1,
+            ),
+          );
       repo = CatalogRepository(db);
     });
 
@@ -196,6 +234,13 @@ void main() {
       );
       expect(first.id, second.id);
     });
+
+    test('updateCategorySortOrders rewrites global aisle order', () async {
+      await repo.updateCategorySortOrders(['fruit_veg', 'dairy']);
+      final categories = await repo.getCategories();
+      expect(categories.map((c) => c.id).toList(), ['fruit_veg', 'dairy']);
+      expect(categories.map((c) => c.sortOrder).toList(), [0, 1]);
+    });
   });
 }
 
@@ -211,21 +256,6 @@ ListItem _listItem() {
     isCompleted: false,
     completedAt: null,
     addedAt: DateTime.now(),
-  );
-}
-
-CategoryRankStat _categoryStat({
-  required double medianRank,
-  required int sampleCount,
-  double? overrideRank,
-}) {
-  return CategoryRankStat(
-    listId: 1,
-    categoryId: 'dairy',
-    medianRank: medianRank,
-    sampleCount: sampleCount,
-    lastUpdated: DateTime.now(),
-    overrideRank: overrideRank,
   );
 }
 
