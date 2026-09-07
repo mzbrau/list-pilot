@@ -94,6 +94,16 @@ class CatalogRepository {
 
   Future<List<Category>> getCategories() => _db.getAllCategories();
 
+  Stream<List<Category>> watchCategories() {
+    return (_db.select(_db.categories)
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .watch();
+  }
+
+  Future<void> updateCategorySortOrders(List<String> categoryIdsInOrder) {
+    return _db.updateCategorySortOrders(categoryIdsInOrder);
+  }
+
   Future<List<CatalogItem>> getUserAddedItems() {
     return (_db.select(_db.catalogItems)
           ..where((t) => t.isUserAdded.equals(true)))

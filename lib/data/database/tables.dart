@@ -83,18 +83,6 @@ class CheckOffEvents extends Table {
   RealColumn get weight => real().withDefault(const Constant(1.0))();
 }
 
-class CategoryRankStats extends Table {
-  IntColumn get listId => integer().references(ShoppingLists, #id)();
-  TextColumn get categoryId => text()();
-  RealColumn get medianRank => real()();
-  IntColumn get sampleCount => integer()();
-  DateTimeColumn get lastUpdated => dateTime()();
-  RealColumn get overrideRank => real().nullable()();
-
-  @override
-  Set<Column<Object>> get primaryKey => {listId, categoryId};
-}
-
 class ItemRankStats extends Table {
   IntColumn get listId => integer().references(ShoppingLists, #id)();
   IntColumn get catalogItemId => integer()();

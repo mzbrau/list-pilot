@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../features/catalog/catalog_item_detail_screen.dart';
 import '../features/catalog/catalog_screen.dart';
+import '../features/categories/category_order_screen.dart';
 import '../features/item_detail/item_detail_screen.dart';
 import '../features/lists/lists_overview_screen.dart';
 import '../features/meal_manager/meal_import_screen.dart';
@@ -32,6 +33,14 @@ Widget buildScreenForLocation(String location, {Object? extra}) {
 
   if (uri.path == '/' || segments.isEmpty) {
     return const ListsOverviewScreen();
+  }
+
+  if (uri.path == '/onboarding/category-order') {
+    return const CategoryOrderScreen(isOnboarding: true);
+  }
+
+  if (uri.path == '/category-order') {
+    return const CategoryOrderScreen();
   }
 
   if (uri.path == '/stats') {

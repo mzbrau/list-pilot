@@ -1,18 +1,6 @@
 import '../../core/constants/app_constants.dart';
 import '../../data/database/app_database.dart';
 
-class CategoryRankResult {
-  const CategoryRankResult({
-    required this.categoryId,
-    required this.medianRank,
-    required this.sampleCount,
-  });
-
-  final String categoryId;
-  final double medianRank;
-  final int sampleCount;
-}
-
 class ItemRankResult {
   const ItemRankResult({
     required this.catalogItemId,
@@ -34,11 +22,8 @@ class ItemSortDiagnostics {
     required this.itemRank,
     required this.nameTie,
     required this.sortKey,
-    required this.categoryOverridden,
     required this.itemOverridden,
-    required this.categorySampleCount,
     required this.itemSampleCount,
-    required this.usingDefaultCategory,
     required this.usingDefaultItem,
   });
 
@@ -46,11 +31,8 @@ class ItemSortDiagnostics {
   final double itemRank;
   final double nameTie;
   final double sortKey;
-  final bool categoryOverridden;
   final bool itemOverridden;
-  final int? categorySampleCount;
   final int? itemSampleCount;
-  final bool usingDefaultCategory;
   final bool usingDefaultItem;
 
   double get categoryContribution => categoryRank * 10000;
@@ -71,40 +53,6 @@ class OrderingService {
       return medianRank;
     }
     return fallback;
-  }
-
-  List<CategoryRankResult> computeCategoryRanks({
-    required List<CheckOffEvent> events,
-    required List<String> defaultCategoryOrder,
-  }) {
-    final trips = _groupByTrip(events);
-    final categoryFirstRanks = <String, List<double>>{};
-
-    for (final tripEvents in trips.values) {
-      if (tripEvents.isEmpty) continue;
-
-      final weight = tripEvents.first.weight;
-      final seenCategories = <String>{};
-      var rank = 0;
-
-      for (final event in tripEvents) {
-        if (seenCategories.contains(event.categoryId)) continue;
-        seenCategories.add(event.categoryId);
-        categoryFirstRanks
-            .putIfAbsent(event.categoryId, () => [])
-            .add(rank * weight);
-        rank++;
-      }
-    }
-
-    return categoryFirstRanks.entries.map((entry) {
-      final median = _median(entry.value);
-      return CategoryRankResult(
-        categoryId: entry.key,
-        medianRank: median,
-        sampleCount: entry.value.length,
-      );
-    }).toList();
   }
 
   List<ItemRankResult> computeItemRanks({
@@ -144,26 +92,10 @@ class OrderingService {
 
   ItemSortDiagnostics diagnosticsForItem({
     required ListItem item,
-    required Map<String, int> defaultCategoryOrder,
-    required Map<String, CategoryRankStat> categoryStats,
+    required Map<String, int> categoryOrder,
     required Map<int, ItemRankStat> itemStats,
   }) {
-    final defaultCatRank =
-        defaultCategoryOrder[item.categoryId]?.toDouble() ?? 999.0;
-
-    final catStat = categoryStats[item.categoryId];
-    final categoryOverridden = catStat?.overrideRank != null;
-    final usingDefaultCategory = catStat == null ||
-        (!categoryOverridden &&
-            catStat.sampleCount < AppConstants.minSamplesForLearnedOrder);
-    final categoryRank = catStat == null
-        ? defaultCatRank
-        : effectiveRank(
-            overrideRank: catStat.overrideRank,
-            medianRank: catStat.medianRank,
-            sampleCount: catStat.sampleCount,
-            fallback: defaultCatRank,
-          );
+    final categoryRank = categoryOrder[item.categoryId]?.toDouble() ?? 999.0;
 
     double itemRank = 999.0;
     var itemOverridden = false;
@@ -193,43 +125,37 @@ class OrderingService {
       itemRank: itemRank,
       nameTie: nameTie,
       sortKey: sortKey,
-      categoryOverridden: categoryOverridden,
       itemOverridden: itemOverridden,
-      categorySampleCount: catStat?.sampleCount,
       itemSampleCount: itemSampleCount,
-      usingDefaultCategory: usingDefaultCategory,
       usingDefaultItem: usingDefaultItem,
     );
   }
 
   double sortKeyForItem({
     required ListItem item,
-    required Map<String, int> defaultCategoryOrder,
-    required Map<String, CategoryRankStat> categoryStats,
+    required Map<String, int> categoryOrder,
     required Map<int, ItemRankStat> itemStats,
   }) {
     return diagnosticsForItem(
       item: item,
-      defaultCategoryOrder: defaultCategoryOrder,
-      categoryStats: categoryStats,
+      categoryOrder: categoryOrder,
       itemStats: itemStats,
     ).sortKey;
   }
 
-  Map<String, int> buildDefaultCategoryOrder(List<Category> categories) {
-    final sorted = [...categories]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+  Map<String, int> buildCategoryOrder(List<Category> categories) {
+    final sorted = [...categories]
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return {for (var i = 0; i < sorted.length; i++) sorted[i].id: i};
   }
 
   Map<String, List<ListItem>> groupActiveItems({
     required List<ListItem> items,
     required List<Category> categories,
-    required List<CategoryRankStat> categoryRankStats,
     required List<ItemRankStat> itemRankStats,
   }) {
     final active = items.where((i) => !i.isCompleted).toList();
-    final defaultOrder = buildDefaultCategoryOrder(categories);
-    final catStatsMap = {for (final s in categoryRankStats) s.categoryId: s};
+    final categoryOrder = buildCategoryOrder(categories);
     final itemStatsMap = {
       for (final s in itemRankStats) s.catalogItemId: s,
     };
@@ -238,14 +164,12 @@ class OrderingService {
     active.sort((a, b) {
       final keyA = sortKeyForItem(
         item: a,
-        defaultCategoryOrder: defaultOrder,
-        categoryStats: catStatsMap,
+        categoryOrder: categoryOrder,
         itemStats: itemStatsMap,
       );
       final keyB = sortKeyForItem(
         item: b,
-        defaultCategoryOrder: defaultOrder,
-        categoryStats: catStatsMap,
+        categoryOrder: categoryOrder,
         itemStats: itemStatsMap,
       );
       return keyA.compareTo(keyB);

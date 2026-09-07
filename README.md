@@ -1,6 +1,6 @@
 # List Pilot
 
-A smart shopping list app for Android built with Flutter. List Pilot helps you add items quickly, group them by category, and learn your in-store check-off order over time.
+A smart shopping list app for Android built with Flutter. List Pilot helps you add items quickly, group them by your aisle order, and learn item order within each category over time.
 
 **Documentation:** [https://mzbrau.github.io/list-pilot/](https://mzbrau.github.io/list-pilot/)
 
@@ -10,7 +10,7 @@ A smart shopping list app for Android built with Flutter. List Pilot helps you a
 
 - Fast catalog autocomplete with 440+ built-in groceries
 - Category grouping and multiple lists
-- Smart ordering that learns your check-off route
+- User-defined aisle order plus learned within-category item order
 - Light & dark mode, local-only storage (no cloud)
 
 ## Quick start

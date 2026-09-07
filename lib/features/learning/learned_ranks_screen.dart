@@ -15,7 +15,6 @@ class LearnedRanksScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final listAsync = ref.watch(shoppingListProvider(listId));
-    final categoryStatsAsync = ref.watch(categoryRankStatsProvider(listId));
     final itemStatsAsync = ref.watch(itemRankStatsProvider(listId));
     final categoriesAsync = ref.watch(categoriesProvider);
     final catalogAsync = ref.watch(allCatalogItemsProvider);
@@ -24,104 +23,70 @@ class LearnedRanksScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Learned ranks — $listName'),
+        title: Text('Learned item ranks — $listName'),
       ),
-      body: categoryStatsAsync.when(
+      body: itemStatsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (categoryStats) {
-          return itemStatsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
-            data: (itemStats) {
-              if (categoryStats.isEmpty && itemStats.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Text(
-                      'No learned ranks yet. Check off items over a few '
-                      'shopping trips and ranks will appear here.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+        data: (itemStats) {
+          if (itemStats.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  'No learned item ranks yet. Check off items over a few '
+                  'shopping trips and within-category order will appear here.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          final categories = categoriesAsync.valueOrNull ?? [];
+          final categoryNames = {
+            for (final c in categories) c.id: c.name,
+          };
+          final catalogItems = catalogAsync.valueOrNull?.items ?? [];
+          final catalogNames = {
+            for (final c in catalogItems) c.id: c.displayName,
+          };
+
+          final sortedItems = [...itemStats]..sort((a, b) {
+                final rankA = OrderingService.effectiveRank(
+                  overrideRank: a.overrideRank,
+                  medianRank: a.medianRank,
+                  sampleCount: a.sampleCount,
+                  fallback: a.medianRank,
                 );
-              }
+                final rankB = OrderingService.effectiveRank(
+                  overrideRank: b.overrideRank,
+                  medianRank: b.medianRank,
+                  sampleCount: b.sampleCount,
+                  fallback: b.medianRank,
+                );
+                return rankA.compareTo(rankB);
+              });
 
-              final categories = categoriesAsync.valueOrNull ?? [];
-              final categoryNames = {
-                for (final c in categories) c.id: c.name,
-              };
-              final catalogItems = catalogAsync.valueOrNull?.items ?? [];
-              final catalogNames = {
-                for (final c in catalogItems) c.id: c.displayName,
-              };
-
-              final sortedCategories = [...categoryStats]..sort((a, b) {
-                    final rankA = OrderingService.effectiveRank(
-                      overrideRank: a.overrideRank,
-                      medianRank: a.medianRank,
-                      sampleCount: a.sampleCount,
-                      fallback: a.medianRank,
-                    );
-                    final rankB = OrderingService.effectiveRank(
-                      overrideRank: b.overrideRank,
-                      medianRank: b.medianRank,
-                      sampleCount: b.sampleCount,
-                      fallback: b.medianRank,
-                    );
-                    return rankA.compareTo(rankB);
-                  });
-
-              final sortedItems = [...itemStats]..sort((a, b) {
-                    final rankA = OrderingService.effectiveRank(
-                      overrideRank: a.overrideRank,
-                      medianRank: a.medianRank,
-                      sampleCount: a.sampleCount,
-                      fallback: a.medianRank,
-                    );
-                    final rankB = OrderingService.effectiveRank(
-                      overrideRank: b.overrideRank,
-                      medianRank: b.medianRank,
-                      sampleCount: b.sampleCount,
-                      fallback: b.medianRank,
-                    );
-                    return rankA.compareTo(rankB);
-                  });
-
-              return ListView(
-                padding: const EdgeInsets.only(bottom: 32),
-                children: [
-                  const _HelpBanner(),
-                  if (sortedCategories.isNotEmpty) ...[
-                    const _SectionHeader('Categories'),
-                    for (final stat in sortedCategories)
-                      _CategoryRankTile(
-                        listId: listId,
-                        stat: stat,
-                        categoryName:
-                            categoryNames[stat.categoryId] ?? stat.categoryId,
-                      ),
-                  ],
-                  if (sortedItems.isNotEmpty) ...[
-                    const _SectionHeader('Items'),
-                    for (final stat in sortedItems)
-                      _ItemRankTile(
-                        listId: listId,
-                        stat: stat,
-                        itemName: catalogNames[stat.catalogItemId] ??
-                            'Item #${stat.catalogItemId}',
-                        categoryName:
-                            categoryNames[stat.categoryId] ?? stat.categoryId,
-                      ),
-                  ],
-                ],
-              );
-            },
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
+              const _HelpBanner(),
+              const _SectionHeader('Items'),
+              for (final stat in sortedItems)
+                _ItemRankTile(
+                  listId: listId,
+                  stat: stat,
+                  itemName: catalogNames[stat.catalogItemId] ??
+                      'Item #${stat.catalogItemId}',
+                  categoryName:
+                      categoryNames[stat.categoryId] ?? stat.categoryId,
+                ),
+            ],
           );
         },
       ),
@@ -138,9 +103,9 @@ class _HelpBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Text(
-        'Lower rank = earlier on the list. Learned ranks apply after '
+        'Lower rank = earlier within a category. Learned ranks apply after '
         '${AppConstants.minSamplesForLearnedOrder}+ samples unless overridden. '
-        'Overrides survive further shopping until undone or learned order is reset.',
+        'Category aisle order is set in Settings → Reorder categories.',
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
@@ -165,73 +130,6 @@ class _SectionHeader extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w600,
         ),
-      ),
-    );
-  }
-}
-
-class _CategoryRankTile extends ConsumerWidget {
-  const _CategoryRankTile({
-    required this.listId,
-    required this.stat,
-    required this.categoryName,
-  });
-
-  final int listId;
-  final CategoryRankStat stat;
-  final String categoryName;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final effective = OrderingService.effectiveRank(
-      overrideRank: stat.overrideRank,
-      medianRank: stat.medianRank,
-      sampleCount: stat.sampleCount,
-      fallback: stat.medianRank,
-    );
-    final overridden = stat.overrideRank != null;
-
-    return ListTile(
-      title: Text(categoryName),
-      subtitle: Text(_rankSubtitle(
-        computed: stat.medianRank,
-        effective: effective,
-        sampleCount: stat.sampleCount,
-        lastUpdated: stat.lastUpdated,
-        overridden: overridden,
-      )),
-      trailing: _RankActions(
-        overridden: overridden,
-        onEdit: () => _editRank(
-          context: context,
-          title: categoryName,
-          initial: effective,
-          onSave: (rank) => ref
-              .read(learningRepositoryProvider)
-              .setCategoryRankOverride(
-                listId: listId,
-                categoryId: stat.categoryId,
-                rank: rank,
-              ),
-        ),
-        onUndo: () => ref
-            .read(learningRepositoryProvider)
-            .clearCategoryRankOverride(
-              listId: listId,
-              categoryId: stat.categoryId,
-            ),
-      ),
-      onTap: () => _editRank(
-        context: context,
-        title: categoryName,
-        initial: effective,
-        onSave: (rank) => ref
-            .read(learningRepositoryProvider)
-            .setCategoryRankOverride(
-              listId: listId,
-              categoryId: stat.categoryId,
-              rank: rank,
-            ),
       ),
     );
   }

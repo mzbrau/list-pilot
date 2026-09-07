@@ -28,6 +28,8 @@ See [Shop Stats](/docs/features/shop-stats) for full details on timing, the live
 
 ## Catalog
 
+**Reorder categories** opens a drag list so you can set your usual path through the shop. The same order is used on every shopping list. You also set this on first launch.
+
 **Export custom catalog** saves your personal catalog changes to a JSON file:
 
 - Custom items you added
