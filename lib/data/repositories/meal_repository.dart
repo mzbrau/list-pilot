@@ -227,15 +227,39 @@ class MealRepository {
   }
 
   Future<void> deleteMealFromPlan(int planItemId) async {
-    await (_db.delete(_db.mealPlanItems)
-          ..where((t) => t.id.equals(planItemId)))
-        .go();
+    await _db.transaction(() async {
+      await (_db.update(_db.mealCheckOffEvents)
+            ..where((t) => t.mealPlanItemId.equals(planItemId)))
+          .write(
+        const MealCheckOffEventsCompanion(
+          mealPlanItemId: Value(null),
+        ),
+      );
+      await (_db.delete(_db.mealPlanItems)
+            ..where((t) => t.id.equals(planItemId)))
+          .go();
+    });
   }
 
   Future<void> clearCompletedPlanItems() async {
-    await (_db.delete(_db.mealPlanItems)
-          ..where((t) => t.isCompleted.equals(true)))
-        .go();
+    await _db.transaction(() async {
+      final completedIds = await (_db.select(_db.mealPlanItems)
+            ..where((t) => t.isCompleted.equals(true)))
+          .map((row) => row.id)
+          .get();
+      if (completedIds.isNotEmpty) {
+        await (_db.update(_db.mealCheckOffEvents)
+              ..where((t) => t.mealPlanItemId.isIn(completedIds)))
+            .write(
+          const MealCheckOffEventsCompanion(
+            mealPlanItemId: Value(null),
+          ),
+        );
+      }
+      await (_db.delete(_db.mealPlanItems)
+            ..where((t) => t.isCompleted.equals(true)))
+          .go();
+    });
   }
 
   Future<void> deleteMeal(int mealId) async {

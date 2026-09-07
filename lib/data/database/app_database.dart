@@ -45,7 +45,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -125,6 +125,58 @@ class AppDatabase extends _$AppDatabase {
           if (from < 15) {
             await customStatement(
               'DROP TABLE IF EXISTS category_rank_stats',
+            );
+          }
+          if (from < 16) {
+            // Rebuild check-off event tables so list/meal deletes can SET NULL
+            // instead of failing FK checks (preserves learning history).
+            await customStatement('''
+CREATE TABLE check_off_events_new (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  list_id INTEGER NOT NULL REFERENCES shopping_lists (id),
+  list_item_id INTEGER REFERENCES list_items (id) ON DELETE SET NULL,
+  category_id TEXT NOT NULL,
+  catalog_item_id INTEGER NULL,
+  checked_at INTEGER NOT NULL,
+  sequence_index INTEGER NOT NULL,
+  trip_id INTEGER NOT NULL,
+  weight REAL NOT NULL DEFAULT 1.0
+)
+''');
+            await customStatement('''
+INSERT INTO check_off_events_new (
+  id, list_id, list_item_id, category_id, catalog_item_id,
+  checked_at, sequence_index, trip_id, weight
+)
+SELECT
+  id, list_id, list_item_id, category_id, catalog_item_id,
+  checked_at, sequence_index, trip_id, weight
+FROM check_off_events
+''');
+            await customStatement('DROP TABLE check_off_events');
+            await customStatement(
+              'ALTER TABLE check_off_events_new RENAME TO check_off_events',
+            );
+
+            await customStatement('''
+CREATE TABLE meal_check_off_events_new (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  meal_id INTEGER NOT NULL REFERENCES meals (id),
+  meal_plan_item_id INTEGER REFERENCES meal_plan_items (id) ON DELETE SET NULL,
+  checked_at INTEGER NOT NULL
+)
+''');
+            await customStatement('''
+INSERT INTO meal_check_off_events_new (
+  id, meal_id, meal_plan_item_id, checked_at
+)
+SELECT id, meal_id, meal_plan_item_id, checked_at
+FROM meal_check_off_events
+''');
+            await customStatement('DROP TABLE meal_check_off_events');
+            await customStatement(
+              'ALTER TABLE meal_check_off_events_new '
+              'RENAME TO meal_check_off_events',
             );
           }
         },

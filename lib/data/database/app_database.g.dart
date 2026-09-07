@@ -2054,8 +2054,8 @@ class $CheckOffEventsTable extends CheckOffEvents
       const VerificationMeta('listItemId');
   @override
   late final GeneratedColumn<int> listItemId = GeneratedColumn<int>(
-      'list_item_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      'list_item_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _categoryIdMeta =
       const VerificationMeta('categoryId');
   @override
@@ -2128,8 +2128,6 @@ class $CheckOffEventsTable extends CheckOffEvents
           _listItemIdMeta,
           listItemId.isAcceptableOrUnknown(
               data['list_item_id']!, _listItemIdMeta));
-    } else if (isInserting) {
-      context.missing(_listItemIdMeta);
     }
     if (data.containsKey('category_id')) {
       context.handle(
@@ -2183,7 +2181,7 @@ class $CheckOffEventsTable extends CheckOffEvents
       listId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}list_id'])!,
       listItemId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}list_item_id'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}list_item_id']),
       categoryId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
       catalogItemId: attachedDatabase.typeMapping
@@ -2208,7 +2206,7 @@ class $CheckOffEventsTable extends CheckOffEvents
 class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
   final int id;
   final int listId;
-  final int listItemId;
+  final int? listItemId;
   final String categoryId;
   final int? catalogItemId;
   final DateTime checkedAt;
@@ -2218,7 +2216,7 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
   const CheckOffEvent(
       {required this.id,
       required this.listId,
-      required this.listItemId,
+      this.listItemId,
       required this.categoryId,
       this.catalogItemId,
       required this.checkedAt,
@@ -2230,7 +2228,9 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['list_id'] = Variable<int>(listId);
-    map['list_item_id'] = Variable<int>(listItemId);
+    if (!nullToAbsent || listItemId != null) {
+      map['list_item_id'] = Variable<int>(listItemId);
+    }
     map['category_id'] = Variable<String>(categoryId);
     if (!nullToAbsent || catalogItemId != null) {
       map['catalog_item_id'] = Variable<int>(catalogItemId);
@@ -2246,7 +2246,9 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
     return CheckOffEventsCompanion(
       id: Value(id),
       listId: Value(listId),
-      listItemId: Value(listItemId),
+      listItemId: listItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(listItemId),
       categoryId: Value(categoryId),
       catalogItemId: catalogItemId == null && nullToAbsent
           ? const Value.absent()
@@ -2264,7 +2266,7 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
     return CheckOffEvent(
       id: serializer.fromJson<int>(json['id']),
       listId: serializer.fromJson<int>(json['listId']),
-      listItemId: serializer.fromJson<int>(json['listItemId']),
+      listItemId: serializer.fromJson<int?>(json['listItemId']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
       catalogItemId: serializer.fromJson<int?>(json['catalogItemId']),
       checkedAt: serializer.fromJson<DateTime>(json['checkedAt']),
@@ -2279,7 +2281,7 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'listId': serializer.toJson<int>(listId),
-      'listItemId': serializer.toJson<int>(listItemId),
+      'listItemId': serializer.toJson<int?>(listItemId),
       'categoryId': serializer.toJson<String>(categoryId),
       'catalogItemId': serializer.toJson<int?>(catalogItemId),
       'checkedAt': serializer.toJson<DateTime>(checkedAt),
@@ -2292,7 +2294,7 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
   CheckOffEvent copyWith(
           {int? id,
           int? listId,
-          int? listItemId,
+          Value<int?> listItemId = const Value.absent(),
           String? categoryId,
           Value<int?> catalogItemId = const Value.absent(),
           DateTime? checkedAt,
@@ -2302,7 +2304,7 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
       CheckOffEvent(
         id: id ?? this.id,
         listId: listId ?? this.listId,
-        listItemId: listItemId ?? this.listItemId,
+        listItemId: listItemId.present ? listItemId.value : this.listItemId,
         categoryId: categoryId ?? this.categoryId,
         catalogItemId:
             catalogItemId.present ? catalogItemId.value : this.catalogItemId,
@@ -2368,7 +2370,7 @@ class CheckOffEvent extends DataClass implements Insertable<CheckOffEvent> {
 class CheckOffEventsCompanion extends UpdateCompanion<CheckOffEvent> {
   final Value<int> id;
   final Value<int> listId;
-  final Value<int> listItemId;
+  final Value<int?> listItemId;
   final Value<String> categoryId;
   final Value<int?> catalogItemId;
   final Value<DateTime> checkedAt;
@@ -2389,7 +2391,7 @@ class CheckOffEventsCompanion extends UpdateCompanion<CheckOffEvent> {
   CheckOffEventsCompanion.insert({
     this.id = const Value.absent(),
     required int listId,
-    required int listItemId,
+    this.listItemId = const Value.absent(),
     required String categoryId,
     this.catalogItemId = const Value.absent(),
     required DateTime checkedAt,
@@ -2397,7 +2399,6 @@ class CheckOffEventsCompanion extends UpdateCompanion<CheckOffEvent> {
     required int tripId,
     this.weight = const Value.absent(),
   })  : listId = Value(listId),
-        listItemId = Value(listItemId),
         categoryId = Value(categoryId),
         checkedAt = Value(checkedAt),
         sequenceIndex = Value(sequenceIndex),
@@ -2429,7 +2430,7 @@ class CheckOffEventsCompanion extends UpdateCompanion<CheckOffEvent> {
   CheckOffEventsCompanion copyWith(
       {Value<int>? id,
       Value<int>? listId,
-      Value<int>? listItemId,
+      Value<int?>? listItemId,
       Value<String>? categoryId,
       Value<int?>? catalogItemId,
       Value<DateTime>? checkedAt,
@@ -11418,7 +11419,7 @@ typedef $$CheckOffEventsTableCreateCompanionBuilder = CheckOffEventsCompanion
     Function({
   Value<int> id,
   required int listId,
-  required int listItemId,
+  Value<int?> listItemId,
   required String categoryId,
   Value<int?> catalogItemId,
   required DateTime checkedAt,
@@ -11430,7 +11431,7 @@ typedef $$CheckOffEventsTableUpdateCompanionBuilder = CheckOffEventsCompanion
     Function({
   Value<int> id,
   Value<int> listId,
-  Value<int> listItemId,
+  Value<int?> listItemId,
   Value<String> categoryId,
   Value<int?> catalogItemId,
   Value<DateTime> checkedAt,
@@ -11581,7 +11582,7 @@ class $$CheckOffEventsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<int> listId = const Value.absent(),
-            Value<int> listItemId = const Value.absent(),
+            Value<int?> listItemId = const Value.absent(),
             Value<String> categoryId = const Value.absent(),
             Value<int?> catalogItemId = const Value.absent(),
             Value<DateTime> checkedAt = const Value.absent(),
@@ -11603,7 +11604,7 @@ class $$CheckOffEventsTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required int listId,
-            required int listItemId,
+            Value<int?> listItemId = const Value.absent(),
             required String categoryId,
             Value<int?> catalogItemId = const Value.absent(),
             required DateTime checkedAt,

@@ -318,9 +318,9 @@ final overviewDisplayItemsProvider =
   );
 });
 
-final categoriesProvider = StreamProvider<List<Category>>((ref) {
-  ref.watch(appInitProvider);
-  return ref.watch(catalogRepositoryProvider).watchCategories();
+final categoriesProvider = StreamProvider<List<Category>>((ref) async* {
+  await ref.watch(appInitProvider.future);
+  yield* ref.watch(catalogRepositoryProvider).watchCategories();
 });
 
 class CatalogOverviewData {

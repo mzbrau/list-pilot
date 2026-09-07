@@ -131,6 +131,63 @@ void main() {
       expect(grouped.keys.toList(), ['Fruit & Veg', 'Dairy']);
     });
 
+    test(
+      'category aisle order beats unlearned item ranks across categories',
+      () {
+        final now = DateTime.now();
+        final items = [
+          ListItem(
+            id: 1,
+            listId: 1,
+            catalogItemId: 1,
+            displayName: 'Unlearned early aisle',
+            categoryId: 'fruit_veg',
+            quantityValue: null,
+            quantityUnit: null,
+            isCompleted: false,
+            completedAt: null,
+            addedAt: now,
+          ),
+          ListItem(
+            id: 2,
+            listId: 1,
+            catalogItemId: 2,
+            displayName: 'Learned later aisle',
+            categoryId: 'dairy',
+            quantityValue: null,
+            quantityUnit: null,
+            isCompleted: false,
+            completedAt: null,
+            addedAt: now,
+          ),
+        ];
+        final categories = [
+          Category(id: 'fruit_veg', name: 'Fruit & Veg', sortOrder: 0),
+          Category(id: 'dairy', name: 'Dairy', sortOrder: 1),
+        ];
+
+        final grouped = service.groupActiveItems(
+          items: items,
+          categories: categories,
+          itemRankStats: [
+            ItemRankStat(
+              listId: 1,
+              catalogItemId: 2,
+              categoryId: 'dairy',
+              medianRank: 0,
+              sampleCount: 10,
+              lastUpdated: now,
+              overrideRank: null,
+            ),
+          ],
+        );
+
+        // Unlearned fruit_veg item would score ~99,900 on the old scalar key;
+        // learned dairy would score ~10,000. Category order must still win.
+        expect(grouped.keys.toList(), ['Fruit & Veg', 'Dairy']);
+      },
+    );
+
     test('computes median item ranks within category across trips', () {
       final events = [
         _event(tripId: 1, seq: 0, categoryId: 'dairy', catalogId: 10),

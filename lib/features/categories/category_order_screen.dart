@@ -67,7 +67,10 @@ class _CategoryOrderScreenState extends ConsumerState<CategoryOrderScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (categories) {
-          _ordered ??= List<Category>.from(categories);
+          if (_ordered == null ||
+              (_ordered!.isEmpty && categories.isNotEmpty)) {
+            _ordered = List<Category>.from(categories);
+          }
           final ordered = _ordered!;
 
           return Column(
