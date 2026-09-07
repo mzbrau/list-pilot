@@ -43,7 +43,7 @@ class LearningRepository {
     await _db.into(_db.checkOffEvents).insert(
           CheckOffEventsCompanion.insert(
             listId: listId,
-            listItemId: listItemId,
+            listItemId: Value(listItemId),
             categoryId: item.categoryId,
             catalogItemId: Value(item.catalogItemId),
             checkedAt: now,

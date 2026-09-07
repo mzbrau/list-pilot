@@ -14,7 +14,7 @@ class ReceiptPdfService {
     try {
       final buffer = StringBuffer();
       for (final page in document.pages) {
-        final pageText = (await page.loadText()).fullText.trim();
+        final pageText = (await page.loadText())?.fullText.trim() ?? '';
         if (pageText.isNotEmpty) {
           if (buffer.isNotEmpty) {
             buffer.writeln();
