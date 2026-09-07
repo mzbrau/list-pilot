@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../core/providers/app_providers.dart';
 import '../../../data/database/app_database.dart';
@@ -17,6 +18,7 @@ class MealPlanTile extends ConsumerWidget {
     required this.onTap,
     required this.onAddIngredients,
     required this.onScaleChanged,
+    required this.onDelete,
     this.onLongPress,
   });
 
@@ -26,6 +28,7 @@ class MealPlanTile extends ConsumerWidget {
   final VoidCallback onTap;
   final VoidCallback onAddIngredients;
   final ValueChanged<double> onScaleChanged;
+  final VoidCallback onDelete;
   final VoidCallback? onLongPress;
 
   @override
@@ -40,85 +43,108 @@ class MealPlanTile extends ConsumerWidget {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
         opacity: completed ? 0.55 : 1,
-        child: Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onLongPress: onLongPress,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Checkbox(
-                  value: completed,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (value) => onToggle(value ?? false),
-                ),
-                _MealPhotoThumbnail(meal: meal),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: onTap,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                meal.displayName,
-                                style: completed
-                                    ? theme.textTheme.titleMedium?.copyWith(
-                                        decoration: TextDecoration.lineThrough,
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      )
-                                    : theme.textTheme.titleMedium,
+        child: Slidable(
+          key: ValueKey(entry.planItem.id),
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            extentRatio: 0.25,
+            children: [
+              SlidableAction(
+                onPressed: (_) => onDelete(),
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+                icon: Icons.delete_outline,
+                label: 'Delete',
+              ),
+            ],
+          ),
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onLongPress: onLongPress,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: completed,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (value) => onToggle(value ?? false),
+                    ),
+                    _MealPhotoThumbnail(meal: meal),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: onTap,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    meal.displayName,
+                                    style: completed
+                                        ? theme.textTheme.titleMedium?.copyWith(
+                                            decoration:
+                                                TextDecoration.lineThrough,
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          )
+                                        : theme.textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  lastEatenAsync.when(
+                                    loading: () => Text(
+                                      formatPortions(meal.portions),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                        color: theme
+                                            .colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    error: (_, __) => Text(
+                                      formatPortions(meal.portions),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                        color: theme
+                                            .colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    data: (lastEaten) => Text(
+                                      '${formatLastEatenSummary(lastEaten)} · ${formatPortions(meal.portions)}',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                        color: theme
+                                            .colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              lastEatenAsync.when(
-                                loading: () => Text(
-                                  formatPortions(meal.portions),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                error: (_, __) => Text(
-                                  formatPortions(meal.portions),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                data: (lastEaten) => Text(
-                                  '${formatLastEatenSummary(lastEaten)} · ${formatPortions(meal.portions)}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          RecipeScaleControl(
+                            scaleFactor: scaleFactor,
+                            onScaleChanged: onScaleChanged,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      RecipeScaleControl(
-                        scaleFactor: scaleFactor,
-                        onScaleChanged: onScaleChanged,
-                      ),
-                    ],
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                      tooltip: 'Add ingredients to list',
+                      onPressed: onAddIngredients,
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add_shopping_cart_outlined),
-                  tooltip: 'Add ingredients to list',
-                  onPressed: onAddIngredients,
-                ),
-              ],
-            ),
+              ),
             ),
           ),
         ),
@@ -152,7 +178,8 @@ class _MealPhotoThumbnail extends ConsumerWidget {
     }
 
     return FutureBuilder<File?>(
-      future: ref.read(mealPhotoServiceProvider).resolvePhotoFile(meal.photoPath),
+      future:
+          ref.read(mealPhotoServiceProvider).resolvePhotoFile(meal.photoPath),
       builder: (context, snapshot) {
         final file = snapshot.data;
         return ClipRRect(

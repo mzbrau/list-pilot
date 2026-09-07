@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../data/database/app_database.dart';
 import '../../learning/ordering_service.dart';
@@ -11,6 +12,7 @@ class ListItemTile extends StatelessWidget {
     required this.completed,
     required this.onToggle,
     required this.onTap,
+    required this.onDelete,
     this.diagnostics,
   });
 
@@ -18,6 +20,7 @@ class ListItemTile extends StatelessWidget {
   final bool completed;
   final ValueChanged<bool> onToggle;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
   final ItemSortDiagnostics? diagnostics;
 
   @override
@@ -30,50 +33,66 @@ class ListItemTile extends StatelessWidget {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
         opacity: completed ? 0.55 : 1,
-        child: ListTile(
-          dense: true,
-          visualDensity: VisualDensity.compact,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          leading: Checkbox(
-            value: completed,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            onChanged: (value) => onToggle(value ?? false),
+        child: Slidable(
+          key: ValueKey(item.id),
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            extentRatio: 0.25,
+            children: [
+              SlidableAction(
+                onPressed: (_) => onDelete(),
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+                icon: Icons.delete_outline,
+                label: 'Delete',
+              ),
+            ],
           ),
-          title: Text(
-            item.displayName,
-            style: completed
-                ? theme.textTheme.bodyLarge?.copyWith(
-                    decoration: TextDecoration.lineThrough,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  )
-                : theme.textTheme.bodyLarge,
-          ),
-          subtitle: diagnostics == null
-              ? null
-              : Text(
-                  _diagnosticsCaption(diagnostics!),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-          trailing: quantity.isNotEmpty
-              ? Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    quantity,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSecondaryContainer,
+          child: ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            leading: Checkbox(
+              value: completed,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onChanged: (value) => onToggle(value ?? false),
+            ),
+            title: Text(
+              item.displayName,
+              style: completed
+                  ? theme.textTheme.bodyLarge?.copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    )
+                  : theme.textTheme.bodyLarge,
+            ),
+            subtitle: diagnostics == null
+                ? null
+                : Text(
+                    _diagnosticsCaption(diagnostics!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontFamily: 'monospace',
                     ),
                   ),
-                )
-              : null,
-          onTap: onTap,
+            trailing: quantity.isNotEmpty
+                ? Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      quantity,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  )
+                : null,
+            onTap: onTap,
+          ),
         ),
       ),
     );
