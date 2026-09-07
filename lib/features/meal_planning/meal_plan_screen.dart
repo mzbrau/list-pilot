@@ -95,6 +95,7 @@ class MealPlanScreen extends ConsumerWidget {
                                     entry,
                                     scale,
                                   ),
+                                  onDelete: () => _deleteFromPlan(ref, entry),
                                   onLongPress: () => _confirmRemoveFromPlan(
                                     context,
                                     ref,
@@ -121,6 +122,7 @@ class MealPlanScreen extends ConsumerWidget {
                             ),
                             onScaleChanged: (entry, scale) =>
                                 _updateScale(ref, entry, scale),
+                            onDelete: (entry) => _deleteFromPlan(ref, entry),
                           ),
                           const SliverToBoxAdapter(child: SizedBox(height: 16)),
                         ],
@@ -156,6 +158,15 @@ class MealPlanScreen extends ConsumerWidget {
         );
   }
 
+  Future<void> _deleteFromPlan(
+    WidgetRef ref,
+    MealPlanItemWithMeal entry,
+  ) async {
+    await ref.read(mealRepositoryProvider).deleteMealFromPlan(
+          entry.planItem.id,
+        );
+  }
+
   Future<void> _confirmRemoveFromPlan(
     BuildContext context,
     WidgetRef ref,
@@ -181,9 +192,7 @@ class MealPlanScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    await ref.read(mealRepositoryProvider).deleteMealFromPlan(
-          entry.planItem.id,
-        );
+    await _deleteFromPlan(ref, entry);
   }
 
   Future<void> _clearCompleted(

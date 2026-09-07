@@ -13,6 +13,7 @@ class CompletedItemsSection extends StatefulWidget {
     required this.onToggle,
     required this.onClear,
     required this.onTapItem,
+    required this.onDelete,
   });
 
   final List<ListItem> items;
@@ -20,6 +21,7 @@ class CompletedItemsSection extends StatefulWidget {
   final void Function(ListItem item, bool completed) onToggle;
   final Future<void> Function(int count) onClear;
   final void Function(ListItem item) onTapItem;
+  final void Function(ListItem item) onDelete;
 
   @override
   State<CompletedItemsSection> createState() => _CompletedItemsSectionState();
@@ -85,6 +87,7 @@ class _CompletedItemsSectionState extends State<CompletedItemsSection> {
                   completed: true,
                   onToggle: (value) => widget.onToggle(item, value),
                   onTap: () => widget.onTapItem(item),
+                  onDelete: () => widget.onDelete(item),
                 );
               },
               childCount: widget.items.length,

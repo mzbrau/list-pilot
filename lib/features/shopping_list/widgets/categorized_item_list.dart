@@ -11,6 +11,7 @@ class CategorizedItemList extends StatelessWidget {
     required this.listId,
     required this.onToggle,
     required this.onTapItem,
+    required this.onDelete,
     this.diagnosticsByItemId,
     this.categoryDiagnosticsByName,
   });
@@ -19,6 +20,7 @@ class CategorizedItemList extends StatelessWidget {
   final int listId;
   final void Function(ListItem item, bool completed) onToggle;
   final void Function(ListItem item) onTapItem;
+  final void Function(ListItem item) onDelete;
 
   /// When non-null, shows per-item ordering diagnostics.
   final Map<int, ItemSortDiagnostics>? diagnosticsByItemId;
@@ -76,6 +78,7 @@ class CategorizedItemList extends StatelessWidget {
                   completed: false,
                   onToggle: (value) => onToggle(item, value),
                   onTap: () => onTapItem(item),
+                  onDelete: () => onDelete(item),
                   diagnostics: diagnosticsByItemId?[item.id],
                 );
               }

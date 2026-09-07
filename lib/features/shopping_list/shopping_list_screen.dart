@@ -241,6 +241,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                                 onTapItem: (item) => context.push(
                                   '/list/${widget.listId}/item/${item.id}',
                                 ),
+                                onDelete: _deleteItem,
                                 diagnosticsByItemId: diagnosticsByItemId,
                                 categoryDiagnosticsByName:
                                     categoryDiagnosticsByName,
@@ -253,6 +254,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                               onTapItem: (item) => context.push(
                                 '/list/${widget.listId}/item/${item.id}',
                               ),
+                              onDelete: _deleteItem,
                             ),
                             SliverPadding(
                               padding: EdgeInsets.only(
@@ -281,6 +283,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       },
     ),
     );
+  }
+
+  Future<void> _deleteItem(ListItem item) async {
+    await ref.read(listRepositoryProvider).deleteListItem(item.id);
   }
 
   Future<void> _toggleItem(ListItem item, bool completed) async {
