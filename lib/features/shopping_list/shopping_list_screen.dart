@@ -101,6 +101,9 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final orderingDiagnosticsEnabled =
         ref.watch(orderingDiagnosticsEnabledProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final availableCategories = categoriesAsync.asData?.value;
+    final canCategorizeOtherItems =
+        availableCategories != null && availableCategories.isNotEmpty;
     final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
 
     return popOrGoHomeScope(
@@ -166,16 +169,15 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                   child: SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        final categories =
-                            categoriesAsync.valueOrNull ?? [];
-                        if (categories.isEmpty) return;
-                        CategorizeOtherItemsDialog.show(
-                          context,
-                          items: otherItems,
-                          categories: categories,
-                        );
-                      },
+                      onPressed: !canCategorizeOtherItems
+                          ? null
+                          : () {
+                              CategorizeOtherItemsDialog.show(
+                                context,
+                                items: otherItems,
+                                categories: availableCategories!,
+                              );
+                            },
                       icon: const Icon(Icons.category_outlined),
                       label: Text(
                         'Categorize Other items (${otherItems.length})',
