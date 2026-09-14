@@ -9,6 +9,7 @@ import '../../router/navigation_helpers.dart';
 import '../lists/widgets/quick_list_switcher.dart';
 import '../shop_stats/widgets/shop_stats_ticker.dart';
 import '../shop_stats/widgets/shop_summary_sheet.dart';
+import 'widgets/categorize_other_items_dialog.dart';
 import 'widgets/categorized_item_list.dart';
 import 'widgets/completed_items_section.dart';
 import 'widgets/item_autocomplete_field.dart';
@@ -100,6 +101,9 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final orderingDiagnosticsEnabled =
         ref.watch(orderingDiagnosticsEnabledProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final availableCategories = categoriesAsync.asData?.value;
+    final canCategorizeOtherItems =
+        availableCategories != null && availableCategories.isNotEmpty;
     final itemStatsAsync = ref.watch(itemRankStatsProvider(widget.listId));
 
     return popOrGoHomeScope(
@@ -135,6 +139,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
           );
         }
 
+        final otherItems = items
+            .where((i) => !i.isCompleted && i.categoryId == 'other')
+            .toList();
+
         return Scaffold(
           appBar: _buildAppBar(
             context,
@@ -155,6 +163,28 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                   listId: widget.listId,
                 ),
               ),
+              if (otherItems.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: !canCategorizeOtherItems
+                          ? null
+                          : () {
+                              CategorizeOtherItemsDialog.show(
+                                context,
+                                items: otherItems,
+                                categories: availableCategories!,
+                              );
+                            },
+                      icon: const Icon(Icons.category_outlined),
+                      label: Text(
+                        'Categorize Other items (${otherItems.length})',
+                      ),
+                    ),
+                  ),
+                ),
               Expanded(
                 child: itemsAsync.when(
                   loading: () =>

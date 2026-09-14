@@ -401,4 +401,119 @@ void main() {
 
     await db.close();
   });
+
+  testWidgets(
+      'Categorize Other items saves selected categories and leaves unselected items in other',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+
+    await db.batch((batch) {
+      batch.insert(
+        db.categories,
+        CategoriesCompanion.insert(
+          id: 'produce',
+          name: 'Produce',
+          sortOrder: 0,
+        ),
+      );
+      batch.insert(
+        db.categories,
+        CategoriesCompanion.insert(
+          id: 'other',
+          name: 'Other',
+          sortOrder: 1,
+        ),
+      );
+    });
+
+    final catalogId = await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'apples',
+            displayName: 'Apples',
+            categoryId: 'other',
+            createdAt: DateTime.now(),
+          ),
+        );
+
+    final listId = await db.into(db.shoppingLists).insert(
+          ShoppingListsCompanion.insert(
+            name: 'Supermarket',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+    final now = DateTime.now();
+    final selectedItemId = await db.into(db.listItems).insert(
+          ListItemsCompanion.insert(
+            listId: listId,
+            catalogItemId: Value(catalogId),
+            displayName: 'Apples',
+            categoryId: 'other',
+            addedAt: now,
+          ),
+        );
+    final untouchedItemId = await db.into(db.listItems).insert(
+          ListItemsCompanion.insert(
+            listId: listId,
+            displayName: 'Mystery item',
+            categoryId: 'other',
+            addedAt: now,
+          ),
+        );
+
+    final catalogRepo = CatalogRepository(db);
+    final learningRepo = LearningRepository(db);
+    final shopStatsRepo = ShopStatsRepository(db);
+    final listRepo = ListRepository(db, catalogRepo, learningRepo, shopStatsRepo);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          catalogRepositoryProvider.overrideWithValue(catalogRepo),
+          learningRepositoryProvider.overrideWithValue(learningRepo),
+          listRepositoryProvider.overrideWithValue(listRepo),
+          appInitProvider.overrideWith((ref) async {}),
+        ],
+        child: MaterialApp.router(
+          routerConfig: GoRouter(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => ShoppingListScreen(listId: listId),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Categorize Other items (2)'), findsOneWidget);
+
+    await tester.tap(find.text('Categorize Other items (2)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Categorize Other items'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Produce').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final selectedItem = await listRepo.getListItemById(selectedItemId);
+    final untouchedItem = await listRepo.getListItemById(untouchedItemId);
+    final updatedCatalogItem = await catalogRepo.getById(catalogId);
+
+    expect(selectedItem?.categoryId, 'produce');
+    expect(untouchedItem?.categoryId, 'other');
+    expect(updatedCatalogItem?.categoryId, 'produce');
+
+    await db.close();
+  });
 }
