@@ -40,6 +40,22 @@ void main() {
             createdAt: DateTime.now(),
           ),
         );
+    await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'green apple',
+            displayName: 'Green apple',
+            categoryId: 'fruit_veg',
+            createdAt: DateTime.now(),
+          ),
+        );
+    await db.into(db.catalogItems).insert(
+          CatalogItemsCompanion.insert(
+            name: 'spring onions',
+            displayName: 'Spring onions',
+            categoryId: 'fruit_veg',
+            createdAt: DateTime.now(),
+          ),
+        );
     catalogRepo = CatalogRepository(db);
     matcher = IngredientCatalogMatcher(
       catalogRepo,
@@ -57,10 +73,10 @@ void main() {
     expect(result.catalogItem?.displayName, 'Potatoes');
   });
 
-  test('matches token from descriptive name', () async {
+  test('does not auto-match descriptive token-only names', () async {
     final result = await matcher.matchLine('chat potatoes');
-    expect(result.confidence, IngredientMatchConfidence.matched);
-    expect(result.catalogItem?.displayName, 'Potatoes');
+    expect(result.confidence, IngredientMatchConfidence.unmatched);
+    expect(result.catalogItem, isNull);
   });
 
   test('returns unmatched for unknown item', () async {
@@ -76,9 +92,39 @@ void main() {
     expect(result.confidence, IngredientMatchConfidence.matched);
   });
 
+  test('strips prep words and matches exact plural catalog name', () async {
+    final result = await matcher.matchLine('1 spring onion, sliced');
+    expect(result.confidence, IngredientMatchConfidence.matched);
+    expect(result.catalogItem?.displayName, 'Spring onions');
+  });
+
+  test('does not match green onion to green apple', () async {
+    final result = await matcher.matchLine('1 green onion , sliced');
+    expect(result.confidence, IngredientMatchConfidence.unmatched);
+    expect(result.catalogItem, isNull);
+  });
+
+  test('matchKey strips sliced and punctuation', () {
+    expect(
+      IngredientCatalogMatcher.matchKey('green onion , sliced'),
+      'green onion',
+    );
+  });
+
   test('suggestMatches returns token match for descriptive name', () async {
     final suggestions = await matcher.suggestMatches('green apples');
-    expect(suggestions.map((item) => item.displayName), ['Apples']);
+    expect(
+      suggestions.map((item) => item.displayName),
+      containsAll(['Apples', 'Green apple']),
+    );
+  });
+
+  test('suggestMatches suggests onion-related items for green onion', () async {
+    final suggestions = await matcher.suggestMatches('green onion, sliced');
+    expect(
+      suggestions.map((item) => item.displayName),
+      anyOf(contains('Onion'), contains('Spring onions')),
+    );
   });
 
   test('suggestMatches returns empty list for unknown item', () async {
@@ -89,8 +135,7 @@ void main() {
 
   test('suggestMatches dedupes when multiple strategies match same item', () async {
     final suggestions = await matcher.suggestMatches('apples');
-    expect(suggestions.length, 1);
-    expect(suggestions.first.displayName, 'Apples');
+    expect(suggestions.where((item) => item.displayName == 'Apples').length, 1);
   });
 
   test('matches catalog item via alias', () async {
@@ -115,13 +160,18 @@ void main() {
     expect(result.catalogItem?.displayName, 'Capsicum');
   });
 
-  test('matches via prefix search on token', () async {
-    final result = await matcher.matchLine('green apple');
+  test('exact plural variant matches apples from apple', () async {
+    final result = await matcher.matchLine('1 apple');
     expect(result.confidence, IngredientMatchConfidence.matched);
     expect(result.catalogItem?.displayName, 'Apples');
   });
 
-  test('matches via contained catalog name in descriptive phrase', () async {
+  test('does not auto-match via prefix search on shared token', () async {
+    final result = await matcher.matchLine('green apple pie filling');
+    expect(result.confidence, IngredientMatchConfidence.unmatched);
+  });
+
+  test('does not auto-match via contained catalog name', () async {
     await db.into(db.catalogItems).insert(
           CatalogItemsCompanion.insert(
             name: 'cream cheese',
@@ -132,8 +182,7 @@ void main() {
         );
 
     final result = await matcher.matchLine('philadelphia cream cheese 200g');
-    expect(result.confidence, IngredientMatchConfidence.matched);
-    expect(result.catalogItem?.displayName, 'Cream cheese');
+    expect(result.confidence, IngredientMatchConfidence.unmatched);
   });
 
   test('matchBest falls back to secondary name', () async {
