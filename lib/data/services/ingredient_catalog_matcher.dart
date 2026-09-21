@@ -113,7 +113,7 @@ class IngredientCatalogMatcher {
     if (lowered.isEmpty) return '';
 
     final tokens = lowered
-        .replaceAll(RegExp(r'[^\w\s]+'), ' ')
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\s]+', unicode: true), ' ')
         .split(RegExp(r'\s+'))
         .map((t) => t.trim())
         .where((t) => t.isNotEmpty && !_noiseWords.contains(t))

@@ -111,6 +111,21 @@ void main() {
     );
   });
 
+  test('matchKey preserves accented Unicode letters', () {
+    expect(
+      IngredientCatalogMatcher.matchKey('Crème fraîche, sliced'),
+      'crème fraîche',
+    );
+    expect(
+      IngredientCatalogMatcher.matchKey('Tomato purée'),
+      'tomato purée',
+    );
+    expect(
+      IngredientCatalogMatcher.matchKey('Béarnaise sauce'),
+      'béarnaise sauce',
+    );
+  });
+
   test('suggestMatches returns token match for descriptive name', () async {
     final suggestions = await matcher.suggestMatches('green apples');
     expect(

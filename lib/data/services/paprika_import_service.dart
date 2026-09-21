@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../database/app_database.dart';
 import '../repositories/meal_repository.dart';
 import 'ingredient_catalog_matcher.dart';
 import 'ingredient_parser_service.dart';
@@ -170,13 +171,36 @@ class PaprikaImportService {
     final unmatchedSaved =
         saved.where((i) => i.catalogItemId == null).toList();
 
+    return pairUnmatchedByDisplayName(
+      mealId: mealId,
+      mealName: mealName,
+      unmatchedDrafts: unmatchedDrafts,
+      unmatchedSaved: unmatchedSaved,
+    );
+  }
+
+  /// Pairs unmatched drafts to saved rows by display name.
+  ///
+  /// [getIngredientsForMeal] returns rows sorted by display name, so index
+  /// pairing would assign the wrong IDs when recipe order differs.
+  static List<PaprikaUnmatchedIngredient> pairUnmatchedByDisplayName({
+    required int mealId,
+    required String mealName,
+    required List<ImportIngredientDraft> unmatchedDrafts,
+    required List<MealIngredient> unmatchedSaved,
+  }) {
+    final queues = <String, List<MealIngredient>>{};
+    for (final ingredient in unmatchedSaved) {
+      queues
+          .putIfAbsent(ingredient.displayName.trim(), () => [])
+          .add(ingredient);
+    }
+
     final result = <PaprikaUnmatchedIngredient>[];
-    final count = unmatchedDrafts.length < unmatchedSaved.length
-        ? unmatchedDrafts.length
-        : unmatchedSaved.length;
-    for (var i = 0; i < count; i++) {
-      final draft = unmatchedDrafts[i];
-      final ingredient = unmatchedSaved[i];
+    for (final draft in unmatchedDrafts) {
+      final queue = queues[draft.displayName.trim()];
+      if (queue == null || queue.isEmpty) continue;
+      final ingredient = queue.removeAt(0);
       result.add(
         PaprikaUnmatchedIngredient(
           mealIngredientId: ingredient.id,

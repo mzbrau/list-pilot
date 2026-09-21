@@ -313,10 +313,9 @@ class _ImportSummaryCard extends StatelessWidget {
             Text('Skipped (already exist): ${result.skipped}'),
             Text('Failed: ${result.failed}'),
             if (uniqueUnmatched > 0)
-              Text(
-                'Ingredients needing review: $uniqueUnmatched'
-                '${reviewedLinks > 0 ? ' ($reviewedLinks linked)' : ''}',
-              ),
+              Text('Unique ingredients needing review: $uniqueUnmatched'),
+            if (reviewedLinks > 0)
+              Text('Ingredient occurrences linked: $reviewedLinks'),
             if (result.errors.isNotEmpty) ...[
               const SizedBox(height: 12),
               ExpansionTile(

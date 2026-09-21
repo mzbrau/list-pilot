@@ -213,4 +213,103 @@ void main() {
     final unmatched = saved.where((i) => i.catalogItemId == null).toList();
     expect(unmatched, hasLength(1));
   });
+
+  test('pairUnmatchedByDisplayName survives reverse-alphabetical sort',
+      () async {
+    final meal = await mealRepo.createMeal(
+      displayName: 'Reverse Alpha Recipe',
+      ingredients: const [
+        MealIngredientInput(displayName: 'zucchini'),
+        MealIngredientInput(displayName: 'apple'),
+      ],
+    );
+
+    // getIngredientsForMeal sorts by displayName: apple, zucchini
+    final saved = await mealRepo.getIngredientsForMeal(meal.id);
+    expect(saved.map((i) => i.displayName).toList(), ['apple', 'zucchini']);
+
+    final drafts = [
+      ImportIngredientDraft(
+        parsed: const ParsedIngredientLine(
+          itemName: 'zucchini',
+          originalLine: '1 zucchini',
+        ),
+        confidence: IngredientMatchConfidence.unmatched,
+        displayName: 'zucchini',
+      ),
+      ImportIngredientDraft(
+        parsed: const ParsedIngredientLine(
+          itemName: 'apple',
+          originalLine: '1 apple',
+        ),
+        confidence: IngredientMatchConfidence.unmatched,
+        displayName: 'apple',
+      ),
+    ];
+
+    final paired = PaprikaImportService.pairUnmatchedByDisplayName(
+      mealId: meal.id,
+      mealName: meal.displayName,
+      unmatchedDrafts: drafts,
+      unmatchedSaved: saved.where((i) => i.catalogItemId == null).toList(),
+    );
+
+    expect(paired, hasLength(2));
+    expect(paired[0].displayName, 'zucchini');
+    expect(paired[0].matchKey, 'zucchini');
+    expect(
+      paired[0].mealIngredientId,
+      saved.firstWhere((i) => i.displayName == 'zucchini').id,
+    );
+    expect(paired[1].displayName, 'apple');
+    expect(paired[1].matchKey, 'apple');
+    expect(
+      paired[1].mealIngredientId,
+      saved.firstWhere((i) => i.displayName == 'apple').id,
+    );
+  });
+
+  test('pairUnmatchedByDisplayName handles duplicate display names as a queue',
+      () async {
+    final meal = await mealRepo.createMeal(
+      displayName: 'Duplicate Names Recipe',
+      ingredients: const [
+        MealIngredientInput(displayName: 'garlic'),
+        MealIngredientInput(displayName: 'garlic'),
+      ],
+    );
+    final saved = await mealRepo.getIngredientsForMeal(meal.id);
+
+    final drafts = [
+      ImportIngredientDraft(
+        parsed: const ParsedIngredientLine(
+          itemName: 'garlic clove',
+          originalLine: '1 garlic clove',
+        ),
+        confidence: IngredientMatchConfidence.unmatched,
+        displayName: 'garlic',
+      ),
+      ImportIngredientDraft(
+        parsed: const ParsedIngredientLine(
+          itemName: 'garlic powder',
+          originalLine: '1 tsp garlic powder',
+        ),
+        confidence: IngredientMatchConfidence.unmatched,
+        displayName: 'garlic',
+      ),
+    ];
+
+    final paired = PaprikaImportService.pairUnmatchedByDisplayName(
+      mealId: meal.id,
+      mealName: meal.displayName,
+      unmatchedDrafts: drafts,
+      unmatchedSaved: saved,
+    );
+
+    expect(paired, hasLength(2));
+    expect(paired[0].matchKey, 'garlic clove');
+    expect(paired[0].mealIngredientId, saved[0].id);
+    expect(paired[1].matchKey, 'garlic powder');
+    expect(paired[1].mealIngredientId, saved[1].id);
+  });
 }
