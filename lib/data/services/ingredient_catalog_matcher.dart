@@ -35,6 +35,9 @@ class ImportIngredientDraft {
 
   int? get catalogItemId => catalogItem?.id;
 
+  /// Normalized key used for exact matching and alias creation.
+  String get matchKey => IngredientCatalogMatcher.matchKey(parsed.itemName);
+
   MealIngredientInput toInput() => MealIngredientInput(
         displayName: displayName,
         quantityValue: parsed.quantityValue,
@@ -104,6 +107,21 @@ class IngredientCatalogMatcher {
     'choice',
   };
 
+  /// Strips prep/noise words and punctuation for exact matching / aliases.
+  static String matchKey(String itemName) {
+    final lowered = itemName.trim().toLowerCase();
+    if (lowered.isEmpty) return '';
+
+    final tokens = lowered
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\s]+', unicode: true), ' ')
+        .split(RegExp(r'\s+'))
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty && !_noiseWords.contains(t))
+        .toList();
+
+    return tokens.join(' ');
+  }
+
   Future<IngredientMatchResult> matchLine(String rawLine) async {
     final parsed = _parser.parse(rawLine);
     if (parsed.itemName.isEmpty) {
@@ -161,7 +179,8 @@ class IngredientCatalogMatcher {
     String itemName, {
     int limit = 5,
   }) async {
-    final normalized = itemName.trim().toLowerCase();
+    final key = matchKey(itemName);
+    final normalized = key.isNotEmpty ? key : itemName.trim().toLowerCase();
     if (normalized.isEmpty) return const [];
 
     final suggestions = <CatalogItem>[];
@@ -171,6 +190,11 @@ class IngredientCatalogMatcher {
       if (item == null || seenIds.contains(item.id)) return;
       seenIds.add(item.id);
       suggestions.add(item);
+    }
+
+    for (final variant in _pluralVariants(normalized)) {
+      if (suggestions.length >= limit) break;
+      add(await _catalog.findByNameOrAlias(variant));
     }
 
     final tokens = _significantTokens(normalized);
@@ -189,7 +213,7 @@ class IngredientCatalogMatcher {
     }
 
     if (suggestions.length < limit) {
-      final prefixMatches = await _catalog.search(itemName, limit: limit);
+      final prefixMatches = await _catalog.search(normalized, limit: limit);
       for (final item in prefixMatches) {
         if (suggestions.length >= limit) break;
         add(item);
@@ -199,74 +223,48 @@ class IngredientCatalogMatcher {
     return suggestions;
   }
 
+  /// Auto-match only on exact name/alias (after noise strip + plural variants).
   Future<CatalogItem?> _findMatch(String itemName) async {
-    final normalized = itemName.trim().toLowerCase();
-    if (normalized.isEmpty) return null;
+    final key = matchKey(itemName);
+    if (key.isEmpty) return null;
 
-    final exact = await _catalog.findByNameOrAlias(normalized);
-    if (exact != null) return exact;
-
-    final tokens = _significantTokens(normalized);
-    for (final token in tokens) {
-      final match = await _catalog.findByNameOrAlias(token);
+    for (final variant in _pluralVariants(key)) {
+      final match = await _catalog.findByNameOrAlias(variant);
       if (match != null) return match;
-    }
-
-    for (var phraseLength = 3; phraseLength >= 2; phraseLength--) {
-      if (tokens.length < phraseLength) continue;
-      for (var i = 0; i <= tokens.length - phraseLength; i++) {
-        final phrase = tokens.sublist(i, i + phraseLength).join(' ');
-        final match = await _catalog.findByNameOrAlias(phrase);
-        if (match != null) return match;
-      }
-    }
-
-    for (final token in tokens) {
-      if (token.length < 3) continue;
-      final prefixMatches = await _catalog.search(token, limit: 1);
-      if (prefixMatches.isNotEmpty) return prefixMatches.first;
-    }
-
-    return _findContainedMatch(normalized);
-  }
-
-  Future<CatalogItem?> _findContainedMatch(String normalized) async {
-    final terms = await _containmentTerms();
-    for (final entry in terms) {
-      if (entry.term.length < 4) continue;
-      if (_containsWholeWord(normalized, entry.term)) {
-        final item = await _catalog.getById(entry.catalogItemId);
-        if (item != null) return item;
-      }
     }
     return null;
   }
 
-  List<_ContainmentTerm>? _cachedContainmentTerms;
-
-  Future<List<_ContainmentTerm>> _containmentTerms() async {
-    if (_cachedContainmentTerms != null) return _cachedContainmentTerms!;
-
-    final terms = <_ContainmentTerm>[];
-    final items = await _catalog.getAllCatalogItems();
-    for (final item in items) {
-      terms.add(_ContainmentTerm(term: item.name, catalogItemId: item.id));
+  /// Simple singular/plural variants of [key] for exact lookup.
+  static List<String> _pluralVariants(String key) {
+    final variants = <String>{key};
+    if (key.endsWith('ies') && key.length > 3) {
+      variants.add('${key.substring(0, key.length - 3)}y');
+    } else if (key.endsWith('oes') && key.length > 3) {
+      variants.add(key.substring(0, key.length - 2));
+    } else if (key.endsWith('ses') && key.length > 3) {
+      variants.add(key.substring(0, key.length - 2));
+    } else if (key.endsWith('s') && !key.endsWith('ss') && key.length > 1) {
+      variants.add(key.substring(0, key.length - 1));
     }
-    final aliases = await _catalog.getAllAliases();
-    for (final alias in aliases) {
-      terms.add(
-        _ContainmentTerm(term: alias.alias, catalogItemId: alias.catalogItemId),
-      );
+
+    if (!key.endsWith('s')) {
+      if (key.endsWith('y') &&
+          key.length > 1 &&
+          !_isVowel(key[key.length - 2])) {
+        variants.add('${key.substring(0, key.length - 1)}ies');
+      } else if (key.endsWith('o')) {
+        variants.add('${key}es');
+      } else {
+        variants.add('${key}s');
+      }
     }
-    terms.sort((a, b) => b.term.length.compareTo(a.term.length));
-    _cachedContainmentTerms = terms;
-    return terms;
+
+    return variants.toList();
   }
 
-  bool _containsWholeWord(String haystack, String needle) {
-    final pattern = RegExp(r'(?<!\w)' + RegExp.escape(needle) + r'(?!\w)');
-    return pattern.hasMatch(haystack);
-  }
+  static bool _isVowel(String char) =>
+      const {'a', 'e', 'i', 'o', 'u'}.contains(char);
 
   List<String> _significantTokens(String normalized) {
     final rawTokens = normalized
@@ -282,11 +280,4 @@ class IngredientCatalogMatcher {
 
     return tokens;
   }
-}
-
-class _ContainmentTerm {
-  const _ContainmentTerm({required this.term, required this.catalogItemId});
-
-  final String term;
-  final int catalogItemId;
 }

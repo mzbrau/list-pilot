@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/io/import_folder_resolver.dart';
 import '../../core/providers/app_providers.dart';
+import '../../data/services/import_ingredient_acceptance.dart';
 import '../../data/services/paprika_import_service.dart';
+import 'widgets/import_ingredient_review_sheet.dart';
 
 class PaprikaImportScreen extends ConsumerStatefulWidget {
   const PaprikaImportScreen({super.key});
@@ -23,6 +25,7 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
   int _progressTotal = 0;
   String? _currentFileName;
   PaprikaImportResult? _result;
+  int _reviewedLinks = 0;
 
   Future<void> _pickFolder() async {
     if (_preparingFolder || _importing) return;
@@ -30,6 +33,7 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
     setState(() {
       _preparingFolder = true;
       _result = null;
+      _reviewedLinks = 0;
     });
 
     final previous = _folder;
@@ -82,6 +86,7 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
     setState(() {
       _importing = true;
       _result = null;
+      _reviewedLinks = 0;
       _progressCurrent = 0;
       _progressTotal = 0;
       _currentFileName = null;
@@ -101,6 +106,12 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
           );
       if (!mounted) return;
       setState(() => _result = result);
+
+      final linked = await _reviewUnmatched(result);
+      if (!mounted) return;
+      if (linked > 0) {
+        setState(() => _reviewedLinks = linked);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,6 +130,38 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
         });
       }
     }
+  }
+
+  Future<int> _reviewUnmatched(PaprikaImportResult result) async {
+    if (result.unmatchedIngredients.isEmpty) return 0;
+
+    final groups = ImportIngredientAcceptance.groupByMatchKey(
+      result.unmatchedIngredients,
+    );
+    if (groups.isEmpty) return 0;
+
+    final drafts = ImportIngredientAcceptance.draftsFromPaprikaGroups(groups);
+    final reviewed = await ImportIngredientReviewSheet.show(
+      context,
+      drafts: drafts,
+    );
+    if (reviewed == null || !mounted) return 0;
+
+    await ImportIngredientAcceptance.applyPaprikaReviews(
+      meals: ref.read(mealRepositoryProvider),
+      groups: groups,
+      reviewed: reviewed,
+    );
+
+    var linked = 0;
+    for (final draft in reviewed) {
+      if (draft.catalogItem == null) continue;
+      final key = draft.matchKey.isNotEmpty
+          ? draft.matchKey
+          : draft.displayName.trim().toLowerCase();
+      linked += groups[key]?.length ?? 0;
+    }
+    return linked;
   }
 
   @override
@@ -228,7 +271,10 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
                 ],
                 if (_result != null) ...[
                   const SizedBox(height: 24),
-                  _ImportSummaryCard(result: _result!),
+                  _ImportSummaryCard(
+                    result: _result!,
+                    reviewedLinks: _reviewedLinks,
+                  ),
                 ],
               ],
             ),
@@ -237,13 +283,20 @@ class _PaprikaImportScreenState extends ConsumerState<PaprikaImportScreen> {
 }
 
 class _ImportSummaryCard extends StatelessWidget {
-  const _ImportSummaryCard({required this.result});
+  const _ImportSummaryCard({
+    required this.result,
+    this.reviewedLinks = 0,
+  });
 
   final PaprikaImportResult result;
+  final int reviewedLinks;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final uniqueUnmatched = ImportIngredientAcceptance.groupByMatchKey(
+      result.unmatchedIngredients,
+    ).length;
 
     return Card(
       child: Padding(
@@ -259,6 +312,10 @@ class _ImportSummaryCard extends StatelessWidget {
             Text('Imported: ${result.imported}'),
             Text('Skipped (already exist): ${result.skipped}'),
             Text('Failed: ${result.failed}'),
+            if (uniqueUnmatched > 0)
+              Text('Unique ingredients needing review: $uniqueUnmatched'),
+            if (reviewedLinks > 0)
+              Text('Ingredient occurrences linked: $reviewedLinks'),
             if (result.errors.isNotEmpty) ...[
               const SizedBox(height: 12),
               ExpansionTile(

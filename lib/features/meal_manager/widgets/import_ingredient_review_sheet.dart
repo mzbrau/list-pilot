@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/widgets/keyboard_inset_padding.dart';
 import '../../../data/database/app_database.dart';
+import '../../../data/services/import_ingredient_acceptance.dart';
 import '../../../data/services/ingredient_catalog_matcher.dart';
 import '../../meal_planning/widgets/ingredient_catalog_name_field.dart';
 
@@ -177,26 +178,10 @@ class _ImportIngredientReviewSheetState
 
   Future<void> _confirm() async {
     final catalogRepo = ref.read(catalogRepositoryProvider);
-    for (final entry in _entries) {
-      final draft = entry.draft;
-      if (draft.addToCatalog && draft.catalogItem == null) {
-        final name = draft.displayName.trim();
-        if (name.isEmpty) continue;
-        final item = await catalogRepo.getOrCreate(
-          displayName: name,
-          categoryId: draft.categoryId,
-          isUserAdded: true,
-        );
-        draft.catalogItem = item;
-        draft.displayName = item.displayName;
-        draft.confidence = IngredientMatchConfidence.matched;
-      }
-    }
-
-    final result = _entries
-        .map((e) => e.draft)
-        .where((d) => d.displayName.trim().isNotEmpty)
-        .toList();
+    final result = await ImportIngredientAcceptance.finalizeDrafts(
+      catalog: catalogRepo,
+      drafts: _entries.map((e) => e.draft).toList(),
+    );
 
     if (!mounted) return;
     Navigator.pop(context, result);
