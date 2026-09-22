@@ -10,12 +10,18 @@ class MealManagerListTile extends ConsumerWidget {
     super.key,
     required this.meal,
     required this.onTap,
+    this.onLongPress,
     this.onAddToPlan,
+    this.isSelecting = false,
+    this.isSelected = false,
   });
 
   final Meal meal;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback? onAddToPlan;
+  final bool isSelecting;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,10 +33,18 @@ class MealManagerListTile extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              if (isSelecting) ...[
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => onTap(),
+                ),
+                const SizedBox(width: 8),
+              ],
               MealPhotoThumbnail(meal: meal),
               const SizedBox(width: 16),
               Expanded(
@@ -80,16 +94,18 @@ class MealManagerListTile extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (onAddToPlan != null)
-                IconButton(
-                  icon: const Icon(Icons.playlist_add_outlined),
-                  tooltip: 'Add to meal plan',
-                  onPressed: onAddToPlan,
+              if (!isSelecting) ...[
+                if (onAddToPlan != null)
+                  IconButton(
+                    icon: const Icon(Icons.playlist_add_outlined),
+                    tooltip: 'Add to meal plan',
+                    onPressed: onAddToPlan,
+                  ),
+                Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              ],
             ],
           ),
         ),
