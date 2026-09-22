@@ -9,12 +9,18 @@ class MealManagerGridTile extends ConsumerWidget {
     super.key,
     required this.meal,
     required this.onTap,
+    this.onLongPress,
     this.onAddToPlan,
+    this.isSelecting = false,
+    this.isSelected = false,
   });
 
   final Meal meal;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback? onAddToPlan;
+  final bool isSelecting;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,8 +28,15 @@ class MealManagerGridTile extends ConsumerWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isSelected
+            ? BorderSide(color: theme.colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -38,7 +51,24 @@ class MealManagerGridTile extends ConsumerWidget {
                     borderRadius: 0,
                     iconSize: 40,
                   ),
-                  if (onAddToPlan != null)
+                  if (isSelecting)
+                    Positioned(
+                      top: 4,
+                      left: 4,
+                      child: Material(
+                        color: theme.colorScheme.surface.withValues(alpha: 0.92),
+                        shape: const CircleBorder(),
+                        clipBehavior: Clip.antiAlias,
+                        child: Checkbox(
+                          value: isSelected,
+                          onChanged: (_) => onTap(),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ),
+                  if (!isSelecting && onAddToPlan != null)
                     Positioned(
                       top: 4,
                       right: 4,
